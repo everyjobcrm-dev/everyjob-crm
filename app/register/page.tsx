@@ -83,16 +83,24 @@ export default function RegisterPage() {
       return;
     }
 
-    const result = await supabase.from("profiles").insert({
-      id: data.user.id,
-      first_name: form.first_name,
-      last_name: form.last_name,
-      tz: form.tz,
-      role: "employee",
+    const profileResponse = await fetch("/api/auth/create-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: data.user.id,
+        first_name: form.first_name,
+        last_name: form.last_name,
+        tz: form.tz,
+        role: "employee",
+      }),
     });
 
-    if (result.error) {
-      setError(`We created the auth account, but the profile could not be saved: ${result.error.message}`);
+    const profilePayload = await profileResponse.json().catch(() => null);
+
+    if (!profileResponse.ok || !profilePayload?.success) {
+      setError(
+        profilePayload?.error ?? "We created the auth account, but the profile could not be saved. Please contact support if this keeps happening.",
+      );
       setLoading(false);
       return;
     }
@@ -112,56 +120,59 @@ export default function RegisterPage() {
 
   return (
     <AuthCard
-      title="Create your account"
-      subtitle="Join EveryJob CRM as an employee. Your profile will be created automatically."
+      title="יצירת חשבון"
+      subtitle="הצטרפו למערכת everyJob עם חשבון חדש ונשמעו מהיר ונוח."
       error={error}
       success={success}
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300" htmlFor="first_name">
-              First Name
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="first_name">
+              שם פרטי
             </label>
             <input
               id="first_name"
               required
               value={form.first_name}
               onChange={(event) => handleChange("first_name", event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm text-white outline-none transition focus:border-cyan-400 focus:bg-slate-950"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+              placeholder="הקלידו שם פרטי"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300" htmlFor="last_name">
-              Last Name
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="last_name">
+              שם משפחה
             </label>
             <input
               id="last_name"
               required
               value={form.last_name}
               onChange={(event) => handleChange("last_name", event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm text-white outline-none transition focus:border-cyan-400 focus:bg-slate-950"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+              placeholder="הקלידו שם משפחה"
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-300" htmlFor="tz">
-            TZ (ID Number)
+          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="tz">
+            תעודת זהות
           </label>
           <input
             id="tz"
             required
             value={form.tz}
             onChange={(event) => handleChange("tz", event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm text-white outline-none transition focus:border-cyan-400 focus:bg-slate-950"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            placeholder="הקלידו 8–9 ספרות"
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-300" htmlFor="email">
-            Email
+          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="email">
+            אימייל
           </label>
           <input
             id="email"
@@ -169,14 +180,15 @@ export default function RegisterPage() {
             required
             value={form.email}
             onChange={(event) => handleChange("email", event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm text-white outline-none transition focus:border-cyan-400 focus:bg-slate-950"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            placeholder="name@example.com"
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300" htmlFor="password">
-              Password
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="password">
+              סיסמה
             </label>
             <input
               id="password"
@@ -184,13 +196,14 @@ export default function RegisterPage() {
               required
               value={form.password}
               onChange={(event) => handleChange("password", event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm text-white outline-none transition focus:border-cyan-400 focus:bg-slate-950"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+              placeholder="הקלידו סיסמה"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300" htmlFor="confirmPassword">
-              Confirm Password
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="confirmPassword">
+              אימות סיסמה
             </label>
             <input
               id="confirmPassword"
@@ -198,7 +211,8 @@ export default function RegisterPage() {
               required
               value={form.confirmPassword}
               onChange={(event) => handleChange("confirmPassword", event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm text-white outline-none transition focus:border-cyan-400 focus:bg-slate-950"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+              placeholder="הקלידו שוב"
             />
           </div>
         </div>
@@ -206,17 +220,17 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-500 to-violet-500 px-4 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Creating account..." : "Create account"}
+          {loading ? "יוצר חשבון..." : "צור משתמש"}
           <ArrowRight className="h-4 w-4" />
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
-        Already have an account?{' '}
-        <Link className="font-semibold text-cyan-400 hover:text-cyan-300" href="/login">
-          Sign in
+      <p className="mt-6 text-center text-sm text-slate-500">
+        כבר יש לך חשבון?{' '}
+        <Link className="font-semibold text-sky-600 hover:text-sky-700" href="/login">
+          התחבר
         </Link>
       </p>
     </AuthCard>

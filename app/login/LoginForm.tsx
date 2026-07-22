@@ -83,14 +83,14 @@ export default function LoginForm() {
 
   return (
     <AuthCard
-      title="Sign in"
-      subtitle="Sign in with your TZ or email and password."
+      title="התחברות"
+      subtitle="התחברו עם תעודת זהות או אימייל וסיסמה."
       error={error}
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-300" htmlFor="identifier">
-            TZ or Email
+          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="identifier">
+            תעודת זהות או אימייל
           </label>
           <input
             id="identifier"
@@ -99,14 +99,14 @@ export default function LoginForm() {
             required
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm text-white outline-none ring-0 transition focus:border-cyan-400 focus:bg-slate-950"
-            placeholder="Enter TZ or email"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            placeholder="הקלידו תעודת זהות או אימייל"
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-300" htmlFor="password">
-            Password
+          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="password">
+            סיסמה
           </label>
           <input
             id="password"
@@ -115,31 +115,31 @@ export default function LoginForm() {
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm text-white outline-none transition focus:border-cyan-400 focus:bg-slate-950"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             placeholder="••••••••"
           />
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <Link className="font-medium text-cyan-400 transition hover:text-cyan-300" href="/forgot-password">
-            Forgot password?
+          <Link className="font-medium text-sky-600 transition hover:text-sky-700" href="/forgot-password">
+            שכחת סיסמה?
           </Link>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-500 to-violet-500 px-4 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "מתחבר..." : "התחבר"}
           <ArrowRight className="h-4 w-4" />
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
-        New here?{' '}
-        <Link className="font-semibold text-cyan-400 hover:text-cyan-300" href="/register">
-          Create an account
+      <p className="mt-6 text-center text-sm text-slate-500">
+        חדש כאן?{' '}
+        <Link className="font-semibold text-sky-600 hover:text-sky-700" href="/register">
+          צור חשבון
         </Link>
       </p>
     </AuthCard>

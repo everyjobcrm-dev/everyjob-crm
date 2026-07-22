@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EveryJob CRM",
-  description: "Authentication and role-based access for EveryJob CRM",
+  title: "everyJob | אנשים טובים, משמרות טובות",
+  description: "everyJob מחברת בין אנשים טובים לעבודה טובה ולצוותים מנצחים.",
 };
 
 export default function RootLayout({
@@ -25,7 +25,8 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="he"
+      dir="rtl"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

@@ -49,15 +49,15 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthCard
-      title="Reset your password"
-      subtitle="Enter your email to receive a reset link."
+      title="איפוס סיסמה"
+      subtitle="הקלידו את האימייל שלכם ותישלח אליכם קישור לאיפוס הסיסמה."
       error={error}
       success={success}
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-300" htmlFor="email">
-            Email
+          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="email">
+            אימייל
           </label>
           <input
             id="email"
@@ -65,25 +65,25 @@ export default function ForgotPasswordPage() {
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm text-white outline-none transition focus:border-cyan-400 focus:bg-slate-950"
-            placeholder="name@company.com"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            placeholder="name@example.com"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-500 to-violet-500 px-4 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Sending..." : "Send reset link"}
+          {loading ? "שולח..." : "שלח קישור לאיפוס"}
           <ArrowRight className="h-4 w-4" />
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
-        Return to{' '}
-        <Link className="font-semibold text-cyan-400 hover:text-cyan-300" href="/login">
-          sign in
+      <p className="mt-6 text-center text-sm text-slate-500">
+        חזרו ל{' '}
+        <Link className="font-semibold text-sky-600 hover:text-sky-700" href="/login">
+          התחברות
         </Link>
       </p>
     </AuthCard>
