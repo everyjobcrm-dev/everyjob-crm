@@ -83,28 +83,8 @@ export default function RegisterPage() {
       return;
     }
 
-    const profileResponse = await fetch("/api/auth/create-profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: data.user.id,
-        first_name: form.first_name,
-        last_name: form.last_name,
-        tz: form.tz,
-        role: "employee",
-      }),
-    });
-
-    const profilePayload = await profileResponse.json().catch(() => null);
-
-    if (!profileResponse.ok || !profilePayload?.success) {
-      setError(
-        profilePayload?.error ?? "We created the auth account, but the profile could not be saved. Please contact support if this keeps happening.",
-      );
-      setLoading(false);
-      return;
-    }
-
+    // Profile creation is now securely handled by the PostgreSQL trigger in Supabase.
+    
     setSuccess("Account created successfully. Please check your inbox to confirm your email before signing in.");
     setForm({
       first_name: "",
@@ -115,22 +95,22 @@ export default function RegisterPage() {
       confirmPassword: "",
     });
     setLoading(false);
-    router.push("/login");
+    
+    // Optionally redirect immediately or let them read the success message
+    // router.push("/login"); 
   };
 
   return (
     <AuthCard
       title="יצירת חשבון"
-      subtitle="הצטרפו למערכת everyJob עם חשבון חדש ונשמעו מהיר ונוח."
+      subtitle="הצטרפו למערכת everyJob עם חשבון חדש ונוח."
       error={error}
       success={success}
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="first_name">
-              שם פרטי
-            </label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="first_name">שם פרטי</label>
             <input
               id="first_name"
               required
@@ -142,9 +122,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="last_name">
-              שם משפחה
-            </label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="last_name">שם משפחה</label>
             <input
               id="last_name"
               required
@@ -157,9 +135,7 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="tz">
-            תעודת זהות
-          </label>
+          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="tz">תעודת זהות</label>
           <input
             id="tz"
             required
@@ -171,9 +147,7 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="email">
-            אימייל
-          </label>
+          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="email">אימייל</label>
           <input
             id="email"
             type="email"
@@ -187,9 +161,7 @@ export default function RegisterPage() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="password">
-              סיסמה
-            </label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="password">סיסמה</label>
             <input
               id="password"
               type="password"
@@ -202,9 +174,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="confirmPassword">
-              אימות סיסמה
-            </label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="confirmPassword">אימות סיסמה</label>
             <input
               id="confirmPassword"
               type="password"

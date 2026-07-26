@@ -12,6 +12,7 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? undefined;
+  
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,8 +31,9 @@ export default function LoginForm() {
     }
 
     const normalizedIdentifier = identifier.trim();
-    let email = normalizedIdentifier;
+    let emailToLogin = normalizedIdentifier;
 
+    // If there is no '@' symbol, assume it is a TZ and resolve it
     if (!normalizedIdentifier.includes("@")) {
       try {
         const response = await fetch("/api/auth/resolve-identifier", {
@@ -41,13 +43,14 @@ export default function LoginForm() {
         });
 
         const payload = await response.json();
+        
         if (!response.ok || !payload.success || !payload.email) {
           setError(payload.error ?? "We could not find an account for this TZ. Please try your email instead.");
           setLoading(false);
           return;
         }
 
-        email = payload.email;
+        emailToLogin = payload.email;
       } catch {
         setError("We could not resolve your TZ automatically. Please use your email and password instead.");
         setLoading(false);
@@ -56,7 +59,7 @@ export default function LoginForm() {
     }
 
     const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+      email: emailToLogin,
       password,
     });
 
@@ -78,7 +81,6 @@ export default function LoginForm() {
     const role = await getUserRole(supabase, data.user.id);
     const destination = role === "admin" ? "/admin/dashboard" : "/employee/home";
     router.replace(redirectTo ?? destination);
-    setLoading(false);
   };
 
   return (
