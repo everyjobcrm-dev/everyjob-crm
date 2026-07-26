@@ -44,12 +44,10 @@ export function ClosingCTA() {
         href="/register"
         className="mt-6 rounded-full bg-brass px-10 py-4 text-sm font-bold text-obsidian transition-transform hover:scale-[1.02] active:scale-[0.98]"
       >
-        קבלו את המשמרת הראשונה שלכם
+        התחילו את המשמרת הראשונה שלכם!
       </motion.a>
 
-      <p className="mt-4 text-xs text-cream/40">
-        ללא עלות הצטרפות. ללא התחייבות למשמרת קבועה.
-      </p>
+      
     </LampContainer>
   );
 } 

@@ -10,7 +10,7 @@ type ShiftCardProps = {
 const tiles = [
   { label: "תפקיד", value: "הגשה", icon: UserCheck },
   { label: "תעריף", value: "₪52 / שעה", icon: Wallet },
-  { label: "תחילת משמרת", value: "היום, 18:00", icon: Clock3 },
+  { label: "תחילת משמרת", value: "היום 18:00", icon: Clock3 },
   { label: "סיום משוער", value: "02:00", icon: Timer },
 ];
 

@@ -176,7 +176,7 @@ export default function Home() {
               className="glass-panel-light inline-flex rounded-full px-4 py-1.5"
             >
               <p className="text-[11px] font-semibold uppercase text-brass-deep tracking-luxe">
-                everyJob · השמה בעברית, בלי גיליונות
+                everyJob · אנשים טובים 770
               </p>
             </motion.div>
 
