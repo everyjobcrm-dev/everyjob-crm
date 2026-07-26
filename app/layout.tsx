@@ -6,7 +6,8 @@ import { AuthProvider } from "@/lib/auth-context";
 const frankRuhlLibre = Frank_Ruhl_Libre({
   variable: "--font-display-raw",
   subsets: ["latin", "hebrew"],
-  weight: ["400", "500", "700"],
+  // 900 added: the hero headline needs real weight to carry the scale bump.
+  weight: ["400", "500", "700", "900"],
 });
 
 const heebo = Heebo({
