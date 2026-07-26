@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Frank_Ruhl_Libre, Heebo, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const frankRuhlLibre = Frank_Ruhl_Libre({
+  variable: "--font-display-raw",
+  subsets: ["latin", "hebrew"],
+  weight: ["400", "500", "700"],
+});
+
+const heebo = Heebo({
+  variable: "--font-body-raw",
+  subsets: ["latin", "hebrew"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -27,7 +34,7 @@ export default function RootLayout({
     <html
       lang="he"
       dir="rtl"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${frankRuhlLibre.variable} ${heebo.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>{children}</AuthProvider>

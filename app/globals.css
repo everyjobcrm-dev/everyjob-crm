@@ -8,7 +8,17 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+
+  /* ticket-system palette — shared across auth, CTA and landing */
+  --color-obsidian: #14131a;
+  --color-surface: #1c1b23;
+  --color-surface2: #24222c;
+  --color-brass: #c9a15b;
+  --color-brass-deep: #93691f;
+  --color-cream: #f5f0e6;
+
+  --font-sans: var(--font-body-raw);
+  --font-display: var(--font-display-raw);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -22,5 +32,40 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body-raw), Arial, Helvetica, sans-serif;
+}
+
+/* --- Ticket-pass signature element --------------------------------- */
+/* Perforated seam that separates a ticket's main panel from its stub. */
+.perforation {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(245, 240, 230, 0.28) 0px,
+    rgba(245, 240, 230, 0.28) 4px,
+    transparent 4px,
+    transparent 10px
+  );
+}
+
+/* Die-cut circular notches at the top and bottom of the seam. Set
+   --notch-bg to whatever sits behind the ticket so the "cut" reads
+   as a true cutout rather than a drawn circle. */
+.ticket-notch {
+  position: relative;
+}
+.ticket-notch::before,
+.ticket-notch::after {
+  content: "";
+  position: absolute;
+  left: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: var(--notch-bg, #14131a);
+}
+.ticket-notch::before {
+  top: -8px;
+}
+.ticket-notch::after {
+  bottom: -8px;
 }
