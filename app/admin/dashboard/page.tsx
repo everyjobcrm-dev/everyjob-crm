@@ -10,10 +10,10 @@ export default function AdminDashboardPage() {
           This area is reserved for administrators. You can expand it with team management, reports, and recruiting controls.
         </p>
         <div className="mt-6">
-          <Link className="text-sm font-semibold text-cyan-400 hover:text-cyan-300" href="/employee/home">
-            Go to employee home
-          </Link>
-        </div>
+        <Link className="text-sm font-semibold text-cyan-400 hover:text-cyan-300" href="/employee/dashboard">
+          Go to employee dashboard
+        </Link>
+      </div>
       </div>
     </main>
   );

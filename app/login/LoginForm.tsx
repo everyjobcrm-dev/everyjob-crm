@@ -79,8 +79,15 @@ export default function LoginForm() {
     }
 
     const role = await getUserRole(supabase, data.user.id);
-    const destination = role === "admin" ? "/admin/dashboard" : "/employee/home";
-    router.replace(redirectTo ?? destination);
+
+if (role === "admin") {
+  router.replace(redirectTo ?? "/admin/dashboard");
+} else if (role === "employee" || role === "recruiter") {
+  router.replace(redirectTo ?? "/employee/dashboard");
+} else {
+  setError("החשבון שלך עדיין לא הוגדר במלואו. פנה/י לתמיכה.");
+  setLoading(false);
+}
   };
 
   return (
@@ -103,6 +110,7 @@ export default function LoginForm() {
             onChange={(event) => setIdentifier(event.target.value)}
             className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             placeholder="הקלידו תעודת זהות או אימייל"
+            suppressHydrationWarning={true}
           />
         </div>
 
@@ -119,6 +127,7 @@ export default function LoginForm() {
             onChange={(event) => setPassword(event.target.value)}
             className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             placeholder="••••••••"
+            suppressHydrationWarning={true}
           />
         </div>
 
@@ -131,6 +140,7 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
+          suppressHydrationWarning={true}
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "מתחבר..." : "התחבר"}

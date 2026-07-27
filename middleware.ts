@@ -40,14 +40,21 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (PUBLIC_PATHS.includes(pathname)) {
-    if (user) {
-      const role = await getUserRole(supabase, user.id);
-      const destination = role === "admin" ? "/admin/dashboard" : "/employee/home";
-      return NextResponse.redirect(new URL(destination, request.url));
-    }
+  if (user) {
+    const role = await getUserRole(supabase, user.id);
 
+    if (role === "admin") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
+    if (role === "employee") {
+      return NextResponse.redirect(new URL("/employee/dashboard", request.url));
+    }
+    
     return response;
   }
+
+  return response;
+}
 
   if (!user) {
     const redirectTo = `/login?redirectTo=${encodeURIComponent(pathname)}`;
@@ -57,7 +64,7 @@ export async function middleware(request: NextRequest) {
   const role = await getUserRole(supabase, user.id);
 
   if (pathname.startsWith(ADMIN_PREFIX) && role !== "admin") {
-    return NextResponse.redirect(new URL("/employee/home", request.url));
+    return NextResponse.redirect(new URL("/employee/dashboard", request.url));
   }
 
   if (pathname.startsWith(EMPLOYEE_PREFIX) && role === null) {
