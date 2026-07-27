@@ -9,6 +9,7 @@ import { LayoutGroup } from "motion/react";
 import { ArrowLeft, Check, Sparkles, WalletCards } from "lucide-react";
 import { ClosingCTA } from "@/components/ClosingCTA";
 import { TextRotate } from "@/components/ui/text-rotate";
+import { Typewriter } from "@/components/ui/typewriter-text";
 
 const manifest = [
   {
@@ -32,6 +33,16 @@ const manifest = [
 // as the "who we are" pillars below, so the motion earns its place instead
 // of just decorating the headline.
 const rotatingPromises = ["משמרות טובות.", "שכר הוגן.", "צוות מנצח.", "גיוס אמיתי."];
+
+// The roles the "מי אנחנו" section types out one by one — concrete proof
+// of who everyJob actually staffs, instead of another abstract claim.
+const staffedRoles = [
+  "מלצרים ומלצריות.",
+  "ברמנים.",
+  "צוותי הפקה.",
+  "אנשי אבטחה.",
+  "כוח אדם לאירועים.",
+];
 
 const easeOutExpo = [0.16, 1, 0.3, 1] as const;
 
@@ -280,7 +291,21 @@ export default function Home() {
         <div className="mx-auto max-w-5xl">
           <p className="text-[11px] font-semibold uppercase text-brass-deep tracking-luxe">Every Job</p>
           <div className="mt-3 h-px w-16 hairline-gold" aria-hidden />
-          <h2 className="mt-5 font-display text-5xl font-bold text-obsidian sm:text-6xl">מי אנחנו</h2>
+          <h2 className="mt-5 font-display text-5xl font-bold text-obsidian sm:text-6xl">מי אנחנו?</h2>
+
+          <div className="mt-4 flex items-center gap-2 font-display text-xl text-brass-deep sm:text-2xl" dir="rtl">
+            <span className="text-obsidian/45">מאיישים:</span>
+            <Typewriter
+              text={staffedRoles}
+              speed={70}
+              deleteSpeed={35}
+              delay={1400}
+              loop
+              cursor="|"
+              className="font-semibold"
+            />
+          </div>
+
           <p className="mt-8 max-w-2xl text-xl font-medium leading-9 text-obsidian/80">
             חברת כוח אדם והשמה שנולדה מתוך הרצון לתת מענה אמיתי למציאת עבודה
             בתנאים נוחים, עם שכר מתגמל ויחס אישי וחם.
