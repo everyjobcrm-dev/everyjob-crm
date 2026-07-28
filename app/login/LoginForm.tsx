@@ -77,9 +77,9 @@ export default function LoginForm() {
       setLoading(false);
       return;
     }
-
+  
     const role = await getUserRole(supabase, data.user.id);
-
+// THERE IS NO SECURITY IN HERE. PLS ADD SERVER SIDE CHECKS FOR ROLE AND REDIRECTS.
 if (role === "admin") {
   router.replace(redirectTo ?? "/admin/dashboard");
 } else if (role === "employee" || role === "recruiter") {

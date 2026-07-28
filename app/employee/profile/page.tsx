@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, FileCheck2, Landmark, Wallet, LogOut } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 
 const PREFERRED_AREAS = ["תל אביב והמרכז", "השרון", "ירושלים"];
 
@@ -20,9 +21,23 @@ function StatusPill({ status }: { status: DocStatus }) {
 }
 
 export default function ProfilePage() {
+  const { user, profile, loading } = useAuth();
   const router = useRouter();
+   
+  const displayName = (() => {
+    const profileName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim();
+    if (profileName) return profileName;
 
-  // TODO: replace with the authenticated employee's row from Supabase
+    const metadataName = [user?.user_metadata?.first_name, user?.user_metadata?.last_name]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    if (metadataName) return metadataName;
+
+    const emailName = user?.email?.split("@")[0]?.replace(/[._-]+/g, " ").trim();
+    return emailName || "משתמש/ת";
+  })();
+
   const form101Status: DocStatus = "missing";
   const bankDetailsStatus: DocStatus = "complete";
   const totalEarned = 12480;
@@ -50,11 +65,11 @@ export default function ProfilePage() {
           className="flex h-16 w-16 items-center justify-center rounded-full bg-brass font-display text-xl text-obsidian"
           aria-hidden="true"
         >
-          נ
+          {loading ? "..." : displayName[0]}
         </div>
         <div>
-          <h1 className="font-display text-2xl text-cream">נועה כהן</h1>
-          <p className="text-sm text-cream/50">מלצרית · חברה מ-2024</p>
+          <h1 className="font-display text-2xl text-cream">{loading ? "..." : displayName}</h1>
+          <p className="text-sm text-cream/50">{profile?.role || "אין תיאור"}</p>
         </div>
       </header>
 
