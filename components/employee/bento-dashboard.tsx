@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, MessageCircle, Megaphone } from "lucide-react";
+import { AlertTriangle, MessageCircle, Megaphone, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { OfferTicket } from "@/components/employee/OfferTicket";
 
 export type ShiftOffer = {
@@ -96,14 +97,12 @@ export function BentoDashboard({
                 ? "הטופס שלך תקין ומעודכן."
                 : "בלי טופס 101 לא נוכל להעביר את התשלום על המשמרת הבאה."}
             </p>
-            {!form101Filled && (
-              <button
-                type="button"
-                className="mt-3 rounded-full bg-brass px-4 py-2 text-xs font-bold text-obsidian transition-transform hover:scale-[1.02] active:scale-[0.98]"
-              >
-                למילוי עכשיו
-              </button>
-            )}
+            {!form101Filled ? (
+              <Link href="/employee/101form" className="mt-4 inline-flex w-full max-w-[220px] items-center justify-center gap-2 rounded-full border border-brass/30 bg-brass/10 px-4 py-2 text-sm font-semibold text-brass transition-colors hover:bg-brass/20">
+                <span>להגיש טופס</span>
+                <ArrowLeft className="h-4 w-4" strokeWidth={1.8} />
+              </Link>
+            ) : null}
           </div>
         </div>
       </motion.section>

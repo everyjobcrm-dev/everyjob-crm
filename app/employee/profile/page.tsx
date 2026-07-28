@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MapPin, FileCheck2, Landmark, Wallet, LogOut } from "lucide-react";
+import { MapPin, FileCheck2, Landmark, Wallet, LogOut, ArrowLeft } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 
@@ -102,7 +103,18 @@ export default function ProfilePage() {
               <p className="text-sm text-cream/50">נדרש לעדכון שכר</p>
             </div>
           </div>
-          <StatusPill status={form101Status} />
+          <div className="flex items-center gap-2">
+            <StatusPill status={form101Status} />
+            {form101Status === "missing" ? (
+              <Link
+                href="/employee/101form"
+                className="inline-flex items-center gap-1 rounded-full border border-brass/20 px-3 py-1.5 text-sm font-semibold text-brass transition hover:bg-brass/10"
+              >
+                להגיש טופס
+                <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.8} />
+              </Link>
+            ) : null}
+          </div>
         </section>
 
         <section className="flex items-center justify-between rounded-2xl border border-brass/15 bg-surface p-5">
