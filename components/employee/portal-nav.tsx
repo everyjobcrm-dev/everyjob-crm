@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { Home, CalendarDays, History, UserRound } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "בית", icon: Home },
-  { href: "/events", label: "אירועים", icon: CalendarDays },
-  { href: "/shifts", label: "משמרות", icon: History },
-  { href: "/profile", label: "פרופיל", icon: UserRound },
+  { href: "/employee/dashboard", label: "בית", icon: Home },
+  { href: "/employee/events", label: "אירועים", icon: CalendarDays },
+  { href: "/employee/shifts", label: "משמרות", icon: History },
+  { href: "/employee/profile", label: "פרופיל", icon: UserRound },
 ] as const;
 
 export function PortalNav() {

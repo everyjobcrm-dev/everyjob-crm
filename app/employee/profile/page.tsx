@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { MapPin, FileCheck2, Landmark, Wallet, LogOut } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const PREFERRED_AREAS = ["תל אביב והמרכז", "השרון", "ירושלים"];
 
@@ -17,13 +20,27 @@ function StatusPill({ status }: { status: DocStatus }) {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
+
   // TODO: replace with the authenticated employee's row from Supabase
   const form101Status: DocStatus = "missing";
   const bankDetailsStatus: DocStatus = "complete";
   const totalEarned = 12480;
 
-  function handleLogout() {
-    // TODO: wire to Supabase auth.signOut() and redirect to /login
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) {
+      router.replace("/login");
+      return;
+    }
+
+    setLoggingOut(true);
+    await supabase.auth.signOut();
+    // Full reload (not router.replace) so middleware re-runs on a clean
+    // request and any stale client-side auth state is discarded.
+    window.location.href = "/login";
   }
 
   return (
@@ -103,10 +120,11 @@ export default function ProfilePage() {
       <button
         type="button"
         onClick={handleLogout}
-        className="mt-8 inline-flex items-center gap-2 rounded-full border border-rose-400/30 px-5 py-2.5 text-sm font-semibold text-rose-400 transition-colors hover:bg-rose-500/10"
+        disabled={loggingOut}
+        className="mt-8 inline-flex items-center gap-2 rounded-full border border-rose-400/30 px-5 py-2.5 text-sm font-semibold text-rose-400 transition-colors hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <LogOut className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-        התנתקות
+        {loggingOut ? "מתנתק..." : "התנתקות"}
       </button>
     </div>
   );
