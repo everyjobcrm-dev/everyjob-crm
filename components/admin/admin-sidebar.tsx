@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, CalendarRange, Users, LogOut } from "lucide-react";
+import { LayoutGrid, CalendarRange, Users, Building2, LogOut } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "דף הבית", icon: LayoutGrid },
   { href: "/admin/events", label: "אירועים ומשמרות", icon: CalendarRange },
   { href: "/admin/employees", label: "עובדים", icon: Users },
+  { href: "/admin/clients", label: "לקוחות", icon: Building2 },
 ] as const;
+
 
 export function AdminSidebar() {
   const pathname = usePathname();

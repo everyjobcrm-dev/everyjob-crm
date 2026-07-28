@@ -9,7 +9,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* ticket-system palette — shared across auth, CTA and landing */
+  
   --color-obsidian: #14131a;
   --color-surface: #1c1b23;
   --color-surface2: #24222c;
@@ -24,8 +24,14 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --color-obsidian: 10 10 15;
+  --color-cream: 245 245 247;
+  --color-surface: 18 18 24;
+  --color-surface2: 26 26 34;
+  --color-brass: 79 70 229;   /* Electric Indigo #4F46E5 */
+  --color-lime: 212 255 0;    /* Hyper Lime #D4FF00 — new */
+}
   }
 }
 
