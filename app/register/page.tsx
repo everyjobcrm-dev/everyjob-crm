@@ -1,11 +1,24 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react"; // Using ArrowLeft because it's RTL (points forward in Hebrew)
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AuthCard } from "@/components/AuthCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+
+// Helper to calculate age dynamically
+const calculateAge = (dob: string): number | null => {
+  if (!dob) return null;
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age > 0 ? age : null;
+};
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -14,13 +27,18 @@ export default function RegisterPage() {
     last_name: "",
     tz: "",
     birth_date: "",
+    phone_number: "",
+    gender: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // Verification State
   const [verificationStep, setVerificationStep] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationLoading, setVerificationLoading] = useState(false);
@@ -30,7 +48,12 @@ export default function RegisterPage() {
     last_name: string;
     tz: string;
     birth_date: string;
+    phone_number: string;
+    gender: string;
   } | null>(null);
+
+  // Auto-calculated age based on birth_date input
+  const age = useMemo(() => calculateAge(form.birth_date), [form.birth_date]);
 
   const handleChange = (key: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -44,31 +67,44 @@ export default function RegisterPage() {
 
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
-      setError("Supabase is not configured yet.");
+      setError("המערכת אינה מוגדרת כראוי. נסה שוב מאוחר יותר.");
       setLoading(false);
       return;
     }
 
+    // Validations
     if (!/^[0-9]{8,9}$/.test(form.tz)) {
-      setError("TZ must contain only digits and be 8–9 characters long.");
+      setError("תעודת זהות חייבת להכיל 8-9 ספרות בלבד.");
+      setLoading(false);
+      return;
+    }
+    
+    if (!/^[0-9]{9,10}$/.test(form.phone_number)) {
+      setError("מספר טלפון לא תקין.");
       setLoading(false);
       return;
     }
 
     if (!form.birth_date) {
-      setError("Please choose your date of birth.");
+      setError("אנא בחר תאריך לידה.");
+      setLoading(false);
+      return;
+    }
+    
+    if (!form.gender) {
+      setError("אנא בחר מין.");
       setLoading(false);
       return;
     }
 
     if (form.password.length < 8) {
-      setError("Password must be at least 8 characters long.");
+      setError("הסיסמה חייבת להכיל לפחות 8 תווים.");
       setLoading(false);
       return;
     }
 
     if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match. Please re-enter them carefully.");
+      setError("הסיסמאות אינן תואמות. אנא נסה שוב.");
       setLoading(false);
       return;
     }
@@ -78,6 +114,8 @@ export default function RegisterPage() {
       last_name: form.last_name,
       tz: form.tz,
       birth_date: form.birth_date,
+      phone_number: form.phone_number,
+      gender: form.gender,
     };
 
     setPendingProfile(pendingProfilePayload);
@@ -91,15 +129,15 @@ export default function RegisterPage() {
     });
 
     if (signUpError || !data.user) {
-      const message = signUpError?.message ?? "";
-      if (message.toLowerCase().includes("already registered")) {
-        setError("This email is already registered. Please use another email or reset your password.");
-      } else if (message.toLowerCase().includes("password")) {
-        setError("The password does not meet the required policy. Please choose a stronger password.");
-      } else if (message.toLowerCase().includes("rate limit") || message.toLowerCase().includes("too many requests")) {
-        setError("Too many registration attempts. Please wait a few minutes and try again.");
+      const message = signUpError?.message?.toLowerCase() ?? "";
+      if (message.includes("already registered")) {
+        setError("אימייל זה כבר רשום במערכת.");
+      } else if (message.includes("password")) {
+        setError("הסיסמה חלשה מדי. בחר סיסמה מורכבת יותר.");
+      } else if (message.includes("rate limit") || message.includes("too many requests")) {
+        setError("יותר מדי ניסיונות. אנא המתן מספר דקות ונסה שוב.");
       } else {
-        setError("We could not create your account. Please review the form and try again.");
+        setError("לא הצלחנו ליצור את החשבון. אנא בדוק את הפרטים ונסה שוב.");
       }
       setLoading(false);
       return;
@@ -107,14 +145,11 @@ export default function RegisterPage() {
 
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email: form.email,
-      options: {
-        shouldCreateUser: false,
-      },
+      options: { shouldCreateUser: false },
     });
 
     if (otpError) {
-      console.error("OTP ERROR:", otpError.message, otpError.status);
-      setError("The account was created, but we could not send the verification code. Please try again.");
+      setError("החשבון נוצר, אך חלה שגיאה בשליחת קוד האימות. אנא נסה שוב.");
       setLoading(false);
       return;
     }
@@ -122,16 +157,7 @@ export default function RegisterPage() {
     setPendingEmail(form.email);
     setVerificationStep(true);
     setVerificationCode("");
-    setSuccess("Account created. We sent a verification code to your email. Enter it below to continue.");
-    setForm({
-      first_name: "",
-      last_name: "",
-      tz: "",
-      birth_date: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
+    setSuccess("החשבון נוצר! שלחנו קוד אימות לאימייל שלך. הכנס אותו למטה.");
     setLoading(false);
   };
 
@@ -142,66 +168,57 @@ export default function RegisterPage() {
     setSuccess(null);
 
     const supabase = createSupabaseBrowserClient();
+    
+    // 1. ADD THIS GUARD: Tell TypeScript (and the browser) what to do if Supabase fails to load
     if (!supabase) {
-      setError("Supabase is not configured yet.");
+      setError("המערכת אינה מוגדרת כראוי. נסה שוב מאוחר יותר.");
       setVerificationLoading(false);
       return;
     }
 
+    // 2. Your existing checks...
     if (!pendingEmail || !verificationCode.trim()) {
-      setError("Please enter the verification code from your email.");
+      setError("אנא הכנס את קוד האימות שקיבלת.");
       setVerificationLoading(false);
       return;
     }
 
+    // 3. TypeScript is now happy! It knows `supabase` is definitely not null here.
     const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
       email: pendingEmail,
       token: verificationCode.trim(),
       type: "email",
     });
-
-    if (verifyError) {
-      setError("The verification code is invalid or has expired. Please try again.");
-      setVerificationLoading(false);
-      return;
-    }
-
-    const verifiedUserId = verifyData?.user?.id;
-
-    if (!verifiedUserId) {
-      setError("We could not complete the verification flow. Please try again.");
+    if (verifyError || !verifyData?.user?.id) {
+      setError("קוד האימות שגוי או פג תוקף. אנא נסה שוב.");
       setVerificationLoading(false);
       return;
     }
 
     if (!pendingProfile) {
-      setError("We could not find your registration details. Please try again.");
+      setError("שגיאה במציאת פרטי ההרשמה. אנא נסה שוב.");
       setVerificationLoading(false);
       return;
     }
 
-    console.info("Register verification succeeded", {
-      userId: verifiedUserId,
-      email: pendingEmail,
-      hasSession: Boolean(verifyData.session),
-      payload: pendingProfile,
-    });
-
     const profilePayload = {
-      id: verifiedUserId,
+      id: verifyData.user.id,
       first_name: pendingProfile.first_name,
       last_name: pendingProfile.last_name,
       tz: pendingProfile.tz,
       birth_date: pendingProfile.birth_date || null,
+      phone_number: pendingProfile.phone_number,
+      gender: pendingProfile.gender,
       email: pendingEmail,
       role: "employee",
     };
 
-    const { error: profileError } = await supabase.from("profiles").upsert(profilePayload, { onConflict: "id" });
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert(profilePayload, { onConflict: "id" });
 
     if (profileError) {
-      console.error("Direct profiles upsert failed", profileError);
-
+      // Fallback to API route if direct insert fails (e.g., due to strict RLS)
       const profileResponse = await fetch("/api/auth/create-profile", {
         method: "POST",
         headers: {
@@ -210,172 +227,207 @@ export default function RegisterPage() {
             ? { Authorization: `Bearer ${verifyData.session.access_token}` }
             : {}),
         },
-        body: JSON.stringify({
-          userId: verifiedUserId,
-          ...pendingProfile,
-        }),
+        body: JSON.stringify({ userId: verifyData.user.id, ...pendingProfile }),
       });
 
       if (!profileResponse.ok) {
-        const profileMessage = await profileResponse.text();
-        console.error("PROFILE CREATE ERROR:", profileMessage);
-        setError("Your email is verified, but we could not save your profile yet. Please try again in a moment.");
+        setError("האימייל אומת, אך לא הצלחנו לשמור את הפרופיל כרגע.");
         setVerificationLoading(false);
         return;
       }
     }
 
-    setSuccess("Email verified successfully. You can sign in now.");
-    setVerificationStep(false);
-    setVerificationCode("");
-    setPendingEmail("");
-    setPendingProfile(null);
-    setVerificationLoading(false);
-    router.push("/login");
+    setSuccess("האימייל אומת בהצלחה. אתה מועבר להתחברות...");
+    setTimeout(() => router.push("/login"), 2000);
   };
+
+  const inputClasses = "w-full rounded-sm border-2 border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition-all focus:border-[#4F46E5] focus:bg-white";
+  const labelClasses = "mb-1.5 block text-sm font-bold text-slate-900";
 
   return (
     <AuthCard
       title="יצירת חשבון"
-      subtitle="הצטרפו למערכת everyJob עם חשבון חדש ונוח."
+      subtitle="הצטרפו ל-everyJob עם חשבון חדש."
       error={error}
       success={success}
     >
       {verificationStep ? (
-        <form className="space-y-4" onSubmit={handleVerifyEmail}>
-          <div className="rounded-2xl border border-sky-100 bg-sky-50 p-4 text-sm text-sky-800">
-            <p className="font-semibold">אימות אימייל</p>
+        <form className="space-y-6" onSubmit={handleVerifyEmail}>
+          <div className="border-s-4 border-[#4F46E5] bg-[#4F46E5]/5 p-4 text-sm text-[#4F46E5]">
+            <p className="font-bold">אימות אימייל</p>
             <p className="mt-1">שלחנו לך קוד אימות לאימייל שלך. הכנס אותו כדי להשלים את ההרשמה.</p>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="verificationCode">קוד אימות</label>
+            <label className={labelClasses} htmlFor="verificationCode">קוד אימות</label>
             <input
               id="verificationCode"
               required
               value={verificationCode}
               onChange={(event) => setVerificationCode(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+              className={inputClasses}
               placeholder="הקלידו את הקוד שקיבלת"
+              dir="ltr"
             />
           </div>
 
           <button
             type="submit"
             disabled={verificationLoading}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="group flex w-full items-center justify-center gap-2 rounded-sm bg-[#09090B] px-4 py-3.5 font-bold text-white transition-all hover:bg-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {verificationLoading ? "מאמת..." : "אמת אימייל"}
-            <ArrowRight className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           </button>
         </form>
       ) : (
-        <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="first_name">שם פרטי</label>
-            <input
-              id="first_name"
-              required
-              value={form.first_name}
-              onChange={(event) => handleChange("first_name", event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-              placeholder="הקלידו שם פרטי"
-            />
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClasses} htmlFor="first_name">שם פרטי</label>
+              <input
+                id="first_name"
+                required
+                value={form.first_name}
+                onChange={(event) => handleChange("first_name", event.target.value)}
+                className={inputClasses}
+                placeholder="ישראל"
+              />
+            </div>
+            <div>
+              <label className={labelClasses} htmlFor="last_name">שם משפחה</label>
+              <input
+                id="last_name"
+                required
+                value={form.last_name}
+                onChange={(event) => handleChange("last_name", event.target.value)}
+                className={inputClasses}
+                placeholder="ישראלי"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClasses} htmlFor="tz">תעודת זהות</label>
+              <input
+                id="tz"
+                required
+                value={form.tz}
+                onChange={(event) => handleChange("tz", event.target.value)}
+                className={inputClasses}
+                placeholder="8–9 ספרות"
+              />
+            </div>
+            <div>
+              <label className={labelClasses} htmlFor="phone_number">מספר טלפון</label>
+              <input
+                id="phone_number"
+                type="tel"
+                required
+                value={form.phone_number}
+                onChange={(event) => handleChange("phone_number", event.target.value)}
+                className={inputClasses}
+                placeholder="050-0000000"
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClasses} htmlFor="birth_date">
+                תאריך לידה
+                {age !== null && (
+                  <span className="ms-2 inline-flex items-center rounded-sm bg-[#D4FF00] px-2 py-0.5 text-xs font-bold text-black">
+                    גיל: {age}
+                  </span>
+                )}
+              </label>
+              <input
+                id="birth_date"
+                type="date"
+                required
+                value={form.birth_date}
+                onChange={(event) => handleChange("birth_date", event.target.value)}
+                className={inputClasses}
+              />
+            </div>
+            <div>
+              <label className={labelClasses} htmlFor="gender">מין</label>
+              <select
+                id="gender"
+                required
+                value={form.gender}
+                onChange={(event) => handleChange("gender", event.target.value)}
+                className={inputClasses}
+              >
+                <option value="" disabled>בחרו...</option>
+                <option value="male">זכר</option>
+                <option value="female">נקבה</option>
+                <option value="other">אחר</option>
+              </select>
+            </div>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="last_name">שם משפחה</label>
+            <label className={labelClasses} htmlFor="email">אימייל</label>
             <input
-              id="last_name"
+              id="email"
+              type="email"
               required
-              value={form.last_name}
-              onChange={(event) => handleChange("last_name", event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-              placeholder="הקלידו שם משפחה"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="tz">תעודת זהות</label>
-          <input
-            id="tz"
-            required
-            value={form.tz}
-            onChange={(event) => handleChange("tz", event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-            placeholder="הקלידו 8–9 ספרות"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="birth_date">תאריך לידה</label>
-          <input
-            id="birth_date"
-            type="date"
-            required
-            value={form.birth_date}
-            onChange={(event) => handleChange("birth_date", event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="email">אימייל</label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={form.email}
-            onChange={(event) => handleChange("email", event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-            placeholder="name@example.com"
-          />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="password">סיסמה</label>
-            <input
-              id="password"
-              type="password"
-              required
-              value={form.password}
-              onChange={(event) => handleChange("password", event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-              placeholder="הקלידו סיסמה"
+              value={form.email}
+              onChange={(event) => handleChange("email", event.target.value)}
+              className={inputClasses}
+              placeholder="name@example.com"
+              dir="ltr"
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="confirmPassword">אימות סיסמה</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              required
-              value={form.confirmPassword}
-              onChange={(event) => handleChange("confirmPassword", event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-              placeholder="הקלידו שוב"
-            />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClasses} htmlFor="password">סיסמה</label>
+              <input
+                id="password"
+                type="password"
+                required
+                value={form.password}
+                onChange={(event) => handleChange("password", event.target.value)}
+                className={inputClasses}
+                placeholder="8 תווים לפחות"
+                dir="ltr"
+              />
+            </div>
+            <div>
+              <label className={labelClasses} htmlFor="confirmPassword">אימות סיסמה</label>
+              <input
+                id="confirmPassword"
+                type="password"
+                required
+                value={form.confirmPassword}
+                onChange={(event) => handleChange("confirmPassword", event.target.value)}
+                className={inputClasses}
+                placeholder="הקלידו שוב"
+                dir="ltr"
+              />
+            </div>
           </div>
-        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loading ? "יוצר חשבון..." : "צור משתמש"}
-          <ArrowRight className="h-4 w-4" />
-        </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="group mt-2 flex w-full items-center justify-center gap-2 rounded-sm border-2 border-[#09090B] bg-[#4F46E5] px-4 py-3.5 font-bold text-white shadow-[4px_4px_0px_0px_#D4FF00] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
+          >
+            {loading ? "יוצר חשבון..." : "צור משתמש"}
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          </button>
         </form>
       )}
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-8 text-center text-sm font-medium text-slate-500">
         כבר יש לך חשבון?{' '}
-        <Link className="font-semibold text-sky-600 hover:text-sky-700" href="/login">
+        <Link className="font-bold text-[#4F46E5] underline decoration-2 underline-offset-4 transition hover:text-[#09090B]" href="/login">
           התחבר
         </Link>
       </p>

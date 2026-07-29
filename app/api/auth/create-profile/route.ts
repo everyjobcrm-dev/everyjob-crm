@@ -1,14 +1,48 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
+const ALLOWED_GENDERS = new Set(["male", "female", "other"]);
+const PHONE_PATTERN = /^0(5[0-9]{8}|[23489][0-9]{7})$/;
+const TZ_PATTERN = /^[0-9]{8,9}$/;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, first_name, last_name, tz, birth_date, role = "employee" } = body ?? {};
+    const {
+      userId,
+      first_name,
+      last_name,
+      tz,
+      phone_number,
+      birth_date,
+      gender,
+      role = "employee",
+    } = body ?? {};
 
-    if (!userId || !first_name || !last_name || !tz) {
+    if (!userId || !first_name || !last_name || !tz || !phone_number || !birth_date || !gender) {
       return NextResponse.json(
         { success: false, error: "Profile details are incomplete." },
+        { status: 400 },
+      );
+    }
+
+    if (!TZ_PATTERN.test(tz)) {
+      return NextResponse.json(
+        { success: false, error: "ID number must contain 8–9 digits." },
+        { status: 400 },
+      );
+    }
+
+    if (!PHONE_PATTERN.test(phone_number)) {
+      return NextResponse.json(
+        { success: false, error: "Phone number is invalid." },
+        { status: 400 },
+      );
+    }
+
+    if (!ALLOWED_GENDERS.has(gender)) {
+      return NextResponse.json(
+        { success: false, error: "Gender value is invalid." },
         { status: 400 },
       );
     }
@@ -28,13 +62,6 @@ export async function POST(request: Request) {
     }
 
     const authToken = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || body?.accessToken || "";
-
-    console.info("Create profile request", {
-      userId,
-      hasAuthToken: Boolean(authToken),
-      hasServiceRole: Boolean(serviceRoleKey),
-      birthDateProvided: Boolean(birth_date),
-    });
 
     if (serviceRoleKey) {
       const adminClient = createClient(supabaseUrl, serviceRoleKey, {
@@ -69,8 +96,6 @@ export async function POST(request: Request) {
           first_name,
           last_name,
           tz,
-          birth_date: birth_date || null,
-          email: body?.email || null,
           role,
         },
         { onConflict: "id" },
@@ -81,14 +106,6 @@ export async function POST(request: Request) {
           { success: false, error: error.message },
           { status: 500 },
         );
-      }
-
-      if (birth_date) {
-        await adminClient.auth.admin.updateUserById(userId, {
-          user_metadata: {
-            birth_date,
-          },
-        });
       }
 
       return NextResponse.json({ success: true });
@@ -126,20 +143,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: profileData, error } = await userClient.from("profiles").upsert(
+    const { error } = await userClient.from("profiles").upsert(
       {
         id: userId,
         first_name,
         last_name,
         tz,
-        birth_date: birth_date || null,
-        email: body?.email || null,
         role,
       },
       { onConflict: "id" },
     );
-
-    console.info("Create profile upsert result", { profileData, error: error?.message });
 
     if (error) {
       return NextResponse.json(
@@ -149,15 +162,11 @@ export async function POST(request: Request) {
     }
 
     if (birth_date) {
-      try {
-        await userClient.auth.updateUser({
-          data: {
-            birth_date,
-          },
-        });
-      } catch (metadataError) {
-        console.warn("Metadata update failed", metadataError);
-      }
+      await userClient.auth.updateUser({
+        data: {
+          birth_date,
+        },
+      });
     }
 
     return NextResponse.json({ success: true });
