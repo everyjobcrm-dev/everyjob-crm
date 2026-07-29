@@ -2,20 +2,24 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Phone, User, Shirt, CalendarRange, StickyNote, Trash2 } from "lucide-react";
+import { X, MapPin, Phone, User, CalendarRange, StickyNote, Trash2, Pencil } from "lucide-react";
 import type { ClientRecord } from "@/lib/admin/clients-data";
 import { DeleteClientDialog } from "@/components/admin/delete-client-dialog";
+import { EditClientDialog } from "@/components/admin/edit-client-dialog";
 
 export function ClientDetailDrawer({
   client,
   onClose,
   onDeleted,
+  onUpdated,
 }: {
   client: ClientRecord;
   onClose: () => void;
   onDeleted: (clientId: string) => void;
+  onUpdated: (client: ClientRecord) => void;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="client-drawer-title" className="fixed inset-0 z-50">
@@ -49,14 +53,24 @@ export function ClientDetailDrawer({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="סגירה"
-            className="rounded-full p-2 text-cream/50 hover:bg-cream/5 hover:text-cream"
-          >
-            <X className="h-5 w-5" aria-hidden="true" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              aria-label="עריכת לקוח"
+              className="rounded-full p-2 text-cream/50 hover:bg-cream/5 hover:text-cream"
+            >
+              <Pencil className="h-4.5 w-4.5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="סגירה"
+              className="rounded-full p-2 text-cream/50 hover:bg-cream/5 hover:text-cream"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
@@ -64,24 +78,18 @@ export function ClientDetailDrawer({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm">
               <User className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
-              <span className="truncate text-cream/80">{client.contactName ?? "—"}</span>
+              <span className="truncate text-cream/80">{client.contactName || "—"}</span>
             </div>
             <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm">
               <Phone className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
               <span dir="ltr" className="truncate text-cream/80">
-                {client.contactPhone ?? "—"}
+                {client.contactPhone || "—"}
               </span>
             </div>
             <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm sm:col-span-2">
               <MapPin className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
-              <span className="truncate text-cream/80">{client.address ?? "—"}</span>
+              <span className="truncate text-cream/80">{client.address || "—"}</span>
             </div>
-            {client.dressCode && (
-              <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm sm:col-span-2">
-                <Shirt className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
-                <span className="truncate text-cream/80">{client.dressCode}</span>
-              </div>
-            )}
           </div>
 
           {/* Events metric */}
@@ -146,6 +154,16 @@ export function ClientDetailDrawer({
             clientName={client.name}
             onClose={() => setDeleteOpen(false)}
             onDeleted={() => onDeleted(client.id)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editOpen && (
+          <EditClientDialog
+            client={client}
+            onClose={() => setEditOpen(false)}
+            onUpdated={onUpdated}
           />
         )}
       </AnimatePresence>

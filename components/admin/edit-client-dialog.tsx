@@ -3,14 +3,13 @@
 import { useState, useTransition, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { X, Building2, Plus, Trash2 } from "lucide-react";
-import { createClient } from "@/app/admin/clients/actions";
+import { updateClient } from "@/app/admin/clients/actions";
 import type { ClientRecord, PreferredRole } from "@/lib/admin/clients-data";
 
 const inputClass =
   "w-full rounded-xl border border-cream/15 bg-surface2 px-3.5 py-2.5 text-sm text-cream outline-none transition-colors focus:border-[#4F46E5]";
 const labelClass = "mb-1 block text-xs font-medium text-cream/60";
 
-// פתרון לשגיאת crypto.randomUUID() - פונקציה פשוטה ובטוחה ליצירת מזהה ייחודי
 const generateId = () => Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
 type RoleRow = PreferredRole & { key: string };
@@ -24,32 +23,41 @@ function emptyContactRow(): ContactRow {
   return { key: generateId(), name: "", phone: "" };
 }
 
-export function AddClientDialog({
+export function EditClientDialog({
+  client,
   onClose,
-  onCreated,
+  onUpdated,
 }: {
+  client: ClientRecord;
   onClose: () => void;
-  onCreated: (client: ClientRecord) => void;
+  onUpdated: (client: ClientRecord) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  // שדות טקסט בסיסיים
-  const [name, setName] = useState("");
-  const [industry, setIndustry] = useState("");
-  const [companyId, setCompanyId] = useState("");
-  const [address, setAddress] = useState("");
-  const [notes, setNotes] = useState("");
-  
-  // שדות מספריים להגדרות חיוב
-  const [overtimeThreshold, setOvertimeThreshold] = useState<number | "">("");
-  const [minBillable, setMinBillable] = useState<number | "">("");
+  const [name, setName] = useState(client.name);
+  const [industry, setIndustry] = useState(client.industry);
+  const [companyId, setCompanyId] = useState(client.companyId);
+  const [address, setAddress] = useState(client.address);
+  const [notes, setNotes] = useState(client.notes);
+  const [status, setStatus] = useState<"active" | "paused">(client.status);
 
-  // רשימות דינמיות
-  const [contacts, setContacts] = useState<ContactRow[]>([emptyContactRow()]);
-  const [roles, setRoles] = useState<RoleRow[]>([emptyRoleRow()]);
+  const [overtimeThreshold, setOvertimeThreshold] = useState<number | "">(
+    client.overtimeThresholdHours ?? ""
+  );
+  const [minBillable, setMinBillable] = useState<number | "">(client.minBillableHours ?? "");
 
-  // ניהול אנשי קשר
+  const [contacts, setContacts] = useState<ContactRow[]>(
+    client.contacts.length > 0
+      ? client.contacts.map((c) => ({ key: generateId(), name: c.name, phone: c.phone }))
+      : [emptyContactRow()]
+  );
+  const [roles, setRoles] = useState<RoleRow[]>(
+    client.preferredRoles.length > 0
+      ? client.preferredRoles.map((r) => ({ key: generateId(), role: r.role, rate: r.rate }))
+      : [emptyRoleRow()]
+  );
+
   function updateContact(key: string, patch: Partial<ContactRow>) {
     setContacts((prev) => prev.map((c) => (c.key === key ? { ...c, ...patch } : c)));
   }
@@ -60,7 +68,6 @@ export function AddClientDialog({
     setContacts((prev) => (prev.length > 1 ? prev.filter((c) => c.key !== key) : prev));
   }
 
-  // ניהול תפקידים
   function updateRole(key: string, patch: Partial<RoleRow>) {
     setRoles((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   }
@@ -81,21 +88,21 @@ export function AddClientDialog({
     }
 
     startTransition(async () => {
-      // סינון שורות ריקות מאנשי קשר ותפקידים כדי לא לשלוח סתם זבל ל-DB
       const filteredContacts = contacts
         .filter((c) => c.name.trim() || c.phone.trim())
         .map(({ name, phone }) => ({ name, phone }));
-        
+
       const filteredRoles = roles
         .filter((r) => r.role.trim())
         .map(({ role, rate }) => ({ role, rate }));
 
-      const result = await createClient({
+      const result = await updateClient(client.id, {
         name,
         industry,
         companyId,
         address,
         notes,
+        status,
         overtimeThresholdHours: overtimeThreshold === "" ? undefined : Number(overtimeThreshold),
         minBillableHours: minBillable === "" ? undefined : Number(minBillable),
         contacts: filteredContacts,
@@ -107,13 +114,13 @@ export function AddClientDialog({
         return;
       }
 
-      onCreated(result.client);
+      onUpdated(result.client);
       onClose();
     });
   }
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="add-client-title" className="fixed inset-0 z-50">
+    <div role="dialog" aria-modal="true" aria-labelledby="edit-client-title" className="fixed inset-0 z-50">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -135,8 +142,8 @@ export function AddClientDialog({
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#4F46E5]/15 text-[#8b85f5]">
               <Building2 className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
             </div>
-            <h2 id="add-client-title" className="font-display text-xl text-cream">
-              לקוח חדש
+            <h2 id="edit-client-title" className="font-display text-xl text-cream">
+              עריכת לקוח
             </h2>
           </div>
           <button
@@ -156,67 +163,76 @@ export function AddClientDialog({
             </div>
           )}
 
-          {/* מידע כללי */}
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass} htmlFor="cl-name">
+                <label className={labelClass} htmlFor="ec-name">
                   שם הלקוח *
                 </label>
                 <input
-                  id="cl-name"
+                  id="ec-name"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className={inputClass}
-                  placeholder="למשל: מלון הוד הים"
                 />
               </div>
               <div>
-                <label className={labelClass} htmlFor="cl-industry">
+                <label className={labelClass} htmlFor="ec-industry">
                   תעשייה / תחום
                 </label>
                 <input
-                  id="cl-industry"
+                  id="ec-industry"
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
                   className={inputClass}
-                  placeholder="למשל: אירועים, מלונאות"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass} htmlFor="cl-companyid">
+                <label className={labelClass} htmlFor="ec-companyid">
                   ח.פ / ת.ז חברה
                 </label>
                 <input
-                  id="cl-companyid"
+                  id="ec-companyid"
                   value={companyId}
                   onChange={(e) => setCompanyId(e.target.value)}
                   className={inputClass}
-                  placeholder="מספר תאגיד"
                 />
               </div>
               <div>
-                <label className={labelClass} htmlFor="cl-address">
+                <label className={labelClass} htmlFor="ec-address">
                   כתובת
                 </label>
                 <input
-                  id="cl-address"
+                  id="ec-address"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   className={inputClass}
-                  placeholder="עיר, רחוב"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className={labelClass} htmlFor="ec-status">
+                סטטוס לקוח
+              </label>
+              <select
+                id="ec-status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as "active" | "paused")}
+                className={inputClass}
+              >
+                <option value="active">פעיל</option>
+                <option value="paused">מושהה</option>
+              </select>
             </div>
           </div>
 
           <hr className="border-cream/5" />
 
-          {/* אנשי קשר - שורות דינמיות */}
           <div>
             <div className="mb-3 flex items-center justify-between">
               <span className={labelClass + " mb-0"}>אנשי קשר</span>
@@ -261,53 +277,41 @@ export function AddClientDialog({
 
           <hr className="border-cream/5" />
 
-          {/* הגדרות כספים וחיוב */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass} htmlFor="cl-overtime">
+              <label className={labelClass} htmlFor="ec-overtime">
                 סף שעות נוספות
               </label>
-              <div className="relative">
-                <input
-                  id="cl-overtime"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={overtimeThreshold}
-                  onChange={(e) => setOvertimeThreshold(e.target.value ? Number(e.target.value) : "")}
-                  className={inputClass + " pe-8"}
-                  placeholder="8.5"
-                />
-                <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-cream/40">
-                 ש
-                </span>
-              </div>
+              <input
+                id="ec-overtime"
+                type="number"
+                min="0"
+                step="0.5"
+                value={overtimeThreshold}
+                onChange={(e) => setOvertimeThreshold(e.target.value ? Number(e.target.value) : "")}
+                className={inputClass}
+                placeholder="8.5"
+              />
             </div>
             <div>
-              <label className={labelClass} htmlFor="cl-minbill">
+              <label className={labelClass} htmlFor="ec-minbill">
                 מינימום לחיוב משמרת
               </label>
-              <div className="relative">
-                <input
-                  id="cl-minbill"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={minBillable}
-                  onChange={(e) => setMinBillable(e.target.value ? Number(e.target.value) : "")}
-                  className={inputClass + " pe-8"}
-                  placeholder="4"
-                />
-                <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-cream/40">
-                  ש
-                </span>
-              </div>
+              <input
+                id="ec-minbill"
+                type="number"
+                min="0"
+                step="0.5"
+                value={minBillable}
+                onChange={(e) => setMinBillable(e.target.value ? Number(e.target.value) : "")}
+                className={inputClass}
+                placeholder="4"
+              />
             </div>
           </div>
 
           <hr className="border-cream/5" />
 
-          {/* תפקידים ותעריפים - שורות דינמיות */}
           <div>
             <div className="mb-3 flex items-center justify-between">
               <span className={labelClass + " mb-0"}>תפקידים מועדפים ותעריף</span>
@@ -358,16 +362,15 @@ export function AddClientDialog({
           </div>
 
           <div>
-            <label className={labelClass} htmlFor="cl-notes">
+            <label className={labelClass} htmlFor="ec-notes">
               הערות הלקוח / דברים לשים לב אליהם
             </label>
             <textarea
-              id="cl-notes"
+              id="ec-notes"
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className={inputClass + " resize-none"}
-              placeholder="למשל: אין להזמין עובדים חדשים ללא ניסיון קודם באירוח"
             />
           </div>
 
@@ -376,7 +379,7 @@ export function AddClientDialog({
             disabled={isPending}
             className="mt-4 w-full rounded-full bg-[#4F46E5] py-3 text-sm font-bold text-white shadow-[0_15px_35px_-12px_rgba(79,70,229,0.7)] transition-transform hover:scale-[1.01] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isPending ? "שומר..." : "שמירת לקוח"}
+            {isPending ? "שומר שינויים..." : "שמירת שינויים"}
           </button>
         </form>
       </motion.div>
