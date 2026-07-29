@@ -1,17 +1,21 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { X, MapPin, Phone, User, Award } from "lucide-react";
-import { type ClientWithMetrics, formatILS } from "@/lib/admin/clients-data";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, MapPin, Phone, User, Shirt, CalendarRange, StickyNote, Trash2 } from "lucide-react";
+import type { ClientRecord } from "@/lib/admin/clients-data";
+import { DeleteClientDialog } from "@/components/admin/delete-client-dialog";
 
 export function ClientDetailDrawer({
   client,
   onClose,
+  onDeleted,
 }: {
-  client: ClientWithMetrics;
+  client: ClientRecord;
   onClose: () => void;
+  onDeleted: (clientId: string) => void;
 }) {
-  const sortedShifts = [...client.shifts].sort((a, b) => (a.date < b.date ? 1 : -1));
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="client-drawer-title" className="fixed inset-0 z-50">
@@ -40,7 +44,9 @@ export function ClientDetailDrawer({
               <h2 id="client-drawer-title" className="font-display text-xl text-cream">
                 {client.name}
               </h2>
-              <p className="text-sm text-cream/45">{client.industry}</p>
+              <p className="text-sm text-cream/45">
+                {client.status === "active" ? "לקוח פעיל" : "לקוח מושהה"}
+              </p>
             </div>
           </div>
           <button
@@ -58,92 +64,91 @@ export function ClientDetailDrawer({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm">
               <User className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
-              <span className="truncate text-cream/80">{client.contactName}</span>
+              <span className="truncate text-cream/80">{client.contactName ?? "—"}</span>
             </div>
             <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm">
               <Phone className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
               <span dir="ltr" className="truncate text-cream/80">
-                {client.contactPhone}
+                {client.contactPhone ?? "—"}
               </span>
             </div>
             <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm sm:col-span-2">
               <MapPin className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
-              <span className="truncate text-cream/80">{client.address}</span>
+              <span className="truncate text-cream/80">{client.address ?? "—"}</span>
             </div>
+            {client.dressCode && (
+              <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm sm:col-span-2">
+                <Shirt className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
+                <span className="truncate text-cream/80">{client.dressCode}</span>
+              </div>
+            )}
           </div>
 
-          {/* Summary metrics */}
-          <div className="mt-5 grid grid-cols-3 gap-3">
-            <div className="rounded-xl border border-cream/10 bg-surface2 p-4">
-              <p className="text-[11px] text-cream/40">שעות</p>
-              <p className="mt-1 font-display text-2xl text-cream tabular-nums">{client.totalHours}</p>
-            </div>
-            <div className="rounded-xl border border-[#D4FF00]/20 bg-surface2 p-4">
-              <p className="text-[11px] text-cream/40">לתשלום</p>
-              <p className="mt-1 font-display text-2xl text-[#D4FF00] tabular-nums">
-                {formatILS(client.totalPayout)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-cream/10 bg-surface2 p-4">
-              <p className="flex items-center gap-1 text-[11px] text-cream/40">
-                <Award className="h-3 w-3" aria-hidden="true" />
-                בונוס
-              </p>
-              <p className="mt-1 font-display text-2xl text-cream tabular-nums">
-                {formatILS(client.recruiterBonus)}
-              </p>
-            </div>
+          {/* Events metric */}
+          <div className="mt-5 rounded-xl border border-[#D4FF00]/20 bg-surface2 p-4">
+            <p className="flex items-center gap-1.5 text-[11px] text-cream/40">
+              <CalendarRange className="h-3 w-3" aria-hidden="true" />
+              סה&quot;כ אירועים עם הלקוח
+            </p>
+            <p className="mt-1 font-display text-3xl text-[#D4FF00] tabular-nums">{client.eventsCount}</p>
           </div>
 
-          {/* Shift breakdown */}
-          <div className="mt-6">
-            <h3 className="mb-3 text-sm font-semibold text-cream/70">פירוט משמרות · {client.shifts.length}</h3>
-            <div className="overflow-hidden rounded-2xl border border-cream/10">
-              <table className="w-full text-start text-sm">
-                <thead>
-                  <tr className="border-b border-cream/10 bg-surface text-cream/45">
-                    <th scope="col" className="px-3.5 py-2.5 text-start font-medium">
-                      עובד/ת
-                    </th>
-                    <th scope="col" className="px-3.5 py-2.5 text-start font-medium">
-                      תפקיד
-                    </th>
-                    <th scope="col" className="px-3.5 py-2.5 text-start font-medium">
-                      תאריך
-                    </th>
-                    <th scope="col" className="px-3.5 py-2.5 text-start font-medium">
-                      שעות
-                    </th>
-                    <th scope="col" className="px-3.5 py-2.5 text-start font-medium">
-                      סה&quot;כ
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-cream/10 bg-surface">
-                  {sortedShifts.map((s) => (
-                    <tr key={s.id}>
-                      <td className="px-3.5 py-3 font-medium text-cream">{s.employeeName}</td>
-                      <td className="px-3.5 py-3 text-cream/60">{s.role}</td>
-                      <td className="px-3.5 py-3 tabular-nums text-cream/60">{s.date}</td>
-                      <td className="px-3.5 py-3 tabular-nums text-cream/70">{s.hours}</td>
-                      <td className="px-3.5 py-3 tabular-nums font-semibold text-cream">
-                        {formatILS(s.hours * s.hourlyRate)}
-                      </td>
-                    </tr>
-                  ))}
-                  {sortedShifts.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-3.5 py-8 text-center text-cream/40">
-                        אין משמרות רשומות החודש עבור לקוח זה.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          {/* Preferred roles */}
+          {client.preferredRoles.length > 0 && (
+            <div className="mt-6">
+              <h3 className="mb-3 text-sm font-semibold text-cream/70">תפקידים מועדפים ותעריף</h3>
+              <div className="flex flex-wrap gap-2">
+                {client.preferredRoles.map((r, idx) => (
+                  <span
+                    key={idx}
+                    className="rounded-lg border border-cream/10 bg-surface px-3 py-1.5 text-sm text-cream/80"
+                  >
+                    {r.role} <span className="text-cream/40">·</span> ₪{r.rate}/שעה
+                  </span>
+                ))}
+              </div>
             </div>
+          )}
+
+          {/* Notes */}
+          {client.notes && (
+            <div className="mt-6">
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-cream/70">
+                <StickyNote className="h-3.5 w-3.5" aria-hidden="true" />
+                הערות
+              </h3>
+              <p className="whitespace-pre-wrap rounded-xl border border-cream/10 bg-surface p-4 text-sm leading-relaxed text-cream/70">
+                {client.notes}
+              </p>
+            </div>
+          )}
+
+          {/* Danger zone */}
+          <div className="mt-8 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4">
+            <h3 className="text-sm font-semibold text-rose-400">אזור מסוכן</h3>
+            <p className="mt-1 text-xs text-cream/50">מחיקת הלקוח היא פעולה בלתי הפיכה.</p>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(true)}
+              className="mt-3 inline-flex items-center gap-2 rounded-full border border-rose-500/30 px-4 py-2 text-xs font-bold text-rose-400 hover:bg-rose-500/10"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              מחיקת לקוח
+            </button>
           </div>
         </div>
       </motion.aside>
+
+      <AnimatePresence>
+        {deleteOpen && (
+          <DeleteClientDialog
+            clientId={client.id}
+            clientName={client.name}
+            onClose={() => setDeleteOpen(false)}
+            onDeleted={() => onDeleted(client.id)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -6,31 +6,24 @@ import {
   Search,
   Plus,
   FileSpreadsheet,
-  Users,
-  Wallet,
-  Clock,
-  Award,
+  Building2,
+  CalendarRange,
   ChevronLeft,
-  Sparkles,
+  Shirt,
+  Phone,
+  AlertTriangle,
+  StickyNote,
 } from "lucide-react";
-import {
-  type ClientRecord,
-  type ClientWithMetrics,
-  withMetrics,
-  formatILS,
-  currentMonthLabel,
-  exportClientsCsv,
-} from "@/lib/admin/clients-data";
+import { type ClientRecord, currentMonthLabel, exportClientsCsv } from "@/lib/admin/clients-data";
 import { ClientDetailDrawer } from "@/components/admin/client-detail-drawer";
 import { AddClientDialog } from "@/components/admin/add-client-dialog";
 
-type SortKey = "payout" | "hours" | "bonus" | "name";
+type SortKey = "events" | "name" | "recent";
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "payout", label: "סה\"כ לתשלום" },
-  { value: "hours", label: "שעות עבודה" },
-  { value: "bonus", label: "בונוס מגייסים" },
+  { value: "events", label: "מספר אירועים" },
   { value: "name", label: "שם (א-ת)" },
+  { value: "recent", label: "נוספו לאחרונה" },
 ];
 
 const tileVariants = {
@@ -44,61 +37,65 @@ const tileVariants = {
 
 export function ClientsOverview({
   clients: initialClients,
-  isDemoData,
+  loadError,
 }: {
   clients: ClientRecord[];
-  isDemoData: boolean;
+  loadError: boolean;
 }) {
   const [clients, setClients] = useState<ClientRecord[]>(initialClients);
   const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState<SortKey>("payout");
+  const [sortBy, setSortBy] = useState<SortKey>("events");
   const [addOpen, setAddOpen] = useState(false);
-  const [selected, setSelected] = useState<ClientWithMetrics | null>(null);
-
-  const withAllMetrics = useMemo(() => clients.map(withMetrics), [clients]);
+  const [selected, setSelected] = useState<ClientRecord | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim();
     const list = q
-      ? withAllMetrics.filter(
-          (c) => c.name.includes(q) || c.industry.includes(q) || c.contactName.includes(q)
+      ? clients.filter(
+          (c) =>
+            c.name.includes(q) ||
+            (c.contactName ?? "").includes(q) ||
+            (c.address ?? "").includes(q)
         )
-      : withAllMetrics;
+      : clients;
 
-    const sorted = [...list].sort((a, b) => {
+    return [...list].sort((a, b) => {
       switch (sortBy) {
-        case "hours":
-          return b.totalHours - a.totalHours;
-        case "bonus":
-          return b.recruiterBonus - a.recruiterBonus;
         case "name":
           return a.name.localeCompare(b.name, "he");
-        case "payout":
+        case "recent":
+          return b.createdAt.localeCompare(a.createdAt);
+        case "events":
         default:
-          return b.totalPayout - a.totalPayout;
+          return b.eventsCount - a.eventsCount;
       }
     });
-    return sorted;
-  }, [withAllMetrics, query, sortBy]);
+  }, [clients, query, sortBy]);
 
   const globals = useMemo(() => {
-    const activeClients = withAllMetrics.filter((c) => c.status === "active");
+    const active = clients.filter((c) => c.status === "active");
+    const totalEvents = clients.reduce((s, c) => s + c.eventsCount, 0);
     return {
-      activeCount: activeClients.length,
-      totalHours: withAllMetrics.reduce((s, c) => s + c.totalHours, 0),
-      totalPayout: withAllMetrics.reduce((s, c) => s + c.totalPayout, 0),
-      totalBonus: withAllMetrics.reduce((s, c) => s + c.recruiterBonus, 0),
+      total: clients.length,
+      activeCount: active.length,
+      totalEvents,
+      avgEvents: active.length ? totalEvents / active.length : 0,
     };
-  }, [withAllMetrics]);
+  }, [clients]);
 
   const topClientId = useMemo(() => {
-    const active = withAllMetrics.filter((c) => c.status === "active" && c.totalPayout > 0);
-    if (active.length === 0) return null;
-    return active.reduce((top, c) => (c.totalPayout > top.totalPayout ? c : top), active[0]).id;
-  }, [withAllMetrics]);
+    const withEvents = clients.filter((c) => c.eventsCount > 0);
+    if (withEvents.length === 0) return null;
+    return withEvents.reduce((top, c) => (c.eventsCount > top.eventsCount ? c : top), withEvents[0]).id;
+  }, [clients]);
 
   function handleCreateClient(newClient: ClientRecord) {
     setClients((prev) => [newClient, ...prev]);
+  }
+
+  function handleDeleteClient(clientId: string) {
+    setClients((prev) => prev.filter((c) => c.id !== clientId));
+    setSelected(null);
   }
 
   return (
@@ -107,15 +104,7 @@ export function ClientsOverview({
         <div>
           <p className="text-sm text-cream/50">ממשק מנהל</p>
           <h1 className="font-display text-3xl text-cream">ניהול לקוחות</h1>
-          <p className="mt-1 text-sm text-cream/45">
-            מרכז חיוב ותפעול · {currentMonthLabel()}
-            {isDemoData && (
-              <span className="ms-2 inline-flex items-center gap-1 rounded-md bg-[#4F46E5]/15 px-2 py-0.5 text-[11px] font-semibold text-[#8b85f5]">
-                <Sparkles className="h-3 w-3" aria-hidden="true" />
-                נתוני הדגמה
-              </span>
-            )}
-          </p>
+          <p className="mt-1 text-sm text-cream/45">מרכז לקוחות ותפעול · {currentMonthLabel()}</p>
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -138,7 +127,14 @@ export function ClientsOverview({
         </div>
       </header>
 
-      {/* Asymmetric bento stat strip */}
+      {loadError && (
+        <div className="mb-6 flex items-center gap-2.5 rounded-2xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
+          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+          שגיאה בטעינת רשימת הלקוחות מהשרת. רענן/י את הדף או פנה/י לתמיכה.
+        </div>
+      )}
+
+      {/* Bento stat strip */}
       <div className="grid grid-cols-1 gap-4 lg:auto-rows-[minmax(108px,auto)] lg:grid-cols-12">
         <motion.div
           variants={tileVariants}
@@ -152,14 +148,12 @@ export function ClientsOverview({
             style={{ background: "radial-gradient(circle, #D4FF00, transparent 70%)" }}
             aria-hidden="true"
           />
-          <Wallet className="h-5 w-5 text-[#D4FF00]" strokeWidth={1.8} aria-hidden="true" />
-          <p className="mt-4 text-sm text-cream/50">סה&quot;כ לתשלום ללקוחות · {currentMonthLabel()}</p>
+          <CalendarRange className="h-5 w-5 text-[#D4FF00]" strokeWidth={1.8} aria-hidden="true" />
+          <p className="mt-4 text-sm text-cream/50">סה&quot;כ אירועים עם לקוחות</p>
           <p className="relative mt-2 font-display text-5xl text-[#D4FF00] tabular-nums">
-            {formatILS(globals.totalPayout)}
+            {globals.totalEvents.toLocaleString("he-IL")}
           </p>
-          <p className="mt-3 text-xs text-cream/40">
-            מחושב אוטומטית מסך המשמרות שדווחו החודש, לפי התעריף שהוגדר לכל עובד/ת ולקוח.
-          </p>
+          <p className="mt-3 text-xs text-cream/40">נספר על פני כל הלקוחות, פעילים ומושהים כאחד.</p>
         </motion.div>
 
         <motion.div
@@ -169,7 +163,7 @@ export function ClientsOverview({
           custom={1}
           className="rounded-2xl border border-cream/10 bg-surface p-6 lg:col-span-3"
         >
-          <Users className="h-5 w-5 text-[#4F46E5]" strokeWidth={1.8} aria-hidden="true" />
+          <Building2 className="h-5 w-5 text-[#4F46E5]" strokeWidth={1.8} aria-hidden="true" />
           <p className="mt-4 text-sm text-cream/50">לקוחות פעילים</p>
           <p className="mt-1 font-display text-4xl text-cream tabular-nums">{globals.activeCount}</p>
         </motion.div>
@@ -179,11 +173,10 @@ export function ClientsOverview({
           initial="hidden"
           animate="show"
           custom={2}
-          className="rounded-2xl border border-cream/10 bg-surface p-6 lg:col-span-4"
+          className="rounded-2xl border border-cream/10 bg-surface2 p-6 lg:col-span-4"
         >
-          <Award className="h-5 w-5 text-[#4F46E5]" strokeWidth={1.8} aria-hidden="true" />
-          <p className="mt-4 text-sm text-cream/50">בונוס מגייסים · סה&quot;כ החודש</p>
-          <p className="mt-1 font-display text-4xl text-cream tabular-nums">{formatILS(globals.totalBonus)}</p>
+          <p className="text-sm text-cream/50">סה&quot;כ לקוחות במערכת</p>
+          <p className="mt-1 font-display text-4xl text-cream tabular-nums">{globals.total}</p>
         </motion.div>
 
         <motion.div
@@ -193,25 +186,10 @@ export function ClientsOverview({
           custom={3}
           className="rounded-2xl border border-cream/10 bg-surface2 p-6 lg:col-span-4"
         >
-          <Clock className="h-5 w-5 text-cream/50" strokeWidth={1.8} aria-hidden="true" />
-          <p className="mt-4 text-sm text-cream/50">שעות עבודה שדווחו</p>
+          <p className="text-sm text-cream/50">ממוצע אירועים ללקוח פעיל</p>
           <p className="mt-1 font-display text-4xl text-cream tabular-nums">
-            {globals.totalHours.toLocaleString("he-IL")}
+            {globals.avgEvents.toFixed(1)}
           </p>
-        </motion.div>
-
-        <motion.div
-          variants={tileVariants}
-          initial="hidden"
-          animate="show"
-          custom={4}
-          className="rounded-2xl border border-cream/10 bg-surface2 p-6 lg:col-span-3"
-        >
-          <p className="text-sm text-cream/50">ממוצע לקוח פעיל</p>
-          <p className="mt-1 font-display text-2xl text-cream tabular-nums">
-            {formatILS(globals.activeCount ? globals.totalPayout / globals.activeCount : 0)}
-          </p>
-          <p className="mt-1 text-xs text-cream/40">לחודש, לפני מע&quot;מ</p>
         </motion.div>
       </div>
 
@@ -225,7 +203,7 @@ export function ClientsOverview({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="חיפוש לפי שם לקוח, תחום או איש קשר..."
+            placeholder="חיפוש לפי שם לקוח, איש קשר או כתובת..."
             className="w-full rounded-full border border-cream/12 bg-surface py-2.5 ps-10 pe-4 text-sm text-cream outline-none transition-colors focus:border-[#4F46E5]"
           />
         </div>
@@ -265,8 +243,8 @@ export function ClientsOverview({
           >
             {client.id === topClientId && (
               <span className="absolute end-4 top-4 inline-flex items-center gap-1 rounded-md bg-[#D4FF00]/15 px-2 py-1 text-[10px] font-bold text-[#D4FF00]">
-                <Award className="h-3 w-3" aria-hidden="true" />
-                החשבון המוביל
+                <CalendarRange className="h-3 w-3" aria-hidden="true" />
+                הכי הרבה אירועים
               </span>
             )}
 
@@ -276,7 +254,9 @@ export function ClientsOverview({
               </div>
               <div className="min-w-0">
                 <p className="truncate font-semibold text-cream">{client.name}</p>
-                <p className="truncate text-xs text-cream/45">{client.industry}</p>
+                {client.contactName && (
+                  <p className="truncate text-xs text-cream/45">{client.contactName}</p>
+                )}
               </div>
             </div>
 
@@ -286,40 +266,66 @@ export function ClientsOverview({
               </span>
             )}
 
-            <div className="mt-5 grid grid-cols-3 gap-2 border-t border-cream/10 pt-4">
-              <div>
-                <p className="text-[11px] text-cream/40">שעות</p>
-                <p className="mt-0.5 font-semibold tabular-nums text-cream">{client.totalHours}</p>
+            {client.preferredRoles.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {client.preferredRoles.slice(0, 3).map((r, idx) => (
+                  <span
+                    key={idx}
+                    className="rounded-md bg-cream/5 px-2 py-1 text-[11px] font-medium text-cream/70"
+                  >
+                    {r.role} · ₪{r.rate}
+                  </span>
+                ))}
+                {client.preferredRoles.length > 3 && (
+                  <span className="rounded-md bg-cream/5 px-2 py-1 text-[11px] font-medium text-cream/50">
+                    +{client.preferredRoles.length - 3}
+                  </span>
+                )}
               </div>
-              <div>
-                <p className="text-[11px] text-cream/40">לתשלום</p>
-                <p className="mt-0.5 font-semibold tabular-nums text-[#D4FF00]">{formatILS(client.totalPayout)}</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-cream/40">בונוס</p>
-                <p className="mt-0.5 font-semibold tabular-nums text-cream/80">{formatILS(client.recruiterBonus)}</p>
-              </div>
+            )}
+
+            <div className="mt-4 grid grid-cols-2 gap-2 border-t border-cream/10 pt-4 text-xs">
+              {client.contactPhone && (
+                <div className="flex items-center gap-1.5 text-cream/60">
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-cream/35" aria-hidden="true" />
+                  <span dir="ltr" className="truncate">
+                    {client.contactPhone}
+                  </span>
+                </div>
+              )}
+              {client.dressCode && (
+                <div className="flex items-center gap-1.5 text-cream/60">
+                  <Shirt className="h-3.5 w-3.5 shrink-0 text-cream/35" aria-hidden="true" />
+                  <span className="truncate">{client.dressCode}</span>
+                </div>
+              )}
             </div>
 
             <div className="mt-4 flex items-center justify-between text-xs text-cream/40">
-              <span>{client.activeEmployeeCount} עובדים החודש</span>
+              <span className="inline-flex items-center gap-1">
+                <CalendarRange className="h-3.5 w-3.5" aria-hidden="true" />
+                {client.eventsCount} אירועים
+                {client.notes && <StickyNote className="ms-1.5 h-3.5 w-3.5 text-cream/30" aria-hidden="true" />}
+              </span>
               <span className="inline-flex items-center gap-1 font-semibold text-[#4F46E5] opacity-0 transition-opacity group-hover:opacity-100">
-                פירוט משמרות
+                פרטי לקוח
                 <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
             </div>
           </motion.button>
         ))}
 
-        {filtered.length === 0 && (
+        {filtered.length === 0 && !loadError && (
           <div className="col-span-full rounded-2xl border border-dashed border-cream/15 px-4 py-14 text-center text-sm text-cream/45">
-            לא נמצאו לקוחות התואמים את החיפוש.
+            {clients.length === 0 ? "עדיין לא נוספו לקוחות. לחצ/י על \"לקוח חדש\" כדי להתחיל." : "לא נמצאו לקוחות התואמים את החיפוש."}
           </div>
         )}
       </div>
 
       <AnimatePresence>
-        {selected && <ClientDetailDrawer client={selected} onClose={() => setSelected(null)} />}
+        {selected && (
+          <ClientDetailDrawer client={selected} onClose={() => setSelected(null)} onDeleted={handleDeleteClient} />
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
