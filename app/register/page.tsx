@@ -7,43 +7,6 @@ import { useState } from "react";
 import { AuthCard } from "@/components/AuthCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-function formatBirthDateInput(value: string) {
-  const digitsOnly = value.replace(/\D/g, "").slice(0, 8);
-
-  if (digitsOnly.length <= 2) {
-    return digitsOnly;
-  }
-
-  if (digitsOnly.length <= 4) {
-    return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2)}`;
-  }
-
-  return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2, 4)}/${digitsOnly.slice(4)}`;
-}
-
-function normalizeBirthDate(value: string) {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return "";
-  }
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    return trimmed;
-  }
-
-  const digitsOnly = trimmed.replace(/\D/g, "");
-  if (digitsOnly.length !== 8) {
-    return "";
-  }
-
-  const day = digitsOnly.slice(0, 2);
-  const month = digitsOnly.slice(2, 4);
-  const year = digitsOnly.slice(4, 8);
-
-  return `${year}-${month}-${day}`;
-}
-
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -58,10 +21,19 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [verificationStep, setVerificationStep] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [pendingProfile, setPendingProfile] = useState<{
+    first_name: string;
+    last_name: string;
+    tz: string;
+    birth_date: string;
+  } | null>(null);
 
   const handleChange = (key: keyof typeof form, value: string) => {
-    const nextValue = key === "birth_date" ? formatBirthDateInput(value) : value;
-    setForm((current) => ({ ...current, [key]: nextValue }));
+    setForm((current) => ({ ...current, [key]: value }));
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -83,9 +55,8 @@ export default function RegisterPage() {
       return;
     }
 
-    const normalizedBirthDate = normalizeBirthDate(form.birth_date);
-    if (!normalizedBirthDate) {
-      setError("Please enter a valid date of birth in dd/mm/yyyy format.");
+    if (!form.birth_date) {
+      setError("Please choose your date of birth.");
       setLoading(false);
       return;
     }
@@ -102,16 +73,20 @@ export default function RegisterPage() {
       return;
     }
 
+    const pendingProfilePayload = {
+      first_name: form.first_name,
+      last_name: form.last_name,
+      tz: form.tz,
+      birth_date: form.birth_date,
+    };
+
+    setPendingProfile(pendingProfilePayload);
+
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
-        data: {
-          first_name: form.first_name,
-          last_name: form.last_name,
-          tz: form.tz,
-          birth_date: normalizedBirthDate,
-        },
+        data: pendingProfilePayload,
       },
     });
 
@@ -130,9 +105,24 @@ export default function RegisterPage() {
       return;
     }
 
-    // Profile creation is now securely handled by the PostgreSQL trigger in Supabase.
-    
-    setSuccess("Account created successfully. Please check your inbox to confirm your email before signing in.");
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email: form.email,
+      options: {
+        shouldCreateUser: false,
+      },
+    });
+
+    if (otpError) {
+      console.error("OTP ERROR:", otpError.message, otpError.status);
+      setError("The account was created, but we could not send the verification code. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    setPendingEmail(form.email);
+    setVerificationStep(true);
+    setVerificationCode("");
+    setSuccess("Account created. We sent a verification code to your email. Enter it below to continue.");
     setForm({
       first_name: "",
       last_name: "",
@@ -143,9 +133,82 @@ export default function RegisterPage() {
       confirmPassword: "",
     });
     setLoading(false);
-    
-    // Optionally redirect immediately or let them read the success message
-    // router.push("/login"); 
+  };
+
+  const handleVerifyEmail = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setVerificationLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) {
+      setError("Supabase is not configured yet.");
+      setVerificationLoading(false);
+      return;
+    }
+
+    if (!pendingEmail || !verificationCode.trim()) {
+      setError("Please enter the verification code from your email.");
+      setVerificationLoading(false);
+      return;
+    }
+
+    const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+      email: pendingEmail,
+      token: verificationCode.trim(),
+      type: "email",
+    });
+
+    if (verifyError) {
+      setError("The verification code is invalid or has expired. Please try again.");
+      setVerificationLoading(false);
+      return;
+    }
+
+    const verifiedUserId = verifyData?.user?.id;
+
+    if (!verifiedUserId) {
+      setError("We could not complete the verification flow. Please try again.");
+      setVerificationLoading(false);
+      return;
+    }
+
+    if (!pendingProfile) {
+      setError("We could not find your registration details. Please try again.");
+      setVerificationLoading(false);
+      return;
+    }
+
+    const profileResponse = await fetch("/api/auth/create-profile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(verifyData.session?.access_token
+          ? { Authorization: `Bearer ${verifyData.session.access_token}` }
+          : {}),
+      },
+      body: JSON.stringify({
+        userId: verifiedUserId,
+        ...pendingProfile,
+      }),
+    });
+
+    if (!profileResponse.ok) {
+      const profileMessage = await profileResponse.text();
+      console.error("PROFILE CREATE ERROR:", profileMessage);
+      setError("Your email is verified, but we could not save your profile yet. Please try again in a moment.");
+      setVerificationLoading(false);
+      return;
+    }
+
+    setSuccess("Email verified successfully. You can sign in now.");
+    setVerificationStep(false);
+    setVerificationCode("");
+    setPendingEmail("");
+    setPendingProfile(null);
+    setVerificationLoading(false);
+    router.push("/login");
   };
 
   return (
@@ -155,7 +218,36 @@ export default function RegisterPage() {
       error={error}
       success={success}
     >
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      {verificationStep ? (
+        <form className="space-y-4" onSubmit={handleVerifyEmail}>
+          <div className="rounded-2xl border border-sky-100 bg-sky-50 p-4 text-sm text-sky-800">
+            <p className="font-semibold">אימות אימייל</p>
+            <p className="mt-1">שלחנו לך קוד אימות לאימייל שלך. הכנס אותו כדי להשלים את ההרשמה.</p>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="verificationCode">קוד אימות</label>
+            <input
+              id="verificationCode"
+              required
+              value={verificationCode}
+              onChange={(event) => setVerificationCode(event.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+              placeholder="הקלידו את הקוד שקיבלת"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={verificationLoading}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {verificationLoading ? "מאמת..." : "אמת אימייל"}
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </form>
+      ) : (
+        <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="first_name">שם פרטי</label>
@@ -198,13 +290,11 @@ export default function RegisterPage() {
           <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="birth_date">תאריך לידה</label>
           <input
             id="birth_date"
-            type="text"
-            inputMode="numeric"
+            type="date"
             required
             value={form.birth_date}
             onChange={(event) => handleChange("birth_date", event.target.value)}
             className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-            placeholder="dd/mm/yyyy"
           />
         </div>
 
@@ -257,7 +347,8 @@ export default function RegisterPage() {
           {loading ? "יוצר חשבון..." : "צור משתמש"}
           <ArrowRight className="h-4 w-4" />
         </button>
-      </form>
+        </form>
+      )}
 
       <p className="mt-6 text-center text-sm text-slate-500">
         כבר יש לך חשבון?{' '}
