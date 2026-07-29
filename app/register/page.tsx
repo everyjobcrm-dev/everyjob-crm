@@ -7,12 +7,50 @@ import { useState } from "react";
 import { AuthCard } from "@/components/AuthCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+function formatBirthDateInput(value: string) {
+  const digitsOnly = value.replace(/\D/g, "").slice(0, 8);
+
+  if (digitsOnly.length <= 2) {
+    return digitsOnly;
+  }
+
+  if (digitsOnly.length <= 4) {
+    return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2)}`;
+  }
+
+  return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2, 4)}/${digitsOnly.slice(4)}`;
+}
+
+function normalizeBirthDate(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const digitsOnly = trimmed.replace(/\D/g, "");
+  if (digitsOnly.length !== 8) {
+    return "";
+  }
+
+  const day = digitsOnly.slice(0, 2);
+  const month = digitsOnly.slice(2, 4);
+  const year = digitsOnly.slice(4, 8);
+
+  return `${year}-${month}-${day}`;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
     tz: "",
+    birth_date: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -22,7 +60,8 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const handleChange = (key: keyof typeof form, value: string) => {
-    setForm((current) => ({ ...current, [key]: value }));
+    const nextValue = key === "birth_date" ? formatBirthDateInput(value) : value;
+    setForm((current) => ({ ...current, [key]: nextValue }));
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -40,6 +79,13 @@ export default function RegisterPage() {
 
     if (!/^[0-9]{8,9}$/.test(form.tz)) {
       setError("TZ must contain only digits and be 8–9 characters long.");
+      setLoading(false);
+      return;
+    }
+
+    const normalizedBirthDate = normalizeBirthDate(form.birth_date);
+    if (!normalizedBirthDate) {
+      setError("Please enter a valid date of birth in dd/mm/yyyy format.");
       setLoading(false);
       return;
     }
@@ -64,6 +110,7 @@ export default function RegisterPage() {
           first_name: form.first_name,
           last_name: form.last_name,
           tz: form.tz,
+          birth_date: normalizedBirthDate,
         },
       },
     });
@@ -90,6 +137,7 @@ export default function RegisterPage() {
       first_name: "",
       last_name: "",
       tz: "",
+      birth_date: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -143,6 +191,20 @@ export default function RegisterPage() {
             onChange={(event) => handleChange("tz", event.target.value)}
             className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             placeholder="הקלידו 8–9 ספרות"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="birth_date">תאריך לידה</label>
+          <input
+            id="birth_date"
+            type="text"
+            inputMode="numeric"
+            required
+            value={form.birth_date}
+            onChange={(event) => handleChange("birth_date", event.target.value)}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            placeholder="dd/mm/yyyy"
           />
         </div>
 
