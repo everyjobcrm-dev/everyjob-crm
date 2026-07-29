@@ -29,6 +29,13 @@ export async function POST(request: Request) {
 
     const authToken = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || body?.accessToken || "";
 
+    console.info("Create profile request", {
+      userId,
+      hasAuthToken: Boolean(authToken),
+      hasServiceRole: Boolean(serviceRoleKey),
+      birthDateProvided: Boolean(birth_date),
+    });
+
     if (serviceRoleKey) {
       const adminClient = createClient(supabaseUrl, serviceRoleKey, {
         auth: {
@@ -62,6 +69,8 @@ export async function POST(request: Request) {
           first_name,
           last_name,
           tz,
+          birth_date: birth_date || null,
+          email: body?.email || null,
           role,
         },
         { onConflict: "id" },
@@ -117,30 +126,38 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error } = await userClient.from("profiles").upsert(
+    const { data: profileData, error } = await userClient.from("profiles").upsert(
       {
         id: userId,
         first_name,
         last_name,
         tz,
+        birth_date: birth_date || null,
+        email: body?.email || null,
         role,
       },
       { onConflict: "id" },
     );
 
+    console.info("Create profile upsert result", { profileData, error: error?.message });
+
     if (error) {
       return NextResponse.json(
-        { success: false, error: error.message },
+        { success: false, error: error.message, details: error.details, hint: "Make sure the public.profiles table exists and the RLS policies allow inserts for the authenticated user." },
         { status: 500 },
       );
     }
 
     if (birth_date) {
-      await userClient.auth.updateUser({
-        data: {
-          birth_date,
-        },
-      });
+      try {
+        await userClient.auth.updateUser({
+          data: {
+            birth_date,
+          },
+        });
+      } catch (metadataError) {
+        console.warn("Metadata update failed", metadataError);
+      }
     }
 
     return NextResponse.json({ success: true });

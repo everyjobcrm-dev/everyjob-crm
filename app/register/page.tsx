@@ -180,26 +180,49 @@ export default function RegisterPage() {
       return;
     }
 
-    const profileResponse = await fetch("/api/auth/create-profile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(verifyData.session?.access_token
-          ? { Authorization: `Bearer ${verifyData.session.access_token}` }
-          : {}),
-      },
-      body: JSON.stringify({
-        userId: verifiedUserId,
-        ...pendingProfile,
-      }),
+    console.info("Register verification succeeded", {
+      userId: verifiedUserId,
+      email: pendingEmail,
+      hasSession: Boolean(verifyData.session),
+      payload: pendingProfile,
     });
 
-    if (!profileResponse.ok) {
-      const profileMessage = await profileResponse.text();
-      console.error("PROFILE CREATE ERROR:", profileMessage);
-      setError("Your email is verified, but we could not save your profile yet. Please try again in a moment.");
-      setVerificationLoading(false);
-      return;
+    const profilePayload = {
+      id: verifiedUserId,
+      first_name: pendingProfile.first_name,
+      last_name: pendingProfile.last_name,
+      tz: pendingProfile.tz,
+      birth_date: pendingProfile.birth_date || null,
+      email: pendingEmail,
+      role: "employee",
+    };
+
+    const { error: profileError } = await supabase.from("profiles").upsert(profilePayload, { onConflict: "id" });
+
+    if (profileError) {
+      console.error("Direct profiles upsert failed", profileError);
+
+      const profileResponse = await fetch("/api/auth/create-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(verifyData.session?.access_token
+            ? { Authorization: `Bearer ${verifyData.session.access_token}` }
+            : {}),
+        },
+        body: JSON.stringify({
+          userId: verifiedUserId,
+          ...pendingProfile,
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        const profileMessage = await profileResponse.text();
+        console.error("PROFILE CREATE ERROR:", profileMessage);
+        setError("Your email is verified, but we could not save your profile yet. Please try again in a moment.");
+        setVerificationLoading(false);
+        return;
+      }
     }
 
     setSuccess("Email verified successfully. You can sign in now.");
