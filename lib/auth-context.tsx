@@ -9,6 +9,8 @@ type ProfileState = {
   first_name: string | null;
   last_name: string | null;
   tz: string | null;
+  birth_date: string | null;
+  email: string | null;
   role: string | null;
   isRecruiter: boolean;
 };
@@ -42,6 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         first_name: data.first_name ?? null,
         last_name: data.last_name ?? null,
         tz: data.tz ?? null,
+        birth_date: data.birth_date ?? null,
+        email: data.email ?? null,
         role: data.role ?? null,
         isRecruiter: data.role === "recruiter",
       });

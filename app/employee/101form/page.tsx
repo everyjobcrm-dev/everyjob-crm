@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, LoaderCircle, ShieldCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -28,49 +28,208 @@ function normalizeDateForInput(value: string | null | undefined) {
   return `${year}-${month}-${day}`;
 }
 
+
+
+function normalizeBoolean(value: unknown) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "yes" || normalized === "1" || normalized === "y";
+  }
+
+  return false;
+}
+
+function isEligibleChildByBirthDate(dateOfBirth: string) {
+  if (!dateOfBirth) return false;
+
+  const birthDate = new Date(dateOfBirth);
+
+  // סוף שנת המס
+  const endOfTaxYear = new Date(new Date().getFullYear(), 11, 31);
+
+  let age = endOfTaxYear.getFullYear() - birthDate.getFullYear();
+
+  const birthdayPassed =
+    endOfTaxYear.getMonth() > birthDate.getMonth() ||
+    (endOfTaxYear.getMonth() === birthDate.getMonth() &&
+      endOfTaxYear.getDate() >= birthDate.getDate());
+
+  if (!birthdayPassed) {
+    age--;
+  }
+
+  return age < 18;
+}
+
 type FormState = {
-  fullName: string;
+  employerName: string;
+  employerTaxFileNumber: string;
+  firstName: string;
+  lastName: string;
   identityNumber: string;
   dateOfBirth: string;
-  phone: string;
-  email: string;
-  address: string;
+  dateOfImmigration: string;
+  gender: string;
+  israeliResidentStatus: string;
+  street: string;
+  houseNumber: string;
+  apartment: string;
   city: string;
   postalCode: string;
+  email: string;
+  mobilePhone: string;
   maritalStatus: string;
-  dependents: string;
-  employerName: string;
-  jobTitle: string;
-  startDate: string;
-  wage: string;
-  bankName: string;
-  branchNumber: string;
-  accountNumber: string;
-  iban: string;
-  notes: string;
+  spouseName: string;
+  spouseId: string;
+  spouseEmploymentStatus: string;
+  employmentStartDate: string;
+  israeliResident: boolean;
+  newImmigrant: boolean;
+  returningResident: boolean;
+  singleParent: boolean;
+  eligibleChildren: boolean;
+  disabledEmployee: boolean;
+  disabledChild: boolean;
+  academicDegreeEligibility: boolean;
+  releasedSoldier: boolean;
+  taxCoordination: boolean;
+  additionalEmployer: boolean;
+  pensionIncome: boolean;
+  otherTaxCreditEligibility: boolean;
 };
 
 const initialForm: FormState = {
-  fullName: "",
+  employerName: "",
+  employerTaxFileNumber: "",
+  firstName: "",
+  lastName: "",
   identityNumber: "",
   dateOfBirth: "",
-  phone: "",
-  email: "",
-  address: "",
+  dateOfImmigration: "",
+  gender: "",
+  israeliResidentStatus: "",
+  street: "",
+  houseNumber: "",
+  apartment: "",
   city: "",
   postalCode: "",
+  email: "",
+  mobilePhone: "",
   maritalStatus: "",
-  dependents: "",
-  employerName: "",
-  jobTitle: "",
-  startDate: "",
-  wage: "",
-  bankName: "",
-  branchNumber: "",
-  accountNumber: "",
-  iban: "",
-  notes: "",
+  spouseName: "",
+  spouseId: "",
+  spouseEmploymentStatus: "",
+  employmentStartDate: "",
+  israeliResident: false,
+  newImmigrant: false,
+  returningResident: false,
+  singleParent: false,
+  eligibleChildren: false,
+  disabledEmployee: false,
+  disabledChild: false,
+  academicDegreeEligibility: false,
+  releasedSoldier: false,
+  taxCoordination: false,
+  additionalEmployer: false,
+  pensionIncome: false,
+  otherTaxCreditEligibility: false,
 };
+
+const requiredFieldMetadata: Array<{ key: keyof FormState; label: string }> = [
+  { key: "employerName", label: "שם המעסיק" },
+  { key: "employerTaxFileNumber", label: "מספר תיק ניכויים" },
+  { key: "firstName", label: "שם פרטי" },
+  { key: "lastName", label: "שם משפחה" },
+  { key: "identityNumber", label: "מספר תעודת זהות" },
+  { key: "dateOfBirth", label: "תאריך לידה" },
+  { key: "street", label: "רחוב" },
+  { key: "houseNumber", label: "מספר בית" },
+  { key: "city", label: "עיר" },
+  { key: "postalCode", label: "מיקוד" },
+  { key: "email", label: "אימייל" },
+  { key: "mobilePhone", label: "מספר נייד" },
+  { key: "employmentStartDate", label: "תאריך תחילת עבודה" },
+];
+
+const taxFlagMetadata: Array<{ key: keyof FormState; label: string }> = [
+  { key: "israeliResident", label: "תושב ישראל" },
+  { key: "newImmigrant", label: "עולה חדש" },
+  { key: "returningResident", label: "תושב חוזר" },
+  { key: "singleParent", label: "הורה יחיד" },
+  { key: "eligibleChildren", label: "ילדים זכאים(עד סוף שנת המס נשאר מתחת ל-18)" },
+  { key: "disabledEmployee", label: "עובד עם מוגבלות" },
+  { key: "disabledChild", label: "ילד עם מוגבלות" },
+  { key: "academicDegreeEligibility", label: "זכאות לתואר אקדמי" },
+  { key: "releasedSoldier", label: "חייל משוחרר" },
+  { key: "taxCoordination", label: "תיאום מס" },
+  { key: "additionalEmployer", label: "מעסיק נוסף" },
+  { key: "pensionIncome", label: "הכנסת פנסיה" },
+  { key: "otherTaxCreditEligibility", label: "זיכוי מס נוסף" },
+];
+
+function buildAutoPopulatedForm(
+  profile: { first_name?: string | null; last_name?: string | null; tz?: string | null; birth_date?: string | null } | null,
+  user: { email?: string | null; user_metadata?: Record<string, unknown> } | null,
+): FormState {
+  const metadata = user?.user_metadata ?? {};
+  const firstName = String(profile?.first_name ?? metadata.first_name ?? "").trim();
+  const lastName = String(profile?.last_name ?? metadata.last_name ?? "").trim();
+  const identityNumber = String(profile?.tz ?? metadata.tz ?? "").trim();
+  const dateOfBirth = normalizeDateForInput(
+    String(profile?.birth_date ?? metadata.birth_date ?? metadata.date_of_birth ?? "").trim(),
+  );
+  const dateOfImmigration = normalizeDateForInput(
+    String(metadata.date_of_immigration ?? metadata.immigration_date ?? "").trim(),
+  );
+  const employmentStartDate = normalizeDateForInput(
+    String(metadata.employment_start_date ?? metadata.start_date ?? "").trim(),
+  );
+
+  return {
+    employerName: String(metadata.employer_name ?? "").trim(),
+    employerTaxFileNumber: String(metadata.employer_tax_file_number ?? metadata.deductions_file_num ?? "").trim(),
+    firstName,
+    lastName,
+    identityNumber,
+    dateOfBirth,
+    dateOfImmigration,
+    gender: String(metadata.gender ?? "").trim(),
+    israeliResidentStatus: String(metadata.israeli_resident_status ?? metadata.resident_status ?? "").trim(),
+    street: String(metadata.street ?? "").trim(),
+    houseNumber: String(metadata.house_number ?? "").trim(),
+    apartment: String(metadata.apartment ?? "").trim(),
+    city: String(metadata.city ?? "").trim(),
+    postalCode: String(metadata.postal_code ?? "").trim(),
+    email: String(user?.email ?? metadata.email ?? "").trim(),
+    mobilePhone: String(metadata.mobile_phone ?? metadata.phone_number ?? metadata.phone ?? "").trim(),
+    maritalStatus: String(metadata.marital_status ?? "").trim(),
+    spouseName: String(metadata.spouse_name ?? "").trim(),
+    spouseId: String(metadata.spouse_id ?? "").trim(),
+    spouseEmploymentStatus: String(metadata.spouse_employment_status ?? "").trim(),
+    employmentStartDate,
+    israeliResident: normalizeBoolean(metadata.israeli_resident),
+    newImmigrant: normalizeBoolean(metadata.new_immigrant),
+    returningResident: normalizeBoolean(metadata.returning_resident),
+    singleParent: normalizeBoolean(metadata.single_parent),
+    eligibleChildren: normalizeBoolean(metadata.eligible_children),
+    disabledEmployee: normalizeBoolean(metadata.disabled_employee),
+    disabledChild: normalizeBoolean(metadata.disabled_child),
+    academicDegreeEligibility: normalizeBoolean(metadata.academic_degree_eligibility),
+    releasedSoldier: normalizeBoolean(metadata.released_soldier),
+    taxCoordination: normalizeBoolean(metadata.tax_coordination),
+    additionalEmployer: normalizeBoolean(metadata.additional_employer),
+    pensionIncome: normalizeBoolean(metadata.pension_income),
+    otherTaxCreditEligibility: normalizeBoolean(metadata.other_tax_credit_eligibility),
+  };
+}
+
+function hasValue(value: string | boolean) {
+  return typeof value === "boolean" ? value : value.trim().length > 0;
+}
 
 export default function Form101Page() {
   const { user, profile, loading } = useAuth();
@@ -80,20 +239,46 @@ export default function Form101Page() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim();
-    const birthDate =
-      user?.user_metadata?.birth_date ||
-      user?.user_metadata?.date_of_birth ||
-      "";
-    const normalizedBirthDate = normalizeDateForInput(birthDate);
-
+    const autoPopulatedForm = buildAutoPopulatedForm(profile, user);
     setForm((current) => ({
       ...current,
-      fullName: current.fullName || name,
-      identityNumber: current.identityNumber || profile?.tz || "",
-      dateOfBirth: current.dateOfBirth || normalizedBirthDate,
-      email: current.email || user?.email || "",
-      phone: current.phone || user?.user_metadata?.phone || "",
+      ...autoPopulatedForm,
+      employerName: current.employerName || autoPopulatedForm.employerName,
+      employerTaxFileNumber: current.employerTaxFileNumber || autoPopulatedForm.employerTaxFileNumber,
+      firstName: current.firstName || autoPopulatedForm.firstName,
+      lastName: current.lastName || autoPopulatedForm.lastName,
+      identityNumber: current.identityNumber || autoPopulatedForm.identityNumber,
+      dateOfBirth: current.dateOfBirth || autoPopulatedForm.dateOfBirth,
+      dateOfImmigration: current.dateOfImmigration || autoPopulatedForm.dateOfImmigration,
+      gender: current.gender || autoPopulatedForm.gender,
+      israeliResidentStatus: current.israeliResidentStatus || autoPopulatedForm.israeliResidentStatus,
+      street: current.street || autoPopulatedForm.street,
+      houseNumber: current.houseNumber || autoPopulatedForm.houseNumber,
+      apartment: current.apartment || autoPopulatedForm.apartment,
+      city: current.city || autoPopulatedForm.city,
+      postalCode: current.postalCode || autoPopulatedForm.postalCode,
+      email: current.email || autoPopulatedForm.email,
+      mobilePhone: current.mobilePhone || autoPopulatedForm.mobilePhone,
+      maritalStatus: current.maritalStatus || autoPopulatedForm.maritalStatus,
+      spouseName: current.spouseName || autoPopulatedForm.spouseName,
+      spouseId: current.spouseId || autoPopulatedForm.spouseId,
+      spouseEmploymentStatus: current.spouseEmploymentStatus || autoPopulatedForm.spouseEmploymentStatus,
+      employmentStartDate: current.employmentStartDate || autoPopulatedForm.employmentStartDate,
+      israeliResident: current.israeliResident || autoPopulatedForm.israeliResident,
+      newImmigrant: current.newImmigrant || autoPopulatedForm.newImmigrant,
+      returningResident: current.returningResident || autoPopulatedForm.returningResident,
+      singleParent: current.singleParent || autoPopulatedForm.singleParent,
+      eligibleChildren: isEligibleChildByBirthDate(current.dateOfBirth || autoPopulatedForm.dateOfBirth),
+      disabledEmployee: current.disabledEmployee || autoPopulatedForm.disabledEmployee,
+      disabledChild: current.disabledChild || autoPopulatedForm.disabledChild,
+      academicDegreeEligibility:
+        current.academicDegreeEligibility || autoPopulatedForm.academicDegreeEligibility,
+      releasedSoldier: current.releasedSoldier || autoPopulatedForm.releasedSoldier,
+      taxCoordination: current.taxCoordination || autoPopulatedForm.taxCoordination,
+      additionalEmployer: current.additionalEmployer || autoPopulatedForm.additionalEmployer,
+      pensionIncome: current.pensionIncome || autoPopulatedForm.pensionIncome,
+      otherTaxCreditEligibility:
+        current.otherTaxCreditEligibility || autoPopulatedForm.otherTaxCreditEligibility,
     }));
   }, [profile, user]);
 
@@ -111,8 +296,50 @@ export default function Form101Page() {
     return emailName || "משתמש/ת";
   })();
 
-  function handleChange<K extends keyof FormState>(field: K, value: FormState[K]) {
-    setForm((current) => ({ ...current, [field]: value }));
+  const missingFields = useMemo(
+    () => requiredFieldMetadata.filter((field) => !hasValue(form[field.key] as string)).map((field) => field.label),
+    [form],
+  );
+
+  const showSpouseFields = /נשוי|married/i.test(form.maritalStatus);
+  const populatedFieldsCount = requiredFieldMetadata.length - missingFields.length;
+
+  function handleChange<K extends keyof FormState>(
+  field: K,
+  value: FormState[K]
+  ) {
+    setForm((current) => {
+      const updated = {
+        ...current,
+        [field]: value,
+      };
+
+      if (field === "dateOfBirth") {
+        updated.eligibleChildren = isEligibleChildByBirthDate(
+          value as string
+        );
+      }
+
+      return updated;
+    });
+  }
+
+  function validateForm() {
+    if (!form.employerName.trim()) return "שם המעסיק הוא שדה חובה.";
+    if (!form.employerTaxFileNumber.trim()) return "מספר תיק ניכויים הוא שדה חובה.";
+    if (!form.firstName.trim() || !form.lastName.trim()) return "שם פרטי ושם משפחה הם שדות חובה.";
+    if (!/^\d{8,9}$/.test(form.identityNumber.trim())) return "מספר תעודת זהות חייב להכיל 8–9 ספרות.";
+    if (!form.dateOfBirth.trim()) return "תאריך לידה הוא שדה חובה.";
+    if (!form.street.trim() || !form.houseNumber.trim() || !form.city.trim() || !form.postalCode.trim()) {
+      return "חובה למלא רחוב, מספר בית, עיר ומיקוד.";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return "כתובת אימייל אינה תקינה.";
+    if (!/^0(5[0-9]{8}|[23489][0-9]{7})$/.test(form.mobilePhone.trim())) return "מספר נייד חייב להיות בפורמט ישראלי תקין.";
+    if (!form.employmentStartDate.trim()) return "תאריך תחילת עבודה הוא שדה חובה.";
+    if (showSpouseFields && (!form.spouseName.trim() || !/^\d{8,9}$/.test(form.spouseId.trim()))) {
+      return "כאשר מצב משפחתי הוא נשוי/אה, יש למלא גם שם בן/בת זוג ותעודת זהות.";
+    }
+    return null;
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -120,6 +347,12 @@ export default function Form101Page() {
 
     if (!user?.id) {
       setError("יש להתחבר כדי לשלוח טופס 101.");
+      return;
+    }
+
+    const validationMessage = validateForm();
+    if (validationMessage) {
+      setError(validationMessage);
       return;
     }
 
@@ -134,28 +367,37 @@ export default function Form101Page() {
       return;
     }
 
+    const now = new Date().toISOString();
     const submissionPayload = {
       user_id: user.id,
-      full_name: form.fullName.trim(),
+      full_name: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
       identity_number: form.identityNumber.trim(),
       date_of_birth: form.dateOfBirth.trim(),
-      phone: form.phone.trim(),
-      email: (form.email || user.email || "").trim(),
-      address: form.address.trim(),
+      phone: form.mobilePhone.trim(),
+      email: form.email.trim(),
+      address: `${form.street.trim()} ${form.houseNumber.trim()}${form.apartment ? `, דירה ${form.apartment.trim()}` : ""}`.trim(),
       city: form.city.trim(),
       postal_code: form.postalCode.trim(),
       marital_status: form.maritalStatus.trim(),
-      dependents: form.dependents.trim(),
+      dependents: "",
       employer_name: form.employerName.trim(),
-      job_title: form.jobTitle.trim(),
-      start_date: form.startDate.trim(),
-      wage: form.wage.trim(),
-      bank_name: form.bankName.trim(),
-      branch_number: form.branchNumber.trim(),
-      account_number: form.accountNumber.trim(),
-      iban: form.iban.trim(),
-      notes: form.notes.trim(),
-      created_at: new Date().toISOString(),
+      job_title: form.employerName.trim(),
+      department: "",
+      position: "",
+      manager: "",
+      start_date: form.employmentStartDate.trim(),
+      wage: "",
+      bank_name: "",
+      branch_number: "",
+      account_number: "",
+      iban: "",
+      tax_id: "",
+      emergency_contact: form.spouseName.trim(),
+      emergency_phone: form.spouseId.trim(),
+      notes: "",
+      created_at: now,
+      updated_at: now,
+      updated_by: user.id,
     };
 
     const { data: existingSubmissions, error: fetchError } = await supabase
@@ -186,24 +428,14 @@ export default function Form101Page() {
     const { error: insertError } = await supabase.from("form_101_submissions").insert(submissionPayload);
 
     if (insertError) {
-      setError("שמירת הטופס נכשלה. בדוק שהטבלה form_101_submissions קיימת ב-Supabase.");
+      setError("שמירת הטופס נכשלה. בדוק שהטבלה form_101_submissions תואמת את השדות הנדרשים.");
       setSubmitting(false);
       return;
     }
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ form_101_status: "pending" })
-      .eq("id", user.id);
-
-    if (profileError) {
-      setError("הטופס נשמר, אבל עדכון הסטטוס בפרופיל נכשל.");
-      setSubmitting(false);
-      return;
-    }
-
-    setMessage("הטופס נשמר בהצלחה. הוא נשלח לבדיקה.");
-    setForm(initialForm);
+    setMessage(
+      `הטופס נשמר בהצלחה. ${populatedFieldsCount} מתוך ${requiredFieldMetadata.length} שדות חובה מולאו אוטומטית מהנתונים הקיימים.`,
+    );
     setSubmitting(false);
   }
 
@@ -212,14 +444,23 @@ export default function Form101Page() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-cream/50">טופס 101</p>
-          <h1 className="font-display text-2xl text-cream">הגשת טופס 101</h1>
+          <h1 className="font-display text-2xl text-cream">מילוי אוטומטי של טופס 101</h1>
         </div>
-        <Link
-          href="/employee/profile"
-          className="inline-flex items-center justify-center rounded-full border border-brass/20 px-4 py-2 text-sm font-semibold text-brass transition hover:bg-brass/10"
-        >
-          חזור לפרופיל
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="inline-flex items-center justify-center rounded-full border border-brass/20 px-4 py-2 text-sm font-semibold text-brass transition hover:bg-brass/10"
+          >
+            הדפס / PDF
+          </button>
+          <Link
+            href="/employee/profile"
+            className="inline-flex items-center justify-center rounded-full border border-brass/20 px-4 py-2 text-sm font-semibold text-brass transition hover:bg-brass/10"
+          >
+            חזור לפרופיל
+          </Link>
+        </div>
       </div>
 
       <form className="space-y-8" onSubmit={handleSubmit}>
@@ -230,99 +471,134 @@ export default function Form101Page() {
             </div>
             <div>
               <p className="text-sm text-cream/60">שלום, {loading ? "..." : displayName}</p>
-              <p className="text-sm text-cream/45">מלא/י את הפרטים הבאים לשמירת טופס 101 אמיתי.</p>
+              <p className="text-sm text-cream/45">
+                כל שדה עם ערך קיים ממולא אוטומטית. רק השדות החסרים נשארים לפתיחה ידנית.
+              </p>
             </div>
           </div>
 
+          {missingFields.length > 0 ? (
+            <div className="mb-5 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-sm text-amber-200">
+              שדות חסרים להשלמה: {missingFields.join(", ")}
+            </div>
+          ) : null}
+
           <div className="space-y-6">
             <div>
-              <h2 className="mb-4 text-lg font-semibold text-cream">1. פרטי עובד</h2>
+              <h2 className="mb-4 text-lg font-semibold text-cream">א. פרטי המעסיק</h2>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">שם מלא</span>
+                  <span className="mb-2 block font-semibold">שם המעסיק</span>
                   <input
-                    required
-                    value={form.fullName}
-                    onChange={(event) => handleChange("fullName", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="לדוגמה: נועה כהן"
+                    value={form.employerName}
+                    onChange={(event) => handleChange("employerName", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("שם המעסיק") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
                   />
                 </label>
                 <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">תעודת זהות</span>
+                  <span className="mb-2 block font-semibold">מספר תיק ניכויים</span>
                   <input
-                    required
-                    value={form.identityNumber}
-                    onChange={(event) => handleChange("identityNumber", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="123456789"
-                  />
-                </label>
-                <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">תאריך לידה</span>
-                  <input
-                    type="date"
-                    required
-                    value={form.dateOfBirth}
-                    onChange={(event) => handleChange("dateOfBirth", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                  />
-                </label>
-                <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">חברות בקופת גמל</span>
-                  <input
-                    type="text"
-                    value={form.maritalStatus}
-                    onChange={(event) => handleChange("maritalStatus", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="סטטוס משפחתי / קופת גמל"
+                    value={form.employerTaxFileNumber}
+                    onChange={(event) => handleChange("employerTaxFileNumber", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("מספר תיק ניכויים") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
                   />
                 </label>
               </div>
             </div>
 
             <div>
-              <h2 className="mb-4 text-lg font-semibold text-cream">2. כתובת ופרטי קשר</h2>
+              <h2 className="mb-4 text-lg font-semibold text-cream">ב. פרטי העובד/ת</h2>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">טלפון</span>
+                  <span className="mb-2 block font-semibold">שם פרטי</span>
                   <input
-                    required
-                    value={form.phone}
-                    onChange={(event) => handleChange("phone", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="05x-xxxxxxx"
+                    value={form.firstName}
+                    onChange={(event) => handleChange("firstName", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("שם פרטי") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
                   />
                 </label>
                 <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">אימייל</span>
+                  <span className="mb-2 block font-semibold">שם משפחה</span>
                   <input
-                    type="email"
-                    required
-                    value={form.email}
-                    onChange={(event) => handleChange("email", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="name@example.com"
+                    value={form.lastName}
+                    onChange={(event) => handleChange("lastName", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("שם משפחה") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
                   />
                 </label>
                 <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">כתובת</span>
+                  <span className="mb-2 block font-semibold">מספר תעודת זהות</span>
                   <input
-                    required
-                    value={form.address}
-                    onChange={(event) => handleChange("address", event.target.value)}
+                    value={form.identityNumber}
+                    onChange={(event) => handleChange("identityNumber", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("מספר תעודת זהות") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                  />
+                </label>
+                <label className="text-sm text-cream/80">
+                  <span className="mb-2 block font-semibold">תאריך לידה</span>
+                  <input
+                    type="date"
+                    value={form.dateOfBirth}
+                    onChange={(event) => handleChange("dateOfBirth", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("תאריך לידה") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                  />
+                </label>
+                <label className="text-sm text-cream/80">
+                  <span className="mb-2 block font-semibold">תאריך עלייה / הגירה</span>
+                  <input
+                    type="date"
+                    value={form.dateOfImmigration}
+                    onChange={(event) => handleChange("dateOfImmigration", event.target.value)}
                     className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="רחוב ועיר"
+                  />
+                </label>
+                <label className="text-sm text-cream/80">
+                  <span className="mb-2 block font-semibold">מין</span>
+                  <input
+                    value={form.gender}
+                    onChange={(event) => handleChange("gender", event.target.value)}
+                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                    placeholder="זכר / נקבה"
+                  />
+                </label>
+                <label className="text-sm text-cream/80">
+                  <span className="mb-2 block font-semibold">סטטוס תושב</span>
+                  <input
+                    value={form.israeliResidentStatus}
+                    onChange={(event) => handleChange("israeliResidentStatus", event.target.value)}
+                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                    placeholder="ישראלי / תושב חוזר / עולה"
+                  />
+                </label>
+                <label className="text-sm text-cream/80 md:col-span-2">
+                  <span className="mb-2 block font-semibold">רחוב</span>
+                  <input
+                    value={form.street}
+                    onChange={(event) => handleChange("street", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("רחוב") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                  />
+                </label>
+                <label className="text-sm text-cream/80">
+                  <span className="mb-2 block font-semibold">מספר בית</span>
+                  <input
+                    value={form.houseNumber}
+                    onChange={(event) => handleChange("houseNumber", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("מספר בית") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                  />
+                </label>
+                <label className="text-sm text-cream/80">
+                  <span className="mb-2 block font-semibold">דירה</span>
+                  <input
+                    value={form.apartment}
+                    onChange={(event) => handleChange("apartment", event.target.value)}
+                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
                   />
                 </label>
                 <label className="text-sm text-cream/80">
                   <span className="mb-2 block font-semibold">עיר</span>
                   <input
-                    required
                     value={form.city}
                     onChange={(event) => handleChange("city", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="תל אביב"
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("עיר") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
                   />
                 </label>
                 <label className="text-sm text-cream/80">
@@ -330,144 +606,116 @@ export default function Form101Page() {
                   <input
                     value={form.postalCode}
                     onChange={(event) => handleChange("postalCode", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="מיקוד"
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("מיקוד") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
                   />
                 </label>
                 <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">מספר תלויים</span>
+                  <span className="mb-2 block font-semibold">אימייל</span>
                   <input
-                    value={form.dependents}
-                    onChange={(event) => handleChange("dependents", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="0"
+                    type="email"
+                    value={form.email}
+                    onChange={(event) => handleChange("email", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("אימייל") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
                   />
                 </label>
-              </div>
-            </div>
-
-            <div>
-              <h2 className="mb-4 text-lg font-semibold text-cream">3. פרטי תעסוקה</h2>
-              <div className="grid gap-4 md:grid-cols-2">
                 <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">שם המעסיק</span>
+                  <span className="mb-2 block font-semibold">מספר נייד</span>
                   <input
-                    required
-                    value={form.employerName}
-                    onChange={(event) => handleChange("employerName", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="שם המעסיק"
+                    value={form.mobilePhone}
+                    onChange={(event) => handleChange("mobilePhone", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("מספר נייד") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
                   />
                 </label>
                 <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">תפקיד</span>
+                  <span className="mb-2 block font-semibold">מצב משפחתי</span>
                   <input
-                    required
-                    value={form.jobTitle}
-                    onChange={(event) => handleChange("jobTitle", event.target.value)}
+                    value={form.maritalStatus}
+                    onChange={(event) => handleChange("maritalStatus", event.target.value)}
                     className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="מלצר/ית"
+                    placeholder="רווק/ה / נשוי/אה / גרוש/ה"
                   />
                 </label>
                 <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">תאריך התחלה</span>
+                  <span className="mb-2 block font-semibold">תאריך תחילת עבודה</span>
                   <input
                     type="date"
-                    required
-                    value={form.startDate}
-                    onChange={(event) => handleChange("startDate", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                  />
-                </label>
-                <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">שכר לשעה</span>
-                  <input
-                    required
-                    value={form.wage}
-                    onChange={(event) => handleChange("wage", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="₪"
+                    value={form.employmentStartDate}
+                    onChange={(event) => handleChange("employmentStartDate", event.target.value)}
+                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("תאריך תחילת עבודה") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
                   />
                 </label>
               </div>
+
+              {showSpouseFields ? (
+                <div className="mt-5 grid gap-4 rounded-2xl border border-brass/15 bg-obsidian/40 p-4 md:grid-cols-3">
+                  <label className="text-sm text-cream/80">
+                    <span className="mb-2 block font-semibold">שם בן/בת זוג</span>
+                    <input
+                      value={form.spouseName}
+                      onChange={(event) => handleChange("spouseName", event.target.value)}
+                      className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                    />
+                  </label>
+                  <label className="text-sm text-cream/80">
+                    <span className="mb-2 block font-semibold">מספר תעודת זהות של בן/בת זוג</span>
+                    <input
+                      value={form.spouseId}
+                      onChange={(event) => handleChange("spouseId", event.target.value)}
+                      className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                    />
+                  </label>
+                  <label className="text-sm text-cream/80">
+                    <span className="mb-2 block font-semibold">סטטוס תעסוקה של בן/בת זוג</span>
+                    <input
+                      value={form.spouseEmploymentStatus}
+                      onChange={(event) => handleChange("spouseEmploymentStatus", event.target.value)}
+                      className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                    />
+                  </label>
+                </div>
+              ) : null}
             </div>
 
             <div>
-              <h2 className="mb-4 text-lg font-semibold text-cream">4. פרטי חשבון בנק</h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">שם הבנק</span>
-                  <input
-                    required
-                    value={form.bankName}
-                    onChange={(event) => handleChange("bankName", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="בנק הפועלים"
-                  />
-                </label>
-                <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">סניף</span>
-                  <input
-                    required
-                    value={form.branchNumber}
-                    onChange={(event) => handleChange("branchNumber", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="123"
-                  />
-                </label>
-                <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">מספר חשבון</span>
-                  <input
-                    required
-                    value={form.accountNumber}
-                    onChange={(event) => handleChange("accountNumber", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="123456"
-                  />
-                </label>
-                <label className="text-sm text-cream/80">
-                  <span className="mb-2 block font-semibold">IBAN</span>
-                  <input
-                    required
-                    value={form.iban}
-                    onChange={(event) => handleChange("iban", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                    placeholder="IL..."
-                  />
-                </label>
+              <h2 className="mb-4 text-lg font-semibold text-cream">ג. פרטי מס</h2>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {taxFlagMetadata.map((taxFlag) => (
+                  <label key={taxFlag.key} className="flex items-center gap-2 rounded-2xl border border-brass/15 bg-obsidian/40 p-3 text-sm text-cream/80">
+                    <input
+                      type="checkbox"
+                      checked={
+                        taxFlag.key === "eligibleChildren"
+                          ? isEligibleChildByBirthDate(form.dateOfBirth)
+                          : Boolean(form[taxFlag.key])
+                      }
+                      disabled={taxFlag.key === "eligibleChildren"}
+                      onChange={(event) => {
+                        if (taxFlag.key === "eligibleChildren") return;
+                        handleChange(taxFlag.key, event.target.checked as never);
+                      }}
+                    />
+                    <span>{taxFlag.label}</span>
+                  </label>
+                ))}
               </div>
-            </div>
-
-            <div>
-              <h2 className="mb-4 text-lg font-semibold text-cream">5. פרטים נוספים</h2>
-              <label className="block text-sm text-cream/80">
-                <span className="mb-2 block font-semibold">הערות נוספות</span>
-                <textarea
-                  value={form.notes}
-                  onChange={(event) => handleChange("notes", event.target.value)}
-                  rows={5}
-                  className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
-                  placeholder="פרטים חשובים נוספים..."
-                />
-              </label>
             </div>
           </div>
 
           {message ? (
-            <div className="flex items-start gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">
+            <div className="mt-5 flex items-start gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">
               <CheckCircle2 className="mt-0.5 h-4 w-4" strokeWidth={1.8} />
               <span>{message}</span>
             </div>
           ) : null}
 
           {error ? (
-            <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-3 text-sm text-rose-300">{error}</div>
+            <div className="mt-5 rounded-2xl border border-rose-400/20 bg-rose-500/10 p-3 text-sm text-rose-300">{error}</div>
           ) : null}
 
           <button
             type="submit"
             disabled={submitting || loading}
-            className="inline-flex items-center gap-2 rounded-full bg-brass px-5 py-3 text-sm font-semibold text-obsidian transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-brass px-5 py-3 text-sm font-semibold text-obsidian transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? (
               <>
@@ -476,7 +724,7 @@ export default function Form101Page() {
               </>
             ) : (
               <>
-                שלח טופס 101
+                שמור ושתף טופס 101
                 <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
               </>
             )}

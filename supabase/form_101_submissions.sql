@@ -18,15 +18,33 @@ CREATE TABLE IF NOT EXISTS public.form_101_submissions (
   dependents text,
   employer_name text NOT NULL,
   job_title text NOT NULL,
+  department text,
+  position text,
+  manager text,
   start_date date,
   wage text NOT NULL,
   bank_name text NOT NULL,
   branch_number text NOT NULL,
   account_number text NOT NULL,
   iban text NOT NULL,
+  tax_id text,
+  emergency_contact text,
+  emergency_phone text,
   notes text,
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz,
+  updated_by uuid REFERENCES public.profiles(id)
 );
 
 -- Optional index to speed up queries by user
 CREATE INDEX IF NOT EXISTS idx_form_101_submissions_user_id ON public.form_101_submissions(user_id);
+
+ALTER TABLE public.form_101_submissions
+  ADD COLUMN IF NOT EXISTS department text,
+  ADD COLUMN IF NOT EXISTS position text,
+  ADD COLUMN IF NOT EXISTS manager text,
+  ADD COLUMN IF NOT EXISTS tax_id text,
+  ADD COLUMN IF NOT EXISTS emergency_contact text,
+  ADD COLUMN IF NOT EXISTS emergency_phone text,
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz,
+  ADD COLUMN IF NOT EXISTS updated_by uuid REFERENCES public.profiles(id);
