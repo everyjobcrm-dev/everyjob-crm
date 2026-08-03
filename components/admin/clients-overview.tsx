@@ -9,7 +9,6 @@ import {
   Building2,
   CalendarRange,
   ChevronLeft,
-  Shirt,
   Phone,
   AlertTriangle,
   StickyNote,
@@ -96,6 +95,11 @@ export function ClientsOverview({
   function handleDeleteClient(clientId: string) {
     setClients((prev) => prev.filter((c) => c.id !== clientId));
     setSelected(null);
+  }
+
+  function handleUpdateClient(updated: ClientRecord) {
+    setClients((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    setSelected(updated);
   }
 
   return (
@@ -293,12 +297,6 @@ export function ClientsOverview({
                   </span>
                 </div>
               )}
-              {client.dressCode && (
-                <div className="flex items-center gap-1.5 text-cream/60">
-                  <Shirt className="h-3.5 w-3.5 shrink-0 text-cream/35" aria-hidden="true" />
-                  <span className="truncate">{client.dressCode}</span>
-                </div>
-              )}
             </div>
 
             <div className="mt-4 flex items-center justify-between text-xs text-cream/40">
@@ -324,7 +322,12 @@ export function ClientsOverview({
 
       <AnimatePresence>
         {selected && (
-          <ClientDetailDrawer client={selected} onClose={() => setSelected(null)} onDeleted={handleDeleteClient} />
+          <ClientDetailDrawer
+            client={selected}
+            onClose={() => setSelected(null)}
+            onDeleted={handleDeleteClient}
+            onUpdated={handleUpdateClient}
+          />
         )}
       </AnimatePresence>
 
