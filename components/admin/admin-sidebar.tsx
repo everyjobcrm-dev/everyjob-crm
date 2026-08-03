@@ -59,6 +59,7 @@ export function AdminSidebar() {
         </nav>
 
         <button
+          suppressHydrationWarning={true}
           type="button"
           onClick={handleLogout}
           className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-cream/50 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
