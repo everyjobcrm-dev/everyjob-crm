@@ -90,74 +90,75 @@
   };
 
   type RawEventRow = {
-    id: string;
-    location: string;
-    event_date: string;
-    start_time: string;
-    end_time: string | null;
-    status: AdminEvent["status"];
-    min_rating: number | null;
-    travel_budget_per_worker: number | null;
-    clients: { name: string } | null;
-    event_roles: RawEventRole[] | null;
-    event_closures: RawEventClosure | null;
-  };
+  id: string;
+  location: string;
+  event_date: string;
+  start_time: string;
+  // end_time removed from here
+  status: AdminEvent["status"];
+  min_rating: number | null;
+  travel_budget_per_worker: number | null;
+  clients: { name: string } | null;
+  event_roles: RawEventRole[] | null;
+  event_closures: RawEventClosure | null;
+};
 
-  export async function fetchEvents(): Promise<AdminEvent[]> {
-    const supabase = await createServerSupabaseClient();
-    if (!supabase) return [];
+export async function fetchEvents(): Promise<AdminEvent[]> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return [];
 
-    const { data: events, error } = await supabase
-      .from("events")
-      .select(
-        `id, location, event_date, start_time, end_time, status, min_rating, travel_budget_per_worker,
-        clients ( name ),
-        event_roles ( id, role_name, headcount, base_rate ),
-        event_closures ( total_hours_reported, travel_paid_to_workers, travel_charged_to_client, actual_income, actual_expense )`
-      )
-      .order("event_date", { ascending: false })
-      .returns<RawEventRow[]>();
+  const { data: events, error } = await supabase
+    .from("events")
+    .select(
+      // Removed end_time from this select string
+      `id, location, event_date, start_time, status, min_rating, travel_budget_per_worker,
+      clients ( name ),
+      event_roles ( id, role_name, headcount, base_rate ),
+      event_closures ( total_hours_reported, travel_paid_to_workers, travel_charged_to_client, actual_income, actual_expense )`
+    )
+    .order("event_date", { ascending: false })
+    .returns<RawEventRow[]>();
 
-    if (error || !events) {
-      console.error("[fetchEvents]", error?.message);
-      return [];
-    }
-
-    const { data: fillCounts } = await supabase
-      .from("event_role_fill_counts")
-      .select("event_role_id, filled_count")
-      .returns<{ event_role_id: string; filled_count: number }[]>();
-
-    const filledByRole = new Map((fillCounts ?? []).map((f) => [f.event_role_id, f.filled_count]));
-
-    return events.map((e): AdminEvent => ({
-      id: e.id,
-      clientName: e.clients?.name ?? "לקוח לא ידוע",
-      location: e.location,
-      eventDate: e.event_date,
-      startTime: e.start_time,
-      endTime: e.end_time,
-      minRating: e.min_rating,
-      travelBudgetPerWorker: e.travel_budget_per_worker,
-      status: e.status,
-      roles: (e.event_roles ?? []).map((r): EventRoleView => ({
-        id: r.id,
-        roleName: r.role_name,
-        headcount: r.headcount,
-        filledCount: filledByRole.get(r.id) ?? 0,
-        baseRate: r.base_rate,
-      })),
-      closure: e.event_closures
-        ? {
-            totalHoursReported: e.event_closures.total_hours_reported,
-            travelPaidToWorkers: e.event_closures.travel_paid_to_workers,
-            travelChargedToClient: e.event_closures.travel_charged_to_client,
-            actualIncome: e.event_closures.actual_income,
-            actualExpense: e.event_closures.actual_expense,
-          }
-        : null,
-    }));
+  if (error || !events) {
+    console.error("[fetchEvents]", error?.message);
+    return [];
   }
+
+  const { data: fillCounts } = await supabase
+    .from("event_role_fill_counts")
+    .select("event_role_id, filled_count")
+    .returns<{ event_role_id: string; filled_count: number }[]>();
+
+  const filledByRole = new Map((fillCounts ?? []).map((f) => [f.event_role_id, f.filled_count]));
+
+  return events.map((e): AdminEvent => ({
+    id: e.id,
+    clientName: e.clients?.name ?? "לקוח לא ידוע",
+    location: e.location,
+    eventDate: e.event_date,
+    startTime: e.start_time,
+    endTime: null, // Hardcoded to null since it doesn't exist on the events table
+    minRating: e.min_rating,
+    travelBudgetPerWorker: e.travel_budget_per_worker,
+    status: e.status,
+    roles: (e.event_roles ?? []).map((r): EventRoleView => ({
+      id: r.id,
+      roleName: r.role_name,
+      headcount: r.headcount,
+      filledCount: filledByRole.get(r.id) ?? 0,
+      baseRate: r.base_rate,
+    })),
+    closure: e.event_closures
+      ? {
+          totalHoursReported: e.event_closures.total_hours_reported,
+          travelPaidToWorkers: e.event_closures.travel_paid_to_workers,
+          travelChargedToClient: e.event_closures.travel_charged_to_client,
+          actualIncome: e.event_closures.actual_income,
+          actualExpense: e.event_closures.actual_expense,
+        }
+      : null,
+  }));
+}
 
   export async function createEvent(
     input: CreateEventInput

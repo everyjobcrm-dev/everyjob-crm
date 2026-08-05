@@ -3,6 +3,7 @@
 import { Fragment, useState, useTransition } from "react";
 import { ChevronDown, ChevronUp, Trash2, Users, AlertTriangle } from "lucide-react";
 import { updateEventStatus, deleteEvent, type AdminEvent } from "@/app/admin/events/actions";
+export type { AdminEvent };
 import { FinancialClosureSummary } from "@/components/admin/financial-closure-summary";
 
 const STATUS_LABEL: Record<AdminEvent["status"], string> = {

@@ -5,12 +5,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getUserRole } from "@/lib/supabase/auth";
 
+
 type ActionResult = { success: true } | { success: false; error: string };
 
 type AdminAuth =
   | { ok: true; supabase: SupabaseClient; userId: string }
   | { ok: false; error: string };
 
+  
 /**
  * Re-verifies the caller is an authenticated admin on every action call.
  * The admin layout guard prevents *page* access, but Server Actions are
@@ -172,3 +174,5 @@ export async function broadcastMessage(title: string, body: string): Promise<Act
   revalidatePath("/employee/dashboard");
   return { success: true };
 }
+
+
