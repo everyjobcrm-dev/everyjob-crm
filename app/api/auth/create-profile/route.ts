@@ -96,12 +96,22 @@ export async function POST(request: Request) {
           first_name,
           last_name,
           tz,
+          birth_date,
+          phone_number,
+          gender,
+          email: userData.user.email,
           role,
         },
         { onConflict: "id" },
       );
 
       if (error) {
+        if (error.code === "23505") {
+          return NextResponse.json(
+            { success: false, error: "This ID number or email is already registered." },
+            { status: 400 },
+          );
+        }
         return NextResponse.json(
           { success: false, error: error.message },
           { status: 500 },
@@ -149,12 +159,22 @@ export async function POST(request: Request) {
         first_name,
         last_name,
         tz,
+        birth_date,
+        phone_number,
+        gender,
+        email: userData.user.email,
         role,
       },
       { onConflict: "id" },
     );
 
     if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { success: false, error: "This ID number or email is already registered." },
+          { status: 400 },
+        );
+      }
       return NextResponse.json(
         { success: false, error: error.message, details: error.details, hint: "Make sure the public.profiles table exists and the RLS policies allow inserts for the authenticated user." },
         { status: 500 },

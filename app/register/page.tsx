@@ -109,6 +109,25 @@ export default function RegisterPage() {
       return;
     }
 
+    try {
+      const registrationCheck = await fetch("/api/auth/check-registration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, tz: form.tz }),
+      });
+      const checkPayload = await registrationCheck.json();
+
+      if (!registrationCheck.ok || !checkPayload.success) {
+        setError(checkPayload.error ?? "פרטי ההרשמה כבר קיימים במערכת.");
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("לא הצלחנו לבדוק את פרטי ההרשמה. נסה שוב.");
+      setLoading(false);
+      return;
+    }
+
     const pendingProfilePayload = {
       first_name: form.first_name,
       last_name: form.last_name,
@@ -218,6 +237,12 @@ export default function RegisterPage() {
       .upsert(profilePayload, { onConflict: "id" });
 
     if (profileError) {
+      if (profileError.code === "23505") {
+        setError("תעודת הזהות או האימייל כבר רשומים במערכת.");
+        setVerificationLoading(false);
+        return;
+      }
+
       // Fallback to API route if direct insert fails (e.g., due to strict RLS)
       const profileResponse = await fetch("/api/auth/create-profile", {
         method: "POST",
@@ -231,7 +256,8 @@ export default function RegisterPage() {
       });
 
       if (!profileResponse.ok) {
-        setError("האימייל אומת, אך לא הצלחנו לשמור את הפרופיל כרגע.");
+        const profilePayload = await profileResponse.json().catch(() => null);
+        setError(profilePayload?.error ?? "האימייל אומת, אך לא הצלחנו לשמור את הפרופיל כרגע.");
         setVerificationLoading(false);
         return;
       }
