@@ -1,7 +1,6 @@
 import { CalendarClock, FileWarning, Users } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { CreateEventDialog } from "@/components/admin/create-event-dialog";
 import { BroadcastDialog } from "@/components/admin/broadcast-dialog";
 
 export default async function AdminDashboardPage() {
@@ -39,7 +38,6 @@ export default async function AdminDashboardPage() {
           <h1 className="font-display text-3xl text-cream">דף הבית</h1>
         </div>
         <div className="flex flex-wrap gap-3">
-          <CreateEventDialog />
           <BroadcastDialog />
         </div>
       </header>
