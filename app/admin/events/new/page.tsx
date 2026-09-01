@@ -1,3 +1,4 @@
+//app/admin/events/new/page.tsx
 import { fetchClients } from "@/app/admin/events/actions";
 import { CreateEventForm } from "@/components/events/CreateEventForm";
 

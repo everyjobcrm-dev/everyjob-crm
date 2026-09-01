@@ -175,4 +175,76 @@ export async function broadcastMessage(title: string, body: string): Promise<Act
   return { success: true };
 }
 
+// ── Phase 1.3: Shift Hours Approval ──────────────────────────────────
 
+export type ShiftSubmission = {
+  submission_id: string;
+  submission_status: "pending" | "approved" | "rejected";
+  reported_hours: number;
+  reported_start: string;
+  reported_end: string;
+  performance_rating: number | null;
+  submitted_at: string;
+  event_date: string;
+  location: string;
+  employee_name: string;
+  employee_tz: string;
+  submitted_by_name: string;
+};
+
+// Fetch pending submissions from our newly created view
+export async function getShiftSubmissions() {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return { success: false, error: "Database connection error" };
+
+  const { data, error } = await supabase
+    .from("v_shift_submissions_dashboard")
+    .select("*")
+    .order("submitted_at", { ascending: false });
+
+  if (error) return { success: false, error: "Failed to fetch shift submissions." };
+  
+  return { success: true, data: data as ShiftSubmission[] };
+}
+
+// State machine for Admin to approve/reject
+export async function reviewShiftSubmission(
+  submissionId: string,
+  status: "approved" | "rejected",
+  rejectionReason?: string
+) {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return { success: false, error: "Database connection error" };
+
+  // Auth & RBAC check
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "admin") {
+    return { success: false, error: "Admin privileges required." };
+  }
+
+  const updatePayload: any = {
+    status: status,
+    reviewed_by: user.id,
+    reviewed_at: new Date().toISOString(),
+  };
+
+  if (status === "rejected") {
+    if (!rejectionReason || rejectionReason.trim() === "") {
+      return { success: false, error: "Rejection reason is required." };
+    }
+    updatePayload.rejection_reason = rejectionReason;
+  }
+
+  const { error } = await supabase
+    .from("shift_hour_submissions")
+    .update(updatePayload)
+    .eq("id", submissionId);
+
+  if (error) return { success: false, error: "Failed to update status." };
+
+  revalidatePath("/admin");
+  return { success: true };
+}

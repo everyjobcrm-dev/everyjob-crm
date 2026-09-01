@@ -1,7 +1,9 @@
 import { CalendarClock, FileWarning, Users } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getShiftSubmissions } from "@/app/admin/actions";
 import { BroadcastDialog } from "@/components/admin/broadcast-dialog";
+import ShiftSubmissionsTable from "@/components/admin/shift-submissions-table";
 
 export default async function AdminDashboardPage() {
   const supabase = await createServerSupabaseClient();
@@ -23,6 +25,8 @@ export default async function AdminDashboardPage() {
       .gte("event_date", todayStr)
       .lte("event_date", weekStr),
   ]);
+
+  const { data: submissions } = await getShiftSubmissions();
 
   const metrics = [
     { label: "עובדים פעילים", value: activeEmployees ?? 0, icon: Users },
@@ -51,6 +55,11 @@ export default async function AdminDashboardPage() {
           </div>
         ))}
       </div>
+
+      <section className="mt-10">
+        <h2 className="font-display text-2xl text-cream mb-4">דיווחי שעות ממתינים לאישור</h2>
+        <ShiftSubmissionsTable initialSubmissions={submissions || []} />
+      </section>
     </div>
   );
 }
