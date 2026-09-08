@@ -265,6 +265,9 @@ export default function Home() {
                 src="/images/tamarImage.png"
                 alt=""
                 fill
+                priority
+                sizes="(max-width: 640px) 320px, 380px"
+                loading="eager"
                 className="object-cover object-top"
                 style={{ filter: "grayscale(0.35) sepia(0.16) contrast(1.08) brightness(1.03) saturate(1.05)" }}
               />

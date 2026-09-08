@@ -15,6 +15,8 @@ export type EmployeeEventRole = {
   filledCount: number;
   baseRate: number;
   myStatus: RegistrationStatus | null;
+  registrationId: string | null;
+  cancellationRequestedAt: string | null;
 };
 
 export type EmployeeEvent = {
@@ -84,14 +86,19 @@ export async function fetchEligibleEvents(): Promise<EmployeeEvent[]> {
       .returns<{ event_role_id: string; filled_count: number }[]>(),
     supabase
       .from("event_registrations")
-      .select("event_role_id, status")
+      .select("id, event_role_id, status, cancellation_requested_at")
       .eq("user_id", user.id)
       .in("event_role_id", roleIds)
-      .returns<{ event_role_id: string; status: RegistrationStatus }[]>(),
+      .returns<{ id: string; event_role_id: string; status: RegistrationStatus; cancellation_requested_at: string | null }[]>(),
   ]);
 
   const filledByRole = new Map((fillCounts ?? []).map((f) => [f.event_role_id, f.filled_count]));
-  const myStatusByRole = new Map((myRegs ?? []).map((r) => [r.event_role_id, r.status]));
+  
+  // Use event_role_id as key
+  const myStatusByRole = new Map((myRegs ?? []).map((r) => [
+    r.event_role_id, 
+    { status: r.status, id: r.id, cancellationRequestedAt: r.cancellation_requested_at }
+  ]));
 
   return events
     .map((e): EmployeeEvent => ({
@@ -104,16 +111,21 @@ export async function fetchEligibleEvents(): Promise<EmployeeEvent[]> {
       // effectively "pending_rates" for that role even if others are open)
       roles: (e.event_roles ?? [])
         .filter((r): r is RawRole & { base_rate: number } => r.base_rate != null)
-        .map((r) => ({
-          id: r.id,
-          roleName: r.role_name,
-          startTime: r.start_time,
-          endTime: r.end_time,
-          headcount: r.headcount,
-          filledCount: filledByRole.get(r.id) ?? 0,
-          baseRate: r.base_rate,
-          myStatus: myStatusByRole.get(r.id) ?? null,
-        })),
+        .map((r) => {
+          const myReg = myStatusByRole.get(r.id);
+          return {
+            id: r.id,
+            roleName: r.role_name,
+            startTime: r.start_time,
+            endTime: r.end_time,
+            headcount: r.headcount,
+            filledCount: filledByRole.get(r.id) ?? 0,
+            baseRate: r.base_rate,
+            myStatus: myReg?.status ?? null,
+            registrationId: myReg?.id ?? null,
+            cancellationRequestedAt: myReg?.cancellationRequestedAt ?? null,
+          };
+        }),
     }))
     .filter((e) => e.roles.length > 0);
 }
@@ -149,4 +161,27 @@ export async function registerForRole(
 
   revalidatePath("/employee/events");
   return { success: true, status: data.status };
+}
+
+export async function requestCancellation(registrationId: string): Promise<ActionResult> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return { success: false, error: "שגיאת תצורה בשרת." };
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "לא מחובר/ת למערכת." };
+
+  const { error } = await supabase
+    .from("event_registrations")
+    .update({ cancellation_requested_at: new Date().toISOString() })
+    .eq("id", registrationId)
+    .eq("user_id", user.id)
+    .not("status", "in", '("cancelled","no_show")');
+
+  if (error) {
+    console.error("[requestCancellation]", error.message);
+    return { success: false, error: "שגיאה בבקשת הביטול. ייתכן והמשמרת כבר בוטלה." };
+  }
+
+  revalidatePath("/employee/events");
+  return { success: true };
 }

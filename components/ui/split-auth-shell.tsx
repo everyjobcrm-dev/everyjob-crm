@@ -27,6 +27,8 @@ export function SplitAuthShell({ title, subtitle, children, error, success }: Sp
             alt="עבודה מקצועית"
             fill
             priority
+            sizes="44vw"
+            loading="eager"
             className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-white/35 to-slate-100/70" />

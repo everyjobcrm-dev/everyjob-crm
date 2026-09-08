@@ -87,6 +87,14 @@ Any insert against a column with a uniqueness constraint (e.g. duplicate client 
 ### 5.5 Server action organization
 New Admin-role logic belongs in `app/admin/actions.ts`. Don't fragment Admin server actions across multiple files "to keep files small" — the consolidation was a deliberate cleanup after the opposite pattern caused permission-check duplication and drift.
 
+### 5.6 Supabase Workflow & Automatic Type Syncing
+- All SQL scripts, triggers, functions, and views modified or created must be saved in the `supabase/` folder as `.sql` files.
+- After creating or modifying any database schema, function, or trigger (with user confirmation as per §8), automatically update the local TypeScript database types by running:
+  ```powershell
+  npx supabase gen types typescript --linked > types/supabase.ts
+  ```
+  And ensure `types/supabase.ts` is saved with UTF-8 encoding.
+
 ## 6. Role-Based Access Control (RBAC)
 
 Flat `role` column on `profiles`: `admin | manager | recruiter | employee`.
