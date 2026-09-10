@@ -86,11 +86,22 @@ export async function createClient(input: CreateClientInput): Promise<CreateClie
     }
   }
 
-  if (input.overtimeThresholdHours !== undefined && input.overtimeThresholdHours <= 0) {
-    return { success: false, error: "סף שעות נוספות חייב להיות מספר חיובי." };
+  if (input.overtimeThresholdHours !== undefined) {
+    if (input.overtimeThresholdHours <= 0) {
+      return { success: false, error: "סף שעות נוספות חייב להיות מספר חיובי." };
+    }
+    if (input.overtimeThresholdHours > 24) {
+      return { success: false, error: "סף שעות נוספות אינו יכול לעלות על 24 שעות." };
+    }
   }
-  if (input.minBillableHours !== undefined && input.minBillableHours < 0) {
-    return { success: false, error: "מינימום לחיוב משמרת חייב להיות מספר לא שלילי." };
+
+  if (input.minBillableHours !== undefined) {
+    if (input.minBillableHours < 0) {
+      return { success: false, error: "מינימום לחיוב משמרת חייב להיות מספר לא שלילי." };
+    }
+    if (input.minBillableHours > 24) {
+      return { success: false, error: "מינימום לחיוב משמרת אינו יכול לעלות על 24 שעות." };
+    }
   }
 
   const { data, error } = await auth.supabase
@@ -106,13 +117,23 @@ export async function createClient(input: CreateClientInput): Promise<CreateClie
       contacts: cleanContacts, // jsonb
       preferred_roles: cleanRoles, // jsonb
       status: "active",
+      created_by: auth.userId,
     })
-    .select("*, events(count)")
+    .select("*")
     .single();
 
   if (error || !data) {
     console.error("Supabase Insert Error:", error);
-    return { success: false, error: "יצירת הלקוח נכשלה. נסה/י שוב." };
+    if (error?.code === "23505") {
+      return { success: false, error: "קיים כבר לקוח עם שם או מספר חברה זה במערכת." };
+    }
+    if (error?.code === "22003") {
+      return { success: false, error: "אחד הערכים המספריים שהוזנו חורג מהטווח המותר במסד הנתונים." };
+    }
+    if (error?.code === "42501" || error?.message?.includes("row-level security")) {
+      return { success: false, error: "אין הרשאות RLS בבסיס הנתונים ליצירת לקוח. יש להריץ את סקריפט ה-RLS בסופבייס." };
+    }
+    return { success: false, error: error?.message || "יצירת הלקוח נכשלה. נסה/י שוב." };
   }
 
   revalidatePath("/admin/clients");
@@ -163,11 +184,22 @@ export async function updateClient(clientId: string, input: UpdateClientInput): 
     }
   }
 
-  if (input.overtimeThresholdHours !== undefined && input.overtimeThresholdHours <= 0) {
-    return { success: false, error: "סף שעות נוספות חייב להיות מספר חיובי." };
+  if (input.overtimeThresholdHours !== undefined) {
+    if (input.overtimeThresholdHours <= 0) {
+      return { success: false, error: "סף שעות נוספות חייב להיות מספר חיובי." };
+    }
+    if (input.overtimeThresholdHours > 24) {
+      return { success: false, error: "סף שעות נוספות אינו יכול לעלות על 24 שעות." };
+    }
   }
-  if (input.minBillableHours !== undefined && input.minBillableHours < 0) {
-    return { success: false, error: "מינימום לחיוב משמרת חייב להיות מספר לא שלילי." };
+
+  if (input.minBillableHours !== undefined) {
+    if (input.minBillableHours < 0) {
+      return { success: false, error: "מינימום לחיוב משמרת חייב להיות מספר לא שלילי." };
+    }
+    if (input.minBillableHours > 24) {
+      return { success: false, error: "מינימום לחיוב משמרת אינו יכול לעלות על 24 שעות." };
+    }
   }
 
   const { data, error } = await auth.supabase
@@ -185,12 +217,21 @@ export async function updateClient(clientId: string, input: UpdateClientInput): 
       status: input.status,
     })
     .eq("id", clientId)
-    .select("*, events(count)")
+    .select("*")
     .single();
 
   if (error || !data) {
     console.error("Supabase Update Error:", error);
-    return { success: false, error: "עדכון הלקוח נכשל. נסה/י שוב." };
+    if (error?.code === "23505") {
+      return { success: false, error: "קיים כבר לקוח עם שם או מספר חברה זה במערכת." };
+    }
+    if (error?.code === "22003") {
+      return { success: false, error: "אחד הערכים המספריים שהוזנו חורג מהטווח המותר (שעות מעל 24 או תעריף מעל 999)." };
+    }
+    if (error?.code === "42501" || error?.message?.includes("row-level security")) {
+      return { success: false, error: "אין הרשאות RLS בבסיס הנתונים לעדכון לקוח. יש להריץ את סקריפט ה-RLS בסופבייס." };
+    }
+    return { success: false, error: error?.message || "עדכון הלקוח נכשל. נסה/י שוב." };
   }
 
   revalidatePath("/admin/clients");

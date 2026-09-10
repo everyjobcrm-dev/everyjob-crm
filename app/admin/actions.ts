@@ -61,20 +61,15 @@ export async function createEvent(input: CreateEventInput): Promise<ActionResult
   }
 
   const { error } = await auth.supabase.from("events").insert({
-    title: input.title.trim(),
     location: input.location.trim(),
     event_date: input.eventDate,
     start_time: input.startTime,
-    end_time: input.endTime,
-    wage_rate: input.wageRate,
-    spots_total: input.spotsTotal,
     dress_code: input.dressCode?.trim() || null,
     status: "open",
-    created_by: auth.userId,
   });
 
   if (error) {
-    return { success: false, error: "יצירת האירוע נכשלה. נסה/י שוב." };
+    return { success: false, error: error.message || "יצירת האירוע נכשלה. נסה/י שוב." };
   }
 
   revalidatePath("/admin/events");

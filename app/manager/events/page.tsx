@@ -1,4 +1,4 @@
-﻿import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Users, AlertCircle } from "lucide-react";
 
@@ -35,9 +35,14 @@ export default async function ManagerEventsPage() {
         {events.map((event) => {
           const pending = pendingCountByEvent.get(event.id) || 0;
           return (
-            <Link key={event.id} href={/manager/events/}>
+            <Link key={event.id} href={`/manager/events/${event.id}`}>
               <div className="rounded-xl border border-brass/10 bg-surface p-5 transition-colors hover:bg-surface2 cursor-pointer relative">
-                <p className="text-xs font-semibold text-indigo-400">{event.clients?.name}</p>
+                <p className="text-xs font-semibold text-indigo-400">
+                  {(() => {
+                    const c = Array.isArray(event.clients) ? event.clients[0] : event.clients;
+                    return (c && typeof c === "object" && "name" in c ? (c as { name: string }).name : null) || "לקוח";
+                  })()}
+                </p>
                 <h3 className="font-display text-lg text-cream">{event.location}</h3>
                 <p className="mt-0.5 text-xs text-cream/50">{event.event_date}</p>
                 

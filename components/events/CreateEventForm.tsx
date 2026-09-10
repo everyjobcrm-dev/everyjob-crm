@@ -161,12 +161,7 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
               <Field label="שעת התחלה כללית" error={errors.start_time?.message}>
                 <input type="time" {...register("start_time")} className={inputClass} />
               </Field>
-              <Field label="שעת סיום כללית">
-                <p className="rounded-xl border border-dashed border-brass/15 bg-surface2 px-3 py-2.5 text-sm text-cream/40">
-                  ייקבע בעת סגירת האירוע
-                </p>
-              </Field>
-              <Field label="מיקום" error={errors.location?.message} span={2}>
+              <Field label="מיקום" error={errors.location?.message}>
                 <input
                   {...register("location", {
                     onChange: () => { locationTouched.current = true; }

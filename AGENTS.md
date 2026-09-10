@@ -88,7 +88,7 @@ Any insert against a column with a uniqueness constraint (e.g. duplicate client 
 New Admin-role logic belongs in `app/admin/actions.ts`. Don't fragment Admin server actions across multiple files "to keep files small" — the consolidation was a deliberate cleanup after the opposite pattern caused permission-check duplication and drift.
 
 ### 5.6 Supabase Workflow & Automatic Type Syncing
-- All SQL scripts, triggers, functions, and views modified or created must be saved in the `supabase/` folder as `.sql` files.
+- All SQL scripts, triggers, functions, procedures, and views modified, created, or provided for Supabase MUST be saved as `.sql` files in the `supabase/` folder in this repository.
 - After creating or modifying any database schema, function, or trigger (with user confirmation as per §8), automatically update the local TypeScript database types by running:
   ```powershell
   npx supabase gen types typescript --linked > types/supabase.ts

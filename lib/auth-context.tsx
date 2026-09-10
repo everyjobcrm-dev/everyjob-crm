@@ -13,6 +13,7 @@ type ProfileState = {
   email: string | null;
   role: string | null;
   isRecruiter: boolean;
+  isFieldManager: boolean;
 };
 
 type AuthContextValue = {
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: data.email ?? null,
         role: data.role ?? null,
         isRecruiter: data.role === "recruiter",
+        isFieldManager: data.role === "manager",
       });
       return;
     }

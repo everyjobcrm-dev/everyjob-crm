@@ -78,7 +78,7 @@ function RoleRow({ role }: { role: EmployeeEvent["roles"][number] }) {
     });
   }
 
-  const canRequestCancel = status === "approved" || status === "registered" || status === "confirmed" || status === "pending";
+  const canRequestCancel = status === "approved" || status === "pending";
 
   return (
     <div className="rounded-xl border border-brass/10 bg-surface2 p-3">

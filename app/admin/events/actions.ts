@@ -182,23 +182,20 @@ export async function fetchEvents(): Promise<AdminEvent[]> {
         client_id: event.client_id,
         event_date: event.event_date,
         start_time: event.start_time,
-        end_time: event.end_time || null, // recorded later, at closure
         location: event.location,
         notes: event.notes || null,
         dress_code: event.dress_code || null,
         min_age: event.min_age ?? null,
         min_rating: event.min_rating ?? null,
         travel_budget_per_worker: event.travel_budget_per_worker ?? 0,
-        spots_total: spotsTotal,
         status,
-        created_by: auth.profile!.id,
       })
       .select("id")
       .single();
 
     if (eventError || !eventRow) {
       console.error("[createEvent] event insert failed", eventError?.message);
-      return { success: false, error: "יצירת האירוע נכשלה. נסה/י שוב." };
+      return { success: false, error: eventError?.message || "יצירת האירוע נכשלה. נסה/י שוב." };
     }
 
     const rolesPayload = roles.map((r) => ({

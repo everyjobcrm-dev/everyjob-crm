@@ -272,6 +272,7 @@ export function AddClientDialog({
                   id="cl-overtime"
                   type="number"
                   min="0"
+                  max="24"
                   step="0.5"
                   value={overtimeThreshold}
                   onChange={(e) => setOvertimeThreshold(e.target.value ? Number(e.target.value) : "")}
@@ -292,6 +293,7 @@ export function AddClientDialog({
                   id="cl-minbill"
                   type="number"
                   min="0"
+                  max="24"
                   step="0.5"
                   value={minBillable}
                   onChange={(e) => setMinBillable(e.target.value ? Number(e.target.value) : "")}

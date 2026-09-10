@@ -30,8 +30,8 @@ Last updated: August 2026
 
 ## Phase 3: Events Management
 - Done — Multi-role roster, derived staffing status, travel budget, flexible `base_rate` (`pending_rates`)
-- In Progress — Waitlist: signup for full shifts with automatic promotion on cancellation
-- In Progress — `cancellation_requests`: controlled cancellation flow, not self-service
+- Done — Waitlist: signup for full shifts with automatic promotion trigger on cancellation (`auto_promote_from_waitlist`)
+- Done — `cancellation_requests`: controlled cancellation flow, not self-service
 - Planned — Smart filtering by age and authorized roles
 
 ## Phase 4: Clients Management
@@ -42,8 +42,8 @@ Last updated: August 2026
 ## Phase 5: Role-Based Interfaces
 - Employee — Planned: home screen, digital Form 101 signature, bank details
 - Recruiter — Planned: assignment management; In Progress: bonus wallet with monthly withdrawal cap
-- Field Manager — In Progress: attendance entry, employee ratings, final attendance report
-- Admin — Planned: finance and pricing management; Planned: bulk Form 101 deletion
+- Field Manager — Done: attendance entry, employee ratings, final attendance report
+- Admin — Done: shift hour report approval board; Planned: finance and pricing management; Planned: bulk Form 101 deletion
 
 ## Phase 6: Payroll & Billing
 Starts immediately after Phases 1 and 2 are complete.
