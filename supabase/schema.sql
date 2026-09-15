@@ -93,7 +93,7 @@ CREATE TABLE public.event_roles (
   role_name text NOT NULL,
   headcount integer NOT NULL CHECK (headcount > 0),
   start_time time without time zone NOT NULL,
-  end_time time without time zone NOT NULL,
+  end_time time without time zone,
   base_rate numeric CHECK (base_rate IS NULL OR base_rate > 0::numeric),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   wage_to_worker numeric DEFAULT 0,

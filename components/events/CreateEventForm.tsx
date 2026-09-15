@@ -376,7 +376,7 @@ function RoleRow({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="col-span-2 sm:col-span-1">
           <span className="mb-1 block text-[11px] font-semibold text-cream/45">כמות</span>
           <Controller
@@ -412,11 +412,6 @@ function RoleRow({
           <span className="mb-1 block text-[11px] font-semibold text-cream/45">התחלה</span>
           <input type="time" {...register(`roles.${index}.start_time` as const)} className={inputClass} />
           {error?.start_time && <p className="mt-1 text-xs text-rose-400">{error.start_time.message}</p>}
-        </div>
-        <div>
-          <span className="mb-1 block text-[11px] font-semibold text-cream/45">סיום</span>
-          <input type="time" {...register(`roles.${index}.end_time` as const)} className={inputClass} />
-          {error?.end_time && <p className="mt-1 text-xs text-rose-400">{error.end_time.message}</p>}
         </div>
         <div>
           <span className="mb-1 block text-[11px] font-semibold text-cream/45">תעריף לשעה (₪)</span>

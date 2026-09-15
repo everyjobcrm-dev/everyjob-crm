@@ -14,7 +14,7 @@ export const eventRoleSchema = z.object({
   role_name: z.string().min(1, "יש להזין שם תפקיד"),
   headcount: z.coerce.number().int().min(1, "כמות חייבת להיות לפחות 1"),
   start_time: z.string().min(1, "יש להזין שעת התחלה"),
-  end_time: z.string().min(1, "יש להזין שעת סיום"),
+  end_time: z.string().optional(),
   base_rate: nullableNumber(z.coerce.number().positive("תעריף לא תקין")),
 });
 
@@ -60,6 +60,5 @@ export const emptyRole: EventRoleFormValues = {
   role_name: "",
   headcount: 1,
   start_time: "18:00",
-  end_time: "23:00",
   base_rate: null,
 };

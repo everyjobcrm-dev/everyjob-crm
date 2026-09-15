@@ -1,7 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# everyJob CRM
 
-## Getting Started
+A mobile-first, role-based workforce management and CRM platform tailored for shift-based staffing. everyJob handles the entire lifecycle of event staffing—from employee onboarding and shift registration to attendance tracking, recruiter bonuses, and client billing/payroll reporting.
 
+---
+
+## 🚀 Getting Started
+
+This is a [Next.js](https://nextjs.org) project bootstrapped with `create-next-app`. 
+
+### Prerequisites
+Make sure you have your `.env.local` file configured with the required Supabase URL and Anon Key before starting the development server.
+
+### Running the Development Server
 First, run the development server:
 
 ```bash
@@ -12,25 +22,106 @@ yarn dev
 pnpm dev
 # or
 bun dev
-```
+Open http://localhost:3000 with your browser to see the result. You can start editing the page by modifying app/page.tsx. The page auto-updates as you edit the file.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+🛠 Tech Stack & Infrastructure
+Framework: Next.js (App Router) + TypeScript
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Database & Auth: Supabase (PostgreSQL) with strict Row Level Security (RLS)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Styling: Tailwind CSS v4 with native RTL support (logical properties)
 
-## Learn More
+Design System: Electric Indigo & Hyper Lime
 
-To learn more about Next.js, take a look at the following resources:
+Fonts: Geist (automatically optimized via next/font)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Architecture: Web Application (Mobile-First approach), with a future roadmap for a native Expo app.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+👥 Role-Based Access Control (RBAC)
+The system is built on a strict, four-tier permission hierarchy:
 
-## Deploy on Vercel
+Admin (Super Admin): Full system control. Requires 2FA for login. Configures clients, sets billing rates, manages recruiter bonuses, and approves final hour reports. The only role with access to sensitive employee financial data and tax documents (Form 101).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Field Manager ("Skill"): Manages the live event. Approves/rejects shift requests, manually enters actual attendance hours at shift close, rates employees, and submits the consolidated hour report to the Admin. No access to financial or tax data.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Recruiter: Creates events and recruits employees. Sets hourly rates for their recruits and manages their own "recruiter bonus wallet."
+
+Employee: End user. Browses and requests shifts, joins waitlists, fills out digital Form 101s, and views expected monthly pay. Cannot unilaterally cancel a shift once assigned.
+
+✨ Key Features
+📅 Event & Shift Management
+Smart Staffing: Employees view shifts matched to their authorized roles and age.
+
+Waitlist System: Automatic promotion from the waitlist if a spot opens up (auto_promote_from_waitlist trigger).
+
+Controlled Cancellations: Employees must request a cancellation; they cannot drop a shift without Manager/Recruiter/Admin approval.
+
+💰 Recruiter Bonus Wallet
+Recruiters earn a configurable bonus (e.g., ₪1/hour) for every employee they recruit.
+
+Bonuses are held in a digital wallet and carry over to future months if the recruiter doesn't work.
+
+Admins can set a redemption cap (maximum bonus drawn per shift) to regulate payroll expenses.
+
+🏢 Client & Billing Management (CRM)
+Full CRUD for clients with smart duplicate prevention.
+
+Custom price lists per client based on employee roles.
+
+Automated internal generation of overtime billing rules and travel costs (exported via Excel; decoupled from external accounting APIs).
+
+🔒 Security, Compliance & Privacy
+2FA Requirement: Mandatory for Admins to view sensitive documents.
+
+Data Protection: Routine, proactive deletion (monthly cron job/purge) of Form 101 details to minimize the legal risk of holding sensitive tax data.
+
+Strict RLS: All database queries are filtered at the Postgres level via profiles.role.
+
+🗺 Roadmap & Development Status
+✅ Completed (Done)
+Next.js + Supabase core infrastructure.
+
+Complete data architecture: business triggers, shift_hour_submissions, recruiter_bonuses.
+
+Single Source of Truth: Views created for staffing-status calculation and hour-approval boards (never storing staffing status, always deriving it from event_role_fill_counts).
+
+RBAC implementation with independent permission checks on every server action.
+
+Field Manager attendance entry, employee ratings, and final report submission.
+
+Waitlist and controlled shift cancellation flows.
+
+🔄 In Progress
+Admin 2FA: SMS/Email two-factor authentication to unlock Form 101 exposure.
+
+Recruiter Wallet: Capping monthly/shift bonus withdrawals.
+
+📅 Planned
+Employee Portal: Digital Form 101 signature, bank details entry, and home screen UI.
+
+Payroll & Billing Engine: Excel exports, compliance dashboards (missing Form 101s/bank details), and employee payroll breakdown (regular, 125%, 150%, travel, bonuses).
+
+Security Enhancements: Database encryption at rest; strict environment separation (Dev/Staging/Prod).
+
+Future Expansion (Phase 2): Native mobile app via Expo, GPS verification for Field Managers, and automated WhatsApp/SMS notifications.
+
+🏗 Architecture Decisions (Dev Notes)
+Staffing Status: We never store staffing status directly in the database. It is dynamically derived via the event_role_fill_counts view.
+
+Form Management: Zod / React Hook Form type-inference is handled via a z.input<>/z.output<> split using the three-generic useForm pattern.
+
+Admin Actions: All Admin server actions are cleanly consolidated into app/admin/actions.ts.
+
+RLS Policies: Explicitly reference profiles.role rather than relying on secondary tables.
+
+📚 Learn More About Next.js
+To learn more about the underlying framework, take a look at the following resources:
+
+Next.js Documentation - learn about Next.js features and API.
+
+Learn Next.js - an interactive Next.js tutorial.
+
+🚀 Deploy on Vercel
+The easiest way to deploy your Next.js app is to use the Vercel Platform from the creators of Next.js. Check out the Next.js deployment documentation for more details.
+
+everyJob CRM is designed for compliance with Israeli labor and privacy laws, specifically tailoring workflows to handle Form 101, statutory overtime (125%/150%), and travel budgets.

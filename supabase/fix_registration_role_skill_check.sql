@@ -1,10 +1,3 @@
--- Step 2 — separate run
-ALTER TABLE public.event_registrations ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY er_employee_select_own ON public.event_registrations
-  FOR SELECT
-  USING (user_id = auth.uid());
-
 CREATE OR REPLACE FUNCTION public.register_for_event_role(p_event_role_id uuid)
 RETURNS public.event_registrations
 LANGUAGE plpgsql
@@ -24,7 +17,6 @@ BEGIN
     RAISE EXCEPTION 'not_authenticated';
   END IF;
 
-  -- lock the role row so concurrent registrations serialize on capacity
   SELECT * INTO v_role FROM public.event_roles WHERE id = p_event_role_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'role_not_found';

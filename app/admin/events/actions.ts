@@ -203,7 +203,7 @@ export async function fetchEvents(): Promise<AdminEvent[]> {
       role_name: r.role_name,
       headcount: r.headcount,
       start_time: r.start_time,
-      end_time: r.end_time,
+      end_time: r.end_time ?? null,
       base_rate: r.base_rate ?? null,
     }));
 

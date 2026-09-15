@@ -10,7 +10,7 @@ export type EmployeeEventRole = {
   id: string;
   roleName: string;
   startTime: string;
-  endTime: string;
+  endTime: string | null;
   headcount: number;
   filledCount: number;
   baseRate: number;
@@ -37,7 +37,7 @@ type RawRole = {
   role_name: string;
   headcount: number;
   start_time: string;
-  end_time: string;
+  end_time: string | null;
   base_rate: number | null;
 };
 
@@ -46,9 +46,24 @@ type RawEvent = {
   location: string;
   event_date: string;
   notes: string | null;
+  min_age: number | null;
+  min_rating: number | null;
   clients: { name: string } | null;
   event_roles: RawRole[] | null;
 };
+
+function getAge(birthDate: string): number | null {
+  const [birthYear, birthMonth, birthDay] = birthDate.split("-").map(Number);
+  if (!birthYear || !birthMonth || !birthDay) return null;
+
+  const today = new Date();
+  let age = today.getUTCFullYear() - birthYear;
+  const birthdayPassed =
+    today.getUTCMonth() + 1 > birthMonth ||
+    (today.getUTCMonth() + 1 === birthMonth && today.getUTCDate() >= birthDay);
+  if (!birthdayPassed) age -= 1;
+  return age;
+}
 
 export async function fetchEligibleEvents(): Promise<EmployeeEvent[]> {
   const supabase = await createServerSupabaseClient();
@@ -59,10 +74,24 @@ export async function fetchEligibleEvents(): Promise<EmployeeEvent[]> {
   } = await supabase.auth.getUser();
   if (!user) return [];
 
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("birth_date, average_rating")
+    .eq("id", user.id)
+    .single<{ birth_date: string | null; average_rating: number | null }>();
+
+  if (profileError || !profile) {
+    console.error("[fetchEligibleEvents] profile lookup failed", profileError?.message);
+    return [];
+  }
+
+  const employeeAge = profile.birth_date ? getAge(profile.birth_date) : null;
+  const employeeRating = profile.average_rating ?? 0;
+
   const { data: events, error } = await supabase
     .from("events")
     .select(
-      `id, location, event_date, notes,
+      `id, location, event_date, notes, min_age, min_rating,
        clients ( name ),
        event_roles ( id, role_name, headcount, start_time, end_time, base_rate )`
     )
@@ -75,7 +104,15 @@ export async function fetchEligibleEvents(): Promise<EmployeeEvent[]> {
     return [];
   }
 
-  const roleIds = events.flatMap((e) => (e.event_roles ?? []).map((r) => r.id));
+  const eligibleEvents = events.filter((event) => {
+    const meetsAgeRequirement =
+      event.min_age == null || (employeeAge != null && employeeAge >= event.min_age);
+    const meetsRatingRequirement =
+      event.min_rating == null || employeeRating >= event.min_rating;
+    return meetsAgeRequirement && meetsRatingRequirement;
+  });
+
+  const roleIds = eligibleEvents.flatMap((event) => (event.event_roles ?? []).map((role) => role.id));
   if (roleIds.length === 0) return [];
 
   const [{ data: fillCounts }, { data: myRegs }] = await Promise.all([
@@ -92,42 +129,42 @@ export async function fetchEligibleEvents(): Promise<EmployeeEvent[]> {
       .returns<{ id: string; event_role_id: string; status: RegistrationStatus; cancellation_requested_at: string | null }[]>(),
   ]);
 
-  const filledByRole = new Map((fillCounts ?? []).map((f) => [f.event_role_id, f.filled_count]));
-  
-  // Use event_role_id as key
-  const myStatusByRole = new Map((myRegs ?? []).map((r) => [
-    r.event_role_id, 
-    { status: r.status, id: r.id, cancellationRequestedAt: r.cancellation_requested_at }
+  const filledByRole = new Map((fillCounts ?? []).map((fill) => [fill.event_role_id, fill.filled_count]));
+  const myStatusByRole = new Map((myRegs ?? []).map((registration) => [
+    registration.event_role_id,
+    {
+      status: registration.status,
+      id: registration.id,
+      cancellationRequestedAt: registration.cancellation_requested_at,
+    },
   ]));
 
-  return events
-    .map((e): EmployeeEvent => ({
-      id: e.id,
-      clientName: e.clients?.name ?? "לקוח",
-      location: e.location,
-      eventDate: e.event_date,
-      notes: e.notes,
-      // roles without a rate yet aren't visible to employees (event is
-      // effectively "pending_rates" for that role even if others are open)
-      roles: (e.event_roles ?? [])
-        .filter((r): r is RawRole & { base_rate: number } => r.base_rate != null)
-        .map((r) => {
-          const myReg = myStatusByRole.get(r.id);
+  return eligibleEvents
+    .map((event): EmployeeEvent => ({
+      id: event.id,
+      clientName: event.clients?.name ?? "לקוח",
+      location: event.location,
+      eventDate: event.event_date,
+      notes: event.notes,
+      roles: (event.event_roles ?? [])
+        .filter((role): role is RawRole & { base_rate: number } => role.base_rate != null)
+        .map((role) => {
+          const myReg = myStatusByRole.get(role.id);
           return {
-            id: r.id,
-            roleName: r.role_name,
-            startTime: r.start_time,
-            endTime: r.end_time,
-            headcount: r.headcount,
-            filledCount: filledByRole.get(r.id) ?? 0,
-            baseRate: r.base_rate,
+            id: role.id,
+            roleName: role.role_name,
+            startTime: role.start_time,
+            endTime: role.end_time,
+            headcount: role.headcount,
+            filledCount: filledByRole.get(role.id) ?? 0,
+            baseRate: role.base_rate,
             myStatus: myReg?.status ?? null,
             registrationId: myReg?.id ?? null,
             cancellationRequestedAt: myReg?.cancellationRequestedAt ?? null,
           };
         }),
     }))
-    .filter((e) => e.roles.length > 0);
+    .filter((event) => event.roles.length > 0);
 }
 
 export async function registerForRole(
@@ -149,6 +186,15 @@ export async function registerForRole(
     console.error("[registerForRole]", error.message);
     if (error.message.includes("already_registered")) {
       return { success: false, error: "כבר נרשמת לתפקיד זה." };
+    }
+    if (error.message.includes("not_eligible: age")) {
+      return { success: false, error: "לא ניתן להירשם: יש לעדכן תאריך לידה ולעמוד בגיל המינימלי לאירוע." };
+    }
+    if (error.message.includes("not_eligible: rating")) {
+      return { success: false, error: "לא ניתן להירשם: הדירוג שלך נמוך מהדירוג המינימלי לאירוע." };
+    }
+    if (error.message.includes("not_eligible: role_skill")) {
+      return { success: false, error: "לא ניתן להירשם: הרשאת התפקיד שלך עדיין לא הוגדרה במערכת." };
     }
     if (error.message.includes("not_eligible")) {
       return { success: false, error: "אינך עומד/ת בתנאי הקבלה למשמרת זו." };

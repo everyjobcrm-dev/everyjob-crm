@@ -87,7 +87,7 @@ function RoleRow({ role }: { role: EmployeeEvent["roles"][number] }) {
           <p className="text-sm font-semibold text-cream">{role.roleName}</p>
           <p className="flex items-center gap-1 text-xs text-cream/45">
             <Clock3 className="h-3 w-3" aria-hidden="true" />
-            {role.startTime}–{role.endTime} · ₪{role.baseRate}/ש&apos;
+            {role.startTime}–{role.endTime ?? "טרם נקבע"} · ₪{role.baseRate}/ש&apos;
           </p>
         </div>
         <span
