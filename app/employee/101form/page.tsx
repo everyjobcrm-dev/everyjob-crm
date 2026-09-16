@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, LoaderCircle, ShieldCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -233,54 +233,22 @@ function hasValue(value: string | boolean) {
 
 export default function Form101Page() {
   const { user, profile, loading } = useAuth();
-  const [form, setForm] = useState<FormState>(initialForm);
+  const autoPopulatedForm = useMemo(() => {
+    const populated = buildAutoPopulatedForm(profile, user);
+    return {
+      ...initialForm,
+      ...populated,
+      eligibleChildren: isEligibleChildByBirthDate(populated.dateOfBirth),
+    };
+  }, [profile, user]);
+
+  const [form, setForm] = useState<FormState>(() => ({
+    ...autoPopulatedForm,
+  }));
+
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const autoPopulatedForm = buildAutoPopulatedForm(profile, user);
-    setForm((current) => ({
-      ...current,
-      ...autoPopulatedForm,
-      employerName: current.employerName || autoPopulatedForm.employerName,
-      employerTaxFileNumber: current.employerTaxFileNumber || autoPopulatedForm.employerTaxFileNumber,
-      firstName: current.firstName || autoPopulatedForm.firstName,
-      lastName: current.lastName || autoPopulatedForm.lastName,
-      identityNumber: current.identityNumber || autoPopulatedForm.identityNumber,
-      dateOfBirth: current.dateOfBirth || autoPopulatedForm.dateOfBirth,
-      dateOfImmigration: current.dateOfImmigration || autoPopulatedForm.dateOfImmigration,
-      gender: current.gender || autoPopulatedForm.gender,
-      israeliResidentStatus: current.israeliResidentStatus || autoPopulatedForm.israeliResidentStatus,
-      street: current.street || autoPopulatedForm.street,
-      houseNumber: current.houseNumber || autoPopulatedForm.houseNumber,
-      apartment: current.apartment || autoPopulatedForm.apartment,
-      city: current.city || autoPopulatedForm.city,
-      postalCode: current.postalCode || autoPopulatedForm.postalCode,
-      email: current.email || autoPopulatedForm.email,
-      mobilePhone: current.mobilePhone || autoPopulatedForm.mobilePhone,
-      maritalStatus: current.maritalStatus || autoPopulatedForm.maritalStatus,
-      spouseName: current.spouseName || autoPopulatedForm.spouseName,
-      spouseId: current.spouseId || autoPopulatedForm.spouseId,
-      spouseEmploymentStatus: current.spouseEmploymentStatus || autoPopulatedForm.spouseEmploymentStatus,
-      employmentStartDate: current.employmentStartDate || autoPopulatedForm.employmentStartDate,
-      israeliResident: current.israeliResident || autoPopulatedForm.israeliResident,
-      newImmigrant: current.newImmigrant || autoPopulatedForm.newImmigrant,
-      returningResident: current.returningResident || autoPopulatedForm.returningResident,
-      singleParent: current.singleParent || autoPopulatedForm.singleParent,
-      eligibleChildren: isEligibleChildByBirthDate(current.dateOfBirth || autoPopulatedForm.dateOfBirth),
-      disabledEmployee: current.disabledEmployee || autoPopulatedForm.disabledEmployee,
-      disabledChild: current.disabledChild || autoPopulatedForm.disabledChild,
-      academicDegreeEligibility:
-        current.academicDegreeEligibility || autoPopulatedForm.academicDegreeEligibility,
-      releasedSoldier: current.releasedSoldier || autoPopulatedForm.releasedSoldier,
-      taxCoordination: current.taxCoordination || autoPopulatedForm.taxCoordination,
-      additionalEmployer: current.additionalEmployer || autoPopulatedForm.additionalEmployer,
-      pensionIncome: current.pensionIncome || autoPopulatedForm.pensionIncome,
-      otherTaxCreditEligibility:
-        current.otherTaxCreditEligibility || autoPopulatedForm.otherTaxCreditEligibility,
-    }));
-  }, [profile, user]);
 
   const displayName = (() => {
     const profileName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim();

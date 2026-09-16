@@ -220,8 +220,13 @@ export async function reviewShiftSubmission(
     return { success: false, error: "Admin privileges required." };
   }
 
-  const updatePayload: any = {
-    status: status,
+  const updatePayload: {
+    status: "approved" | "rejected";
+    reviewed_by: string;
+    reviewed_at: string;
+    rejection_reason?: string;
+  } = {
+    status,
     reviewed_by: user.id,
     reviewed_at: new Date().toISOString(),
   };

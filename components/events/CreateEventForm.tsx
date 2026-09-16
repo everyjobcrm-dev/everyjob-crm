@@ -1,9 +1,10 @@
 "use client";
 //components/events/CreateEventForm.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   useForm,
   useFieldArray,
+  useWatch,
   Controller,
   type Control,
   type UseFormRegister,
@@ -38,7 +39,6 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
     register,
     control,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors },
     // CreateEventFormValues = the raw, in-progress shape (numbers can be
@@ -59,20 +59,22 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "roles" });
-  const roles = watch("roles");
-  const missingRateCount = roles?.filter((r) => r.base_rate == null || r.base_rate === "").length ?? 0;
+  const roles = useWatch({ control, name: "roles" });
+  const missingRateCount = roles?.filter((r: EventRoleFormValues) => r.base_rate == null || r.base_rate === "").length ?? 0;
 
   // --- Address Prefill Logic ---
-  const clientId = watch("client_id");
-  const locationTouched = useRef(false);
+  const clientId = useWatch({ control, name: "client_id" });
+  const currentLocation = useWatch({ control, name: "location" });
 
   useEffect(() => {
-    if (locationTouched.current) return;
     const client = clients.find((c) => c.id === clientId);
-    if (client?.address) {
-      setValue("location", client.address);
-    }
-  }, [clientId, clients, setValue]);
+    if (!client?.address || currentLocation) return;
+
+    setValue("location", client.address, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  }, [clientId, clients, currentLocation, setValue]);
 
   // Receives the parsed/coerced CreateEventInput (numbers, nulls) — not
   // the raw form state — because of the third useForm generic above.
@@ -163,9 +165,7 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
               </Field>
               <Field label="מיקום" error={errors.location?.message}>
                 <input
-                  {...register("location", {
-                    onChange: () => { locationTouched.current = true; }
-                  })}
+                  {...register("location")}
                   placeholder="לדוגמה: אולמי הגן, כפר סבא"
                   className={inputClass}
                 />

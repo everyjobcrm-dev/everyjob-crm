@@ -210,7 +210,7 @@ function RegRow({
                   : reg.submission.status === "rejected"
                   ? "נדחה"
                   : "דיווח הוגש"}
-                ({reg.submission.reported_hours} ש')
+                ({reg.submission.reported_hours} שעות)
               </span>
             ) : null}
 
@@ -328,7 +328,7 @@ function AttendanceModal({ reg, onClose }: { reg: Reg; onClose: () => void }) {
 
           <div>
             <label className="block text-xs font-medium text-cream/70 mb-1">
-              סה"כ שעות מדווחות
+              סה״כ שעות מדווחות
             </label>
             <input
               type="number"

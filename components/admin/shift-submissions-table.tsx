@@ -62,7 +62,7 @@ export default function ShiftSubmissionsTable({
               <th className="px-5 py-3 text-xs font-semibold text-cream/70 uppercase tracking-wider">אירוע ומיקום</th>
               <th className="px-5 py-3 text-xs font-semibold text-cream/70 uppercase tracking-wider">שעות מדווחות</th>
               <th className="px-5 py-3 text-xs font-semibold text-cream/70 uppercase tracking-wider">דירוג ביצוע</th>
-              <th className="px-5 py-3 text-xs font-semibold text-cream/70 uppercase tracking-wider">דווח ע"י</th>
+              <th className="px-5 py-3 text-xs font-semibold text-cream/70 uppercase tracking-wider">דווח על ידי</th>
               <th className="px-5 py-3 text-xs font-semibold text-cream/70 uppercase tracking-wider">פעולות</th>
             </tr>
           </thead>
@@ -78,7 +78,7 @@ export default function ShiftSubmissionsTable({
                 <tr key={sub.submission_id} className="hover:bg-surface2/50 transition-colors">
                   <td className="px-5 py-4 text-xs text-cream">
                     <div className="font-semibold text-cream">{sub.employee_name}</div>
-                    <div className="text-[11px] text-cream/50">ת"ז: {sub.employee_tz}</div>
+                    <div className="text-[11px] text-cream/50">תעודת זהות: {sub.employee_tz}</div>
                   </td>
                   <td className="px-5 py-4 text-xs text-cream/80">
                     <div className="font-medium">{sub.location}</div>

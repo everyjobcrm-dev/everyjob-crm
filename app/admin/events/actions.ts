@@ -174,7 +174,6 @@ export async function fetchEvents(): Promise<AdminEvent[]> {
 
     const missingRates = roles.some((r) => r.base_rate == null);
     const status: "pending_rates" | "open" = missingRates ? "pending_rates" : "open";
-    const spotsTotal = roles.reduce((sum, r) => sum + r.headcount, 0);
 
     const { data: eventRow, error: eventError } = await auth.supabase
       .from("events")

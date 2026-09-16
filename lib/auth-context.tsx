@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getUserProfile } from "@/lib/supabase/auth";
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<ProfileState | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const supabase = createSupabaseBrowserClient();
 
   const refreshProfile = async () => {
     if (!supabase || !user?.id) {
@@ -71,17 +71,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!supabase) {
-      setLoading(false);
       return;
     }
 
     const initialize = async () => {
       const result = await supabase.auth.getSession();
       const session = result.data.session;
+      const activeUser = session?.user ?? null;
 
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await refreshProfile();
+      setUser(activeUser);
+      if (activeUser) {
+        const data = await getUserProfile(supabase, activeUser.id);
+        if (data) {
+          setProfile({
+            first_name: data.first_name ?? null,
+            last_name: data.last_name ?? null,
+            tz: data.tz ?? null,
+            birth_date: data.birth_date ?? null,
+            email: data.email ?? null,
+            role: data.role ?? null,
+            isRecruiter: data.role === "recruiter",
+            isFieldManager: data.role === "manager",
+          });
+        } else {
+          setProfile(null);
+        }
       }
       setLoading(false);
     };
@@ -89,9 +103,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initialize();
 
     const authSubscription = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await refreshProfile();
+      const activeUser = session?.user ?? null;
+      setUser(activeUser);
+      if (activeUser) {
+        const data = await getUserProfile(supabase, activeUser.id);
+        if (data) {
+          setProfile({
+            first_name: data.first_name ?? null,
+            last_name: data.last_name ?? null,
+            tz: data.tz ?? null,
+            birth_date: data.birth_date ?? null,
+            email: data.email ?? null,
+            role: data.role ?? null,
+            isRecruiter: data.role === "recruiter",
+            isFieldManager: data.role === "manager",
+          });
+        } else {
+          setProfile(null);
+        }
       } else {
         setProfile(null);
       }
@@ -101,10 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => authSubscription.data.subscription.unsubscribe();
   }, [supabase]);
 
-  const value = useMemo(
-    () => ({ user, profile, loading, refreshProfile, signOut }),
-    [user, profile, loading, supabase],
-  );
+  const value = { user, profile, loading, refreshProfile, signOut };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

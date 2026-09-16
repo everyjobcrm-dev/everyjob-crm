@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MapPin, Users, Check, Clock3, AlertCircle } from "lucide-react";
+import { Users, Check, Clock3, AlertCircle } from "lucide-react";
 import { registerForRole, requestCancellation, type EmployeeEvent, type RegistrationStatus } from "@/app/employee/events/actions";
 
 const STATUS_LABEL: Record<RegistrationStatus, string> = {

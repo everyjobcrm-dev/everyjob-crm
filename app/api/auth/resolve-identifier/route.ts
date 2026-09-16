@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, email: userData.user.email });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: "We could not resolve the account right now. Please try again in a moment." },
       { status: 500 },

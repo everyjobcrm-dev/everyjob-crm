@@ -22,7 +22,40 @@ yarn dev
 pnpm dev
 # or
 bun dev
+```
+
 Open http://localhost:3000 with your browser to see the result. You can start editing the page by modifying app/page.tsx. The page auto-updates as you edit the file.
+
+### Phase 0 Quality Gates
+
+This repo includes the standard project checks for the Phase 0 setup:
+
+```bash
+npm run lint
+npm run typecheck
+npm run db:push
+```
+
+The repo also includes a GitHub Actions workflow that runs lint + TypeScript checks on pull requests and pushes to `main` and `dev`.
+
+### Vercel + Supabase Deployment Workflow
+
+1. Create a Vercel project from the GitHub repo.
+2. Connect `main` to the production project and `dev` to the preview project.
+3. Add these environment variables in Vercel:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` (only if the app needs server-side admin writes)
+4. Trigger a production deploy from the `main` branch and preview deploys from `dev`.
+5. For Supabase schema changes, use the CLI workflow:
+
+```bash
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase db push
+```
+
+This keeps schema changes moving through dev, staging, and production in a consistent order.
 
 🛠 Tech Stack & Infrastructure
 Framework: Next.js (App Router) + TypeScript
