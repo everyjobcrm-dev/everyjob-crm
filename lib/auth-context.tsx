@@ -12,8 +12,11 @@ type ProfileState = {
   birth_date: string | null;
   email: string | null;
   role: string | null;
+  recruiter_bonus_rate: number | null;
+  isAdmin: boolean;
   isRecruiter: boolean;
   isFieldManager: boolean;
+  canSetEmployeeRate: boolean;
 };
 
 type AuthContextValue = {
@@ -48,8 +51,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         birth_date: data.birth_date ?? null,
         email: data.email ?? null,
         role: data.role ?? null,
+        recruiter_bonus_rate: data.recruiter_bonus_rate ?? null,
+        isAdmin: data.role === "admin",
         isRecruiter: data.role === "recruiter",
         isFieldManager: data.role === "manager",
+        canSetEmployeeRate: data.role === "admin" || data.role === "manager",
       });
       return;
     }
@@ -90,8 +96,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             birth_date: data.birth_date ?? null,
             email: data.email ?? null,
             role: data.role ?? null,
+            recruiter_bonus_rate: data.recruiter_bonus_rate ?? null,
+            isAdmin: data.role === "admin",
             isRecruiter: data.role === "recruiter",
             isFieldManager: data.role === "manager",
+            canSetEmployeeRate: data.role === "admin" || data.role === "manager",
           });
         } else {
           setProfile(null);
@@ -115,8 +124,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             birth_date: data.birth_date ?? null,
             email: data.email ?? null,
             role: data.role ?? null,
+            recruiter_bonus_rate: data.recruiter_bonus_rate ?? null,
+            isAdmin: data.role === "admin",
             isRecruiter: data.role === "recruiter",
             isFieldManager: data.role === "manager",
+            canSetEmployeeRate: data.role === "admin" || data.role === "manager",
           });
         } else {
           setProfile(null);

@@ -78,11 +78,11 @@ Planned — Per-client overtime billing rules
 Phase 5: Role-Based Interfaces
 Employee — Planned: home screen (showing assigned vs. pending shifts), digital Form 101 signature, bank details
 
-Recruiter — Planned: assignment management; In Progress: bonus wallet with monthly withdrawal cap
+Recruiter — In Progress: assignment management and recruitment-credit profile display; Planned: event-screen FIFO redemption
 
 Field Manager — Done: attendance entry, employee ratings, final attendance report
 
-Admin — Done: shift hour report approval board; Planned: finance and pricing management; Planned: bulk Form 101 deletion
+Admin — Done: shift hour report approval board; In Progress: recruiter credit overview and Admin-set recruiter rates; Planned: finance and pricing management; Planned: bulk Form 101 deletion
 
 # Phase 6: Payroll & Billing
 Starts immediately after Phases 1 and 2 are complete.
@@ -112,6 +112,10 @@ Consolidated admin server actions into app/admin/actions.ts
 Removed the global end_time field from events; corrected min_rating and travel_budget_per_worker naming
 
 Resolved a zod/react-hook-form type-inference issue via z.input<>/z.output<> split with the three-generic useForm pattern
+
+Recruitment Credits: Extend `recruiter_bonuses` into an event/employee credit ledger. Create credits only on the approved transition for matching, non-self recruits; use the recruiter's Admin-set `profiles.recruiter_bonus_rate`, not the employee's `wage_rate`. Derive pending count and amount from one shared view, and redeem oldest credits FIFO from event management screens.
+
+Recruiter Overview: Add a read-only Admin screen backed by the shared pending-credit view; it must contain no redemption action.
 
 Fixed RLS policies to reference profiles.role rather than a nonexistent user_roles table
 

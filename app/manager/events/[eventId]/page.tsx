@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Calendar, MapPin, Building2 } from "lucide-react";
 import { RosterTable } from "@/components/manager/RosterTable";
+import { RecruitmentCreditControls } from "@/components/manager/recruitment-credit-controls";
 
 type Props = {
   params: Promise<{ eventId: string }>;
@@ -15,7 +16,7 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, location, event_date, notes, clients(name)")
+    .select("id, location, event_date, notes, recruiter_id, clients(name)")
     .eq("id", eventId)
     .single();
 
@@ -23,11 +24,16 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
     notFound();
   }
 
+  const { data: recruiter } = event.recruiter_id
+    ? await supabase.from("profiles").select("id, first_name, last_name").eq("id", event.recruiter_id).single()
+    : { data: null };
+
   const { data: registrations } = await supabase
     .from("event_registrations")
     .select(`
       id,
       status,
+      wage_rate,
       cancellation_requested_at,
       created_at,
       profiles!event_registrations_user_id_fkey (
@@ -63,6 +69,7 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
 
     return {
       id: reg.id,
+      wage_rate: reg.wage_rate,
       status: reg.status,
       cancellation_requested_at: reg.cancellation_requested_at,
       created_at: reg.created_at,
@@ -135,8 +142,18 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
 
       <section>
         <h2 className="font-display text-xl text-cream mb-4">ניהול צוות ודיווחי נוכחות</h2>
-        <RosterTable registrations={formattedRegistrations} />
+        <RosterTable eventId={eventId} registrations={formattedRegistrations} />
       </section>
+
+      {recruiter && (
+        <RecruitmentCreditControls
+          eventId={eventId}
+          recruiter={{
+            id: recruiter.id,
+            name: [recruiter.first_name, recruiter.last_name].filter(Boolean).join(" "),
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MapPin, FileCheck2, Landmark, Wallet, LogOut, ArrowLeft } from "lucide-react";
@@ -44,6 +44,28 @@ export default function ProfilePage() {
   const totalEarned = 12480;
 
   const [loggingOut, setLoggingOut] = useState(false);
+  const [pendingCredits, setPendingCredits] = useState({ count: 0, amount: 0 });
+
+  useEffect(() => {
+    if (profile?.role !== "recruiter" || !user?.id) return;
+
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+
+    supabase
+      .from("v_recruiter_pending_credits")
+      .select("pending_recruitment_count, pending_recruitment_amount")
+      .eq("recruiter_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setPendingCredits({
+            count: Number(data.pending_recruitment_count),
+            amount: Number(data.pending_recruitment_amount),
+          });
+        }
+      });
+  }, [profile?.role, user?.id]);
 
   async function handleLogout() {
     const supabase = createSupabaseBrowserClient();
@@ -142,6 +164,24 @@ export default function ProfilePage() {
             ₪{totalEarned.toLocaleString("he-IL")}
           </p>
         </section>
+
+        {profile?.role === "recruiter" && (
+          <section className="rounded-2xl border border-indigo-400/20 bg-surface p-5 sm:col-span-2">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="font-semibold text-cream">זיכויי גיוס ממתינים</h2>
+                <p className="mt-1 text-sm text-cream/50">הנתונים מחושבים בזמן אמת. המימוש מתבצע על ידי מנהל/ת באירוע.</p>
+              </div>
+              <div className="text-end">
+                <p className="font-display text-2xl text-cream tabular-nums">{pendingCredits.count}</p>
+                <p className="text-xs text-cream/50">זיכויים</p>
+              </div>
+            </div>
+            <p className="mt-4 text-lg font-semibold text-brass tabular-nums">
+              ₪{pendingCredits.amount.toLocaleString("he-IL", { maximumFractionDigits: 2 })}
+            </p>
+          </section>
+        )}
       </div>
 
       <button

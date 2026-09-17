@@ -202,6 +202,61 @@ export async function getShiftSubmissions() {
   return { success: true, data: data as ShiftSubmission[] };
 }
 
+export type RecruiterPendingCredits = {
+  recruiter_id: string;
+  first_name: string;
+  last_name: string;
+  recruiter_bonus_rate: number | null;
+  pending_recruitment_count: number;
+  pending_recruitment_amount: number;
+};
+
+export async function getRecruiterPendingCredits() {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return { success: false, error: "שגיאת התחברות למסד הנתונים." };
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "לא מחובר/ת למערכת." };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "admin") return { success: false, error: "אין לך הרשאת מנהל." };
+
+  const { data, error } = await supabase
+    .from("v_recruiter_pending_credits")
+    .select("recruiter_id, first_name, last_name, recruiter_bonus_rate, pending_recruitment_count, pending_recruitment_amount")
+    .order("last_name", { ascending: true });
+
+  if (error) return { success: false, error: "טעינת נתוני המגייסים נכשלה." };
+  return { success: true, data: (data ?? []) as RecruiterPendingCredits[] };
+}
+
+export async function setRecruiterBonusRate(
+  recruiterId: string,
+  recruiterBonusRate: number,
+): Promise<{ success: true } | { success: false; error: string }> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return { success: false, error: "שגיאת התחברות למסד הנתונים." };
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "לא מחובר/ת למערכת." };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "admin") return { success: false, error: "רק אדמין יכול לעדכן תעריף זיכוי גיוס." };
+  if (!Number.isFinite(recruiterBonusRate) || recruiterBonusRate < 0) {
+    return { success: false, error: "יש להזין תעריף זיכוי שאינו שלילי." };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ recruiter_bonus_rate: recruiterBonusRate })
+    .eq("id", recruiterId)
+    .eq("role", "recruiter");
+
+  if (error) return { success: false, error: "עדכון תעריף הזיכוי נכשל." };
+  revalidatePath("/admin/recruiters");
+  return { success: true };
+}
+
 // State machine for Admin to approve/reject
 export async function reviewShiftSubmission(
   submissionId: string,

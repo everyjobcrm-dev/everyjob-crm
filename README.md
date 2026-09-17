@@ -1,6 +1,6 @@
 # everyJob CRM
 
-A mobile-first, role-based workforce management and CRM platform tailored for shift-based staffing. everyJob handles the entire lifecycle of event staffing—from employee onboarding and shift registration to attendance tracking, recruiter bonuses, and client billing/payroll reporting.
+A mobile-first, role-based workforce management and CRM platform tailored for shift-based staffing. everyJob handles the entire lifecycle of event staffing—from employee onboarding and shift registration to recruitment credits, attendance tracking, and client billing/payroll reporting.
 
 ---
 
@@ -73,11 +73,11 @@ Architecture: Web Application (Mobile-First approach), with a future roadmap for
 👥 Role-Based Access Control (RBAC)
 The system is built on a strict, four-tier permission hierarchy:
 
-Admin (Super Admin): Full system control. Requires 2FA for login. Configures clients, sets billing rates, manages recruiter bonuses, and approves final hour reports. The only role with access to sensitive employee financial data and tax documents (Form 101).
+Admin (Super Admin): Full system control. Requires 2FA for login. Configures clients, sets billing rates and employee rates, sets each recruiter's per-hour recruitment-credit rate, manages credit records, and approves final hour reports. The only role with access to sensitive employee financial data and tax documents (Form 101).
 
-Field Manager ("Skill"): Manages the live event. Approves/rejects shift requests, manually enters actual attendance hours at shift close, rates employees, and submits the consolidated hour report to the Admin. No access to financial or tax data.
+Field Manager ("Skill"): Manages the live event. Approves/rejects shift requests, manually enters actual attendance hours at shift close, rates employees, sets employee hourly rates through the 10th of the following month, redeems pending recruitment credits for a recruiter from an event screen, and submits the consolidated hour report to the Admin. No access to financial or tax data.
 
-Recruiter: Creates events and recruits employees. Sets hourly rates for their recruits and manages their own "recruiter bonus wallet."
+Recruiter: Creates events and recruits employees. An event may optionally name one responsible recruiter. Recruiters do not set employee rates and cannot redeem credits themselves. Their own profile shows live pending recruitment-credit count and amount.
 
 Employee: End user. Browses and requests shifts, joins waitlists, fills out digital Form 101s, and views expected monthly pay. Cannot unilaterally cancel a shift once assigned.
 
@@ -89,12 +89,10 @@ Waitlist System: Automatic promotion from the waitlist if a spot opens up (auto_
 
 Controlled Cancellations: Employees must request a cancellation; they cannot drop a shift without Manager/Recruiter/Admin approval.
 
-💰 Recruiter Bonus Wallet
-Recruiters earn a configurable bonus (e.g., ₪1/hour) for every employee they recruit.
+💰 Recruitment Credits
+An event may optionally have one responsible recruiter. When a recruited employee's hours are approved, the recruiter earns one pending credit for that event and employee, unless the employee is the recruiter themself.
 
-Bonuses are held in a digital wallet and carry over to future months if the recruiter doesn't work.
-
-Admins can set a redemption cap (maximum bonus drawn per shift) to regulate payroll expenses.
+Each recruiter has an Admin-set `recruiter_bonus_rate` in NIS per approved hour. This rate is stored on the recruiter's profile and is separate from the employee's own `wage_rate`; it defaults to 1 NIS/hour. Credits accumulate without monthly reset and are redeemed FIFO by a Manager or Admin from an event management screen. Recruiters cannot redeem credits themselves.
 
 🏢 Client & Billing Management (CRM)
 Full CRUD for clients with smart duplicate prevention.
@@ -114,7 +112,7 @@ Strict RLS: All database queries are filtered at the Postgres level via profiles
 ✅ Completed (Done)
 Next.js + Supabase core infrastructure.
 
-Complete data architecture: business triggers, shift_hour_submissions, recruiter_bonuses.
+Complete data architecture: business triggers, shift_hour_submissions, recruiter_bonuses credit ledger, and live pending-credit views.
 
 Single Source of Truth: Views created for staffing-status calculation and hour-approval boards (never storing staffing status, always deriving it from event_role_fill_counts).
 
@@ -127,7 +125,7 @@ Waitlist and controlled shift cancellation flows.
 🔄 In Progress
 Admin 2FA: SMS/Email two-factor authentication to unlock Form 101 exposure.
 
-Recruiter Wallet: Capping monthly/shift bonus withdrawals.
+Recruitment credits: event attribution, approval-triggered credit creation, FIFO redemption, and Admin recruiters overview.
 
 📅 Planned
 Employee Portal: Digital Form 101 signature, bank details entry, and home screen UI.
@@ -142,6 +140,10 @@ Future Expansion (Phase 2): Native mobile app via Expo, GPS verification for Fie
 Staffing Status: We never store staffing status directly in the database. It is dynamically derived via the event_role_fill_counts view.
 
 Form Management: Zod / React Hook Form type-inference is handled via a z.input<>/z.output<> split using the three-generic useForm pattern.
+
+Recruitment Credits: `recruiter_bonuses` is the credit ledger. Credits are created only when matching recruited employees' hours become Approved, use the recruiter's Admin-set `profiles.recruiter_bonus_rate` rather than the employee's `wage_rate`, and are redeemed FIFO by Manager/Admin. Pending count and amount are always derived live from one shared view.
+
+Recruiter Overview: Admin has a read-only recruiter overview showing live pending credit count and amount; redemption remains available only from event management screens.
 
 Admin Actions: All Admin server actions are cleanly consolidated into app/admin/actions.ts.
 

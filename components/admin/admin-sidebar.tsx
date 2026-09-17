@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, CalendarRange, Users, Building2, LogOut } from "lucide-react";
+import { LayoutGrid, CalendarRange, Users, Building2, UserRoundCheck, LogOut } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "דף הבית", icon: LayoutGrid },
   { href: "/admin/events", label: "אירועים ומשמרות", icon: CalendarRange },
   { href: "/admin/employees", label: "עובדים", icon: Users },
+  { href: "/admin/recruiters", label: "מגייסים", icon: UserRoundCheck },
   { href: "/admin/clients", label: "לקוחות", icon: Building2 },
 ] as const;
 

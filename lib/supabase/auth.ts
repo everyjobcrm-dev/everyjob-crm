@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type ProfileRole = "admin" | "employee" | "recruiter";
+export type ProfileRole = "admin" | "manager" | "employee" | "recruiter";
 
 export async function getUserProfile(
   supabase: SupabaseClient,
@@ -8,7 +8,7 @@ export async function getUserProfile(
 ) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("first_name,last_name,tz,birth_date,email,role")
+    .select("first_name,last_name,tz,birth_date,email,role,recruiter_bonus_rate")
     .eq("id", userId)
     .single();
 

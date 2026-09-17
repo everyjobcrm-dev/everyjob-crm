@@ -3,11 +3,11 @@
 ## 1. Role Hierarchy and Permissions
 The system is built on a strict permission hierarchy. User types and their authority:
 
-**Admin (Super Admin):** Full system control. Requires two-factor authentication (2FA) at login. Sees profitability, generates client billing and payroll reports, approves final hour reports. The only role in the system exposed to employees' Form 101 (Israeli tax withholding form). Configures clients, rates, employee permissions, and manages/limits the recruiter bonus model.
+**Admin (Super Admin):** Full system control. Requires two-factor authentication (2FA) at login. Sees profitability, generates client billing and payroll reports, approves final hour reports. The only role in the system exposed to employees' Form 101 (Israeli tax withholding form). Configures clients, employee rates, employee permissions, and each recruiter's per-hour recruitment-credit rate.
 
 **Field Manager ("Skill" permission):** Responsible for managing the live event. Manages employee attendance (manual entry), approves or cancels employee shift signups. At shift close, rates employees, enters hours for each employee, and sends an organized hour report to the Admin for approval. No access to company financial data or sensitive documents (Form 101).
 
-**Recruiter:** Authorized to create new events and recruit employees to them. Can approve signed-up employees or cancel their registration. When assigning an employee to an event, can set that employee's hourly rate. Receives a bonus reward for each recruit.
+**Recruiter:** Authorized to create new events and recruit employees to them. Can approve signed-up employees or cancel their registration. Recruiters cannot set employee hourly rates or redeem recruitment credits. An event may optionally name one responsible recruiter, who can earn recruitment credits for matching recruited employees.
 
 **Employee:** End user. Views shifts, submits shift signup requests (pending approval), fills out a digital Form 101. Cannot cancel a shift themselves (requires Manager/Recruiter/Admin approval).
 
@@ -42,12 +42,13 @@ Signup page:
 ## 4. Recruiter Interface – Extended Permissions
 **Event and recruitment management:** Direct event creation and management of employee join requests (approve / reject / remove from shift).
 
-**Rate control:** Ability to update the hourly rate for employees they recruit.
+**Rate control:** Recruiters have no rate-setting permission. Field Managers may set an employee's hourly rate for an event dated on or before the 10th of the following month; Admins may set rates without a time restriction. The employee's `wage_rate` is separate from the recruiter's Admin-set `recruiter_bonus_rate`.
 
-**Personal recruiter dashboard and bonus model:**
-- Tracks number of employees recruited this month.
-- Bonus management ("recruiter wallet"): the bonus (typically ₪1/hour per recruit, or as set by Admin) is held for them. If the recruiter doesn't work a shift that month, the bonus carries over to future months.
-- Redemption cap: Admin can limit the maximum hourly amount a recruiter can draw in a single shift, so the recruiter doesn't "burn" all bonuses in one shift but spreads them across multiple shifts.
+**Personal recruiter dashboard and recruitment-credit model:**
+- The recruiter's profile shows live pending recruitment-credit count and pending amount.
+- Each recruiter has an Admin-set `recruiter_bonus_rate` in NIS per approved hour, defaulting to 1. It is stored on `profiles` and is separate from the recruited employee's `wage_rate`.
+- When a recruited employee's hours for an event become Approved, a pending credit is created when the event's recruiter matches the employee's `recruited_by` attribution. A recruiter never earns a credit for their own hours.
+- Credits accumulate indefinitely without monthly reset. A Manager or Admin can redeem N pending credits from an event management screen; the oldest unredeemed records are redeemed FIFO with redemption actor and event context recorded. Recruiters have no self-redemption action.
 
 ## 5. Field Manager Interface – Extended Permissions
 **Team and event management:**
@@ -70,7 +71,7 @@ Signup page:
 
 **Extended event management:** Opening events, setting required employee count, hours, base rate, and travel budget allocation.
 
-**Recruiter management:** Setting hourly compensation per recruiter and setting a withdrawal cap (Cap) for bonus redemption per shift, to regulate payroll expenses.
+**Recruiter management:** A read-only recruiters overview lists every recruiter with live pending recruitment count and amount, using the same derived view as the recruiter's profile. It has no redemption control. Admin sets each recruiter's `recruiter_bonus_rate`; redemption is performed only from event management screens by a Manager or Admin.
 
 **Client management:** Adding a client, setting a price list (rate the client pays per role), and defining the overtime billing model for the client.
 

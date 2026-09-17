@@ -42,8 +42,8 @@ The spec and product conversations happen in Hebrew; the codebase is in English.
 | מגייס | Recruiter | `role = 'recruiter'` |
 | עובד | Employee | `role = 'employee'` |
 | טופס 101 | Form 101 (tax withholding form) | `employee_documents` (Admin-only, 2FA-gated) |
-| ארנק מגייס | Recruiter bonus wallet | `recruiter_bonuses` |
-| תקרת משיכה | Bonus withdrawal cap | cap field on recruiter bonus config, set by Admin |
+| זיכוי גיוס | Recruitment credit ledger record | `recruiter_bonuses`; one record per approved recruited employee/event, redeemed FIFO by Manager or Admin |
+| תעריף זיכוי גיוס | Per-recruiter recruitment-credit rate | `profiles.recruiter_bonus_rate`; NIS per approved hour, Admin-set only, separate from the employee's `wage_rate` |
 | דוח שעות | Hour report | `shift_hour_submissions` |
 | רשימת המתנה | Waitlist | waitlist entity on event/role signup (Phase 3, in progress) |
 | דירוג | Rating (post-shift, star-based) | rolls into employee's average rating |
@@ -105,10 +105,10 @@ Flat `role` column on `profiles`: `admin | manager | recruiter | employee`.
 | View Form 101 / bank details | Yes | No | No | Own only, via form-fill flow |
 | Approve final hour reports | Yes | No | No | No |
 | Set client pricing / billing rules | Yes | No | No | No |
-| Set recruiter bonus caps | Yes | No | No | No |
+| Set per-recruiter recruitment-credit rate | Yes | No | No | No |
 | Create events | No | No | Yes | No |
 | Approve/reject/remove event signups | No | Yes (live event) | Yes (own recruits) | No |
-| Set employee hourly rate at assignment | No | No | Yes | No |
+| Set employee hourly rate at assignment | Yes (no time restriction) | Yes (through the 10th of the following month) | No | No |
 | Enter shift attendance/hours | No | Yes (manual entry) | No | No |
 | Rate employees post-shift | No | Yes | No | No |
 | Submit hour report for approval | No | Yes | No | No |

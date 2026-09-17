@@ -606,6 +606,7 @@ export type Database = {
           event_date: string
           id: string
           location: string
+          recruiter_id: string | null
           min_age: number | null
           min_rating: number | null
           notes: string | null
@@ -620,6 +621,7 @@ export type Database = {
           event_date: string
           id?: string
           location: string
+          recruiter_id?: string | null
           min_age?: number | null
           min_rating?: number | null
           notes?: string | null
@@ -634,6 +636,7 @@ export type Database = {
           event_date?: string
           id?: string
           location?: string
+          recruiter_id?: string | null
           min_age?: number | null
           min_rating?: number | null
           notes?: string | null
@@ -665,6 +668,7 @@ export type Database = {
           last_name: string
           phone_number: string | null
           phone_verified: boolean | null
+          recruiter_bonus_rate: number | null
           role: Database["public"]["Enums"]["user_role"] | null
           total_ratings: number | null
           tz: string
@@ -682,6 +686,7 @@ export type Database = {
           last_name: string
           phone_number?: string | null
           phone_verified?: boolean | null
+          recruiter_bonus_rate?: number | null
           role?: Database["public"]["Enums"]["user_role"] | null
           total_ratings?: number | null
           tz: string
@@ -699,6 +704,7 @@ export type Database = {
           last_name?: string
           phone_number?: string | null
           phone_verified?: boolean | null
+          recruiter_bonus_rate?: number | null
           role?: Database["public"]["Enums"]["user_role"] | null
           total_ratings?: number | null
           tz?: string
@@ -707,48 +713,75 @@ export type Database = {
       }
       recruiter_bonuses: {
         Row: {
-          applied_at: string | null
-          applied_to_registration_id: string | null
           bonus_amount: number
           created_at: string
+          employee_id: string
+          event_id: string
           id: string
+          redeemed_at: string | null
+          redeemed_by: string | null
+          redeemed_context_event_id: string | null
           recruiter_id: string
           source_registration_id: string
-          status: Database["public"]["Enums"]["bonus_status"]
         }
         Insert: {
-          applied_at?: string | null
-          applied_to_registration_id?: string | null
           bonus_amount: number
           created_at?: string
+          employee_id: string
+          event_id: string
           id?: string
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redeemed_context_event_id?: string | null
           recruiter_id: string
           source_registration_id: string
-          status?: Database["public"]["Enums"]["bonus_status"]
         }
         Update: {
-          applied_at?: string | null
-          applied_to_registration_id?: string | null
           bonus_amount?: number
           created_at?: string
+          employee_id?: string
+          event_id?: string
           id?: string
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redeemed_context_event_id?: string | null
           recruiter_id?: string
           source_registration_id?: string
-          status?: Database["public"]["Enums"]["bonus_status"]
         }
         Relationships: [
-          {
-            foreignKeyName: "recruiter_bonuses_applied_to_registration_id_fkey"
-            columns: ["applied_to_registration_id"]
-            isOneToOne: false
-            referencedRelation: "event_registrations"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
             columns: ["recruiter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_context_event_id_fkey"
+            columns: ["redeemed_context_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
           {
@@ -961,6 +994,17 @@ export type Database = {
             referencedColumns: ["event_id"]
           },
         ]
+      }
+      v_recruiter_pending_credits: {
+        Row: {
+          first_name: string
+          last_name: string
+          pending_recruitment_amount: number
+          pending_recruitment_count: number
+          recruiter_id: string
+          recruiter_bonus_rate: number | null
+        }
+        Relationships: []
       }
       profiles_with_age: {
         Row: {

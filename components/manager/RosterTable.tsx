@@ -6,11 +6,13 @@ import {
   rejectCancellation,
   promoteWaitlist,
   submitShiftAttendance,
+  setEmployeeRate,
 } from "@/app/manager/actions";
 import { Check, X, ArrowUpCircle, Clock, Star, AlertCircle, CheckCircle2 } from "lucide-react";
 
 type Reg = {
   id: string;
+  wage_rate: number | null;
   status: string;
   cancellation_requested_at: string | null;
   created_at: string;
@@ -36,7 +38,7 @@ type Reg = {
   } | null;
 };
 
-export function RosterTable({ registrations }: { registrations: Reg[] }) {
+export function RosterTable({ eventId, registrations }: { eventId: string; registrations: Reg[] }) {
   const [selectedReg, setSelectedReg] = useState<Reg | null>(null);
 
   const byRole = registrations.reduce((acc, reg) => {
@@ -74,7 +76,7 @@ export function RosterTable({ registrations }: { registrations: Reg[] }) {
                   </h4>
                   <div className="space-y-2">
                     {cancellations.map((reg) => (
-                      <RegRow key={reg.id} reg={reg} type="cancellation" onOpenAttendance={setSelectedReg} />
+                      <RegRow key={reg.id} eventId={eventId} reg={reg} type="cancellation" onOpenAttendance={setSelectedReg} />
                     ))}
                   </div>
                 </div>
@@ -87,7 +89,7 @@ export function RosterTable({ registrations }: { registrations: Reg[] }) {
                   </h4>
                   <div className="space-y-2">
                     {confirmed.map((reg) => (
-                      <RegRow key={reg.id} reg={reg} type="confirmed" onOpenAttendance={setSelectedReg} />
+                      <RegRow key={reg.id} eventId={eventId} reg={reg} type="confirmed" onOpenAttendance={setSelectedReg} />
                     ))}
                   </div>
                 </div>
@@ -100,7 +102,7 @@ export function RosterTable({ registrations }: { registrations: Reg[] }) {
                   </h4>
                   <div className="space-y-2">
                     {waitlist.map((reg) => (
-                      <RegRow key={reg.id} reg={reg} type="waitlist" onOpenAttendance={setSelectedReg} />
+                      <RegRow key={reg.id} eventId={eventId} reg={reg} type="waitlist" onOpenAttendance={setSelectedReg} />
                     ))}
                   </div>
                 </div>
@@ -118,15 +120,19 @@ export function RosterTable({ registrations }: { registrations: Reg[] }) {
 }
 
 function RegRow({
+  eventId,
   reg,
   type,
   onOpenAttendance,
 }: {
+  eventId: string;
   reg: Reg;
   type: "cancellation" | "confirmed" | "waitlist";
   onOpenAttendance: (reg: Reg) => void;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [rate, setRate] = useState(reg.wage_rate?.toString() ?? "");
+  const [rateError, setRateError] = useState<string | null>(null);
 
   const handleAction = (action: "approve_cancel" | "reject_cancel" | "promote") => {
     startTransition(async () => {
@@ -194,6 +200,32 @@ function RegRow({
 
         {type === "confirmed" && (
           <div className="flex items-center gap-2">
+            <form
+              className="flex items-center gap-1"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setRateError(null);
+                startTransition(async () => {
+                  const result = await setEmployeeRate(eventId, reg.id, Number(rate));
+                  if (!result.success) setRateError(result.error);
+                });
+              }}
+            >
+              <label className="sr-only" htmlFor={`rate-${reg.id}`}>תעריף שעתי</label>
+              <input
+                id={`rate-${reg.id}`}
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={rate}
+                onChange={(event) => setRate(event.target.value)}
+                placeholder="₪/שעה"
+                className="w-24 rounded-md border border-brass/15 bg-surface px-2 py-1.5 text-xs text-cream"
+              />
+              <button type="submit" disabled={isPending} className="rounded-md bg-brass/15 px-2 py-1.5 text-xs font-semibold text-brass disabled:opacity-50">
+                שמור
+              </button>
+            </form>
             {reg.submission ? (
               <span
                 className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -221,6 +253,7 @@ function RegRow({
               <Clock className="w-3.5 h-3.5" />
               {reg.submission ? "עדכן דיווח" : "דיווח שעות ודירוג"}
             </button>
+            {rateError && <span className="text-xs text-rose-400">{rateError}</span>}
           </div>
         )}
       </div>
