@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { AuthCard } from "@/components/AuthCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isValidIsraeliId } from "@/lib/validations/israeli-id";
 
 // Helper to calculate age dynamically
 const calculateAge = (dob: string): number | null => {
@@ -43,14 +44,6 @@ export default function RegisterPage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
-  const [pendingProfile, setPendingProfile] = useState<{
-    first_name: string;
-    last_name: string;
-    tz: string;
-    birth_date: string;
-    phone_number: string;
-    gender: string;
-  } | null>(null);
 
   // Auto-calculated age based on birth_date input
   const age = useMemo(() => calculateAge(form.birth_date), [form.birth_date]);
@@ -73,14 +66,14 @@ export default function RegisterPage() {
     }
 
     // Validations
-    if (!/^[0-9]{8,9}$/.test(form.tz)) {
-      setError("תעודת זהות חייבת להכיל 8-9 ספרות בלבד.");
+    if (!isValidIsraeliId(form.tz)) {
+      setError("מספר תעודת הזהות אינו תקין. יש להזין מספר ישראלי תקף.");
       setLoading(false);
       return;
     }
     
-    if (!/^[0-9]{9,10}$/.test(form.phone_number)) {
-      setError("מספר טלפון לא תקין.");
+    if (!/^0(5[0-9]{8}|[23489][0-9]{7})$/.test(form.phone_number)) {
+      setError("מספר טלפון לא תקין. יש להזין מספר ישראלי ללא מקפים.");
       setLoading(false);
       return;
     }
@@ -110,70 +103,52 @@ export default function RegisterPage() {
     }
 
     try {
-      const registrationCheck = await fetch("/api/auth/check-registration", {
+      const registrationResponse = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email, tz: form.tz }),
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          first_name: form.first_name,
+          last_name: form.last_name,
+          tz: form.tz,
+          birth_date: form.birth_date,
+          phone_number: form.phone_number,
+          gender: form.gender,
+        }),
       });
-      const checkPayload = await registrationCheck.json();
+      const registrationPayload = await registrationResponse.json();
 
-      if (!registrationCheck.ok || !checkPayload.success) {
-        setError(checkPayload.error ?? "פרטי ההרשמה כבר קיימים במערכת.");
+      if (!registrationResponse.ok || !registrationPayload.success) {
+        setError(registrationPayload.error ?? "ההרשמה נכשלה. נסה שוב.");
         setLoading(false);
         return;
       }
-    } catch {
-      setError("לא הצלחנו לבדוק את פרטי ההרשמה. נסה שוב.");
+
+      setPendingEmail(registrationPayload.email);
+    } catch (caughtError) {
+      const thrownError = caughtError as {
+        message?: unknown;
+        status?: unknown;
+        code?: unknown;
+      };
+      const thrownMessage = typeof thrownError.message === "string" ? thrownError.message.trim() : "";
+      const thrownStatus = typeof thrownError.status === "number" ? thrownError.status : null;
+
+      console.warn("Registration request failed", {
+        message: thrownMessage || "No error message returned",
+        status: thrownStatus,
+        code: typeof thrownError.code === "string" ? thrownError.code : null,
+      });
+      setError(
+        thrownMessage
+          ? `${thrownMessage}${thrownStatus ? ` (${thrownStatus})` : ""}`
+          : `שירות ההרשמה החזיר שגיאת שרת${thrownStatus ? ` (${thrownStatus})` : ""}. נסה שוב מאוחר יותר.`,
+      );
       setLoading(false);
       return;
     }
 
-    const pendingProfilePayload = {
-      first_name: form.first_name,
-      last_name: form.last_name,
-      tz: form.tz,
-      birth_date: form.birth_date,
-      phone_number: form.phone_number,
-      gender: form.gender,
-    };
-
-    setPendingProfile(pendingProfilePayload);
-
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: pendingProfilePayload,
-      },
-    });
-
-    if (signUpError || !data.user) {
-      const message = signUpError?.message?.toLowerCase() ?? "";
-      if (message.includes("already registered")) {
-        setError("אימייל זה כבר רשום במערכת.");
-      } else if (message.includes("password")) {
-        setError("הסיסמה חלשה מדי. בחר סיסמה מורכבת יותר.");
-      } else if (message.includes("rate limit") || message.includes("too many requests")) {
-        setError("יותר מדי ניסיונות. אנא המתן מספר דקות ונסה שוב.");
-      } else {
-        setError("לא הצלחנו ליצור את החשבון. אנא בדוק את הפרטים ונסה שוב.");
-      }
-      setLoading(false);
-      return;
-    }
-
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email: form.email,
-      options: { shouldCreateUser: false },
-    });
-
-    if (otpError) {
-      setError("החשבון נוצר, אך חלה שגיאה בשליחת קוד האימות. אנא נסה שוב.");
-      setLoading(false);
-      return;
-    }
-
-    setPendingEmail(form.email);
     setVerificationStep(true);
     setVerificationCode("");
     setSuccess("החשבון נוצר! שלחנו קוד אימות לאימייל שלך. הכנס אותו למטה.");
@@ -214,55 +189,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!pendingProfile) {
-      setError("שגיאה במציאת פרטי ההרשמה. אנא נסה שוב.");
-      setVerificationLoading(false);
-      return;
-    }
-
-    const profilePayload = {
-      id: verifyData.user.id,
-      first_name: pendingProfile.first_name,
-      last_name: pendingProfile.last_name,
-      tz: pendingProfile.tz,
-      birth_date: pendingProfile.birth_date || null,
-      phone_number: pendingProfile.phone_number,
-      gender: pendingProfile.gender,
-      email: pendingEmail,
-      role: "employee",
-    };
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert(profilePayload, { onConflict: "id" });
-
-    if (profileError) {
-      if (profileError.code === "23505") {
-        setError("תעודת הזהות או האימייל כבר רשומים במערכת.");
-        setVerificationLoading(false);
-        return;
-      }
-
-      // Fallback to API route if direct insert fails (e.g., due to strict RLS)
-      const profileResponse = await fetch("/api/auth/create-profile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(verifyData.session?.access_token
-            ? { Authorization: `Bearer ${verifyData.session.access_token}` }
-            : {}),
-        },
-        body: JSON.stringify({ userId: verifyData.user.id, ...pendingProfile }),
-      });
-
-      if (!profileResponse.ok) {
-        const profilePayload = await profileResponse.json().catch(() => null);
-        setError(profilePayload?.error ?? "האימייל אומת, אך לא הצלחנו לשמור את הפרופיל כרגע.");
-        setVerificationLoading(false);
-        return;
-      }
-    }
-
+    // Profile creation is handled atomically by the auth.users insert trigger.
+    // Do not write to public.profiles here; the trigger is the single source of truth.
     setSuccess("האימייל אומת בהצלחה. אתה מועבר להתחברות...");
     setTimeout(() => router.push("/login"), 2000);
   };

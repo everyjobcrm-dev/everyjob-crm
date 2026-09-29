@@ -46,6 +46,7 @@ The repo also includes a GitHub Actions workflow that runs lint + TypeScript che
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY` (only if the app needs server-side admin writes)
+   - `SIGNUP_RATE_LIMIT_SECRET` (server-only secret used to hash signup ID numbers for rate limiting)
 4. Trigger a production deploy from the `main` branch and preview deploys from `dev`.
 5. For Supabase schema changes, use the CLI workflow:
 
@@ -56,6 +57,14 @@ npx supabase db push
 ```
 
 This keeps schema changes moving through dev, staging, and production in a consistent order.
+
+### Unverified-account cleanup
+
+The signup trigger creates a profile immediately, so an inaccessible email can otherwise reserve a unique email or Israeli ID (`tz`) indefinitely. The dry-run cleanup is implemented in `supabase/functions/cleanup-unverified-users/index.ts`.
+
+The exact rule is `auth.users.email_confirmed_at IS NULL` and `created_at` older than 24 hours. A verified account (`email_confirmed_at IS NOT NULL`) is never eligible. The function checks dependent profile foreign keys and blocks that user if any dependent row or schema lookup error is found. Output includes the masked `tz`, `created_at`, exact `age_seconds`, and `age_minutes`.
+
+The function defaults to dry-run, is not scheduled, and does not delete until the dry-run output is reviewed and explicitly approved. Run the read-only schema checks from `supabase/unverified_account_cleanup_inspection.sql` first. When invoking the function manually, send `mode: "dry-run"` with the service-role bearer token; never expose that token in browser code or logs.
 
 🛠 Tech Stack & Infrastructure
 Framework: Next.js (App Router) + TypeScript

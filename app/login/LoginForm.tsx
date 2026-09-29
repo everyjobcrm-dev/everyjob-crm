@@ -79,15 +79,17 @@ export default function LoginForm() {
     }
   
     const role = await getUserRole(supabase, data.user.id);
-// THERE IS NO SECURITY IN HERE. PLS ADD SERVER SIDE CHECKS FOR ROLE AND REDIRECTS.
-if (role === "admin") {
-  router.replace(redirectTo ?? "/admin/dashboard");
-} else if (role === "employee" || role === "recruiter") {
-  router.replace(redirectTo ?? "/employee/dashboard");
-} else {
-  setError("החשבון שלך עדיין לא הוגדר במלואו. פנה/י לתמיכה.");
-  setLoading(false);
-}
+
+    if (role === "admin") {
+      router.replace(redirectTo ?? "/admin/dashboard");
+    } else if (role === "manager") {
+      router.replace(redirectTo ?? "/manager/events");
+    } else if (role === "employee" || role === "recruiter") {
+      router.replace(redirectTo ?? "/employee/dashboard");
+    } else {
+      setError("החשבון שלך עדיין לא הוגדר במלואו. פנה/י לתמיכה.");
+      setLoading(false);
+    }
   };
 
   return (

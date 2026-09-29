@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { isValidIsraeliId } from "@/lib/validations/israeli-id";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TZ_PATTERN = /^[0-9]{8,9}$/;
 
 export async function POST(request: Request) {
   try {
@@ -10,9 +10,9 @@ export async function POST(request: Request) {
     const normalizedEmail = String(email ?? "").trim().toLowerCase();
     const normalizedTz = String(tz ?? "").trim();
 
-    if (!EMAIL_PATTERN.test(normalizedEmail) || !TZ_PATTERN.test(normalizedTz)) {
+    if (!EMAIL_PATTERN.test(normalizedEmail) || !isValidIsraeliId(normalizedTz)) {
       return NextResponse.json(
-        { success: false, error: "Please provide a valid email and ID number." },
+        { success: false, error: "יש להזין אימייל ומספר תעודת זהות ישראלי תקינים." },
         { status: 400 },
       );
     }

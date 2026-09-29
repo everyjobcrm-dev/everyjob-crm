@@ -95,6 +95,13 @@ New Admin-role logic belongs in `app/admin/actions.ts`. Don't fragment Admin ser
   ```
   And ensure `types/supabase.ts` is saved with UTF-8 encoding.
 
+### 5.7 Unverified-account cleanup
+Unverified Auth users can otherwise reserve unique `profiles.email` and `profiles.tz` values indefinitely, preventing a legitimate retry. The cleanup implementation is `supabase/functions/cleanup-unverified-users/index.ts` and uses the Supabase Admin Auth API; it does not directly delete from `auth.users`.
+
+The hard eligibility rule is: `auth.users.email_confirmed_at IS NULL` and `auth.users.created_at` is older than 24 hours. Rows with `email_confirmed_at IS NOT NULL` must never be selected or deleted. The function defaults to `dry-run`; it is not scheduled and real deletion is not enabled until dry-run output has been reviewed and explicitly approved.
+
+Before any deletion, the function checks all known profile foreign-key paths. Any dependent row, missing table/column, or missing profile blocks deletion for that user. Deletion logs include the user id, masked `tz`, creation time, deletion time, and exact age in seconds/minutes; raw `tz` values must never appear in logs. The read-only inspection queries are in `supabase/unverified_account_cleanup_inspection.sql`.
+
 ## 6. Role-Based Access Control (RBAC)
 
 Flat `role` column on `profiles`: `admin | manager | recruiter | employee`.
