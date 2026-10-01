@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { ensureSignupProfile } from "@/lib/auth/ensure-signup-profile";
 import { isValidIsraeliId } from "@/lib/validations/israeli-id";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,6 +44,14 @@ function genericDuplicateError() {
 }
 
 export async function POST(request: Request) {
+  // TODO(pre-launch): remove dev email verification bypass
+  const skipEmailVerification =
+    process.env.DEV_SKIP_EMAIL_VERIFICATION?.trim().toLowerCase() === "true";
+
+  if (skipEmailVerification && process.env.NODE_ENV === "production") {
+    throw new Error("DEV_SKIP_EMAIL_VERIFICATION cannot be enabled in production");
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -210,6 +219,60 @@ export async function POST(request: Request) {
       keys: Object.keys(userMetadata),
       values: { ...userMetadata, tz: maskTz(tz) },
     });
+
+    // TODO(pre-launch): remove dev email verification bypass
+    if (skipEmailVerification) {
+      const { data: createdUser, error: createUserError } =
+        await adminClient.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: userMetadata,
+        });
+
+      if (createUserError || !createdUser.user) {
+        if (
+          createUserError?.message.toLowerCase().includes("already registered") ||
+          createUserError?.code === "email_exists"
+        ) {
+          return genericDuplicateError();
+        }
+
+        if (
+          createUserError?.status != null &&
+          createUserError.status >= 500 &&
+          createUserError.status <= 599
+        ) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: "לא ניתן להשלים את ההרשמה כרגע. נסה שוב מאוחר יותר.",
+            },
+            { status: 503 },
+          );
+        }
+
+        return NextResponse.json(
+          { success: false, error: "לא ניתן להשלים את ההרשמה כרגע. נסה שוב." },
+          { status: 400 },
+        );
+      }
+
+      // TODO(pre-launch): remove dev email verification bypass
+      const profileResult = await ensureSignupProfile(adminClient, createdUser.user);
+      if (profileResult.error || !profileResult.role) {
+        return NextResponse.json(
+          { success: false, error: "לא ניתן להשלים את הגדרת החשבון כרגע." },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        email,
+        verificationRequired: false,
+      });
+    }
 
     const { data: signupData, error: signupError } =
       await publicClient.auth.signUp({

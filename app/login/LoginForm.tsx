@@ -8,6 +8,19 @@ import { AuthCard } from "@/components/AuthCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getUserRole } from "@/lib/supabase/auth";
 
+const LOGIN_REQUEST_TIMEOUT_MS = 15_000;
+
+function withTimeout<T>(request: Promise<T>): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("Login request timed out")), LOGIN_REQUEST_TIMEOUT_MS);
+  });
+
+  return Promise.race([request, timeout]).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId);
+  });
+}
+
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,6 +53,7 @@ export default function LoginForm() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ identifier: normalizedIdentifier }),
+          signal: AbortSignal.timeout(LOGIN_REQUEST_TIMEOUT_MS),
         });
 
         const payload = await response.json();
@@ -58,10 +72,21 @@ export default function LoginForm() {
       }
     }
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email: emailToLogin,
-      password,
-    });
+    let signInResult;
+    try {
+      signInResult = await withTimeout(
+        supabase.auth.signInWithPassword({
+          email: emailToLogin,
+          password,
+        }),
+      );
+    } catch {
+      setError("ההתחברות מתעכבת. בדקו את החיבור ונסו שוב.");
+      setLoading(false);
+      return;
+    }
+
+    const { data, error: signInError } = signInResult;
 
     if (signInError || !data.user) {
       const message = signInError?.message ?? "";
@@ -78,14 +103,39 @@ export default function LoginForm() {
       return;
     }
   
-    const role = await getUserRole(supabase, data.user.id);
+    let role = await withTimeout(getUserRole(supabase, data.user.id)).catch(() => null);
+    if (role && !new Set(["admin", "manager", "employee", "recruiter"]).has(role)) {
+      role = null;
+    }
 
-    if (role === "admin") {
-      router.replace(redirectTo ?? "/admin/dashboard");
-    } else if (role === "manager") {
-      router.replace(redirectTo ?? "/manager/events");
-    } else if (role === "employee" || role === "recruiter") {
-      router.replace(redirectTo ?? "/employee/dashboard");
+    // TODO(pre-launch): remove dev email verification bypass
+    if (!role && data.session?.access_token) {
+      const profileResponse = await fetch("/api/auth/ensure-profile", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+        signal: AbortSignal.timeout(LOGIN_REQUEST_TIMEOUT_MS),
+      }).catch(() => null);
+
+      if (profileResponse?.ok) {
+        const profilePayload = await profileResponse.json().catch(() => null);
+        if (profilePayload?.success && typeof profilePayload.role === "string") {
+          role = profilePayload.role;
+        }
+      }
+    }
+
+    const destination =
+      redirectTo ??
+      (role === "admin"
+        ? "/admin/dashboard"
+        : role === "manager"
+        ? "/manager/events"
+        : role === "employee" || role === "recruiter"
+        ? "/employee/dashboard"
+        : null);
+
+    if (destination) {
+      window.location.href = destination;
     } else {
       setError("החשבון שלך עדיין לא הוגדר במלואו. פנה/י לתמיכה.");
       setLoading(false);

@@ -125,6 +125,14 @@ export default function RegisterPage() {
         return;
       }
 
+      // TODO(pre-launch): remove dev email verification bypass
+      if (registrationPayload.verificationRequired === false) {
+        setSuccess("החשבון נוצר בהצלחה. אתה מועבר להתחברות...");
+        setLoading(false);
+        setTimeout(() => router.push("/login"), 2000);
+        return;
+      }
+
       setPendingEmail(registrationPayload.email);
     } catch (caughtError) {
       const thrownError = caughtError as {

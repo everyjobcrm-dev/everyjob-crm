@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   // warning (or a hard block on newer versions) for HMR/asset requests
   // that originate from that LAN address instead of localhost.
   allowedDevOrigins: ["192.168.21.1", "localhost", "127.0.0.1"],
+  turbopack: {
+    root: process.cwd(),
+  },
 };
 
 export default nextConfig;

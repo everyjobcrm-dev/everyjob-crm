@@ -111,32 +111,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initialize();
 
-    const authSubscription = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const authSubscription = supabase.auth.onAuthStateChange((_event, session) => {
       const activeUser = session?.user ?? null;
       setUser(activeUser);
       if (activeUser) {
-        const data = await getUserProfile(supabase, activeUser.id);
-        if (data) {
-          setProfile({
-            first_name: data.first_name ?? null,
-            last_name: data.last_name ?? null,
-            tz: data.tz ?? null,
-            birth_date: data.birth_date ?? null,
-            email: data.email ?? null,
-            role: data.role ?? null,
-            recruiter_bonus_rate: data.recruiter_bonus_rate ?? null,
-            isAdmin: data.role === "admin",
-            isRecruiter: data.role === "recruiter",
-            isFieldManager: data.role === "manager",
-            canSetEmployeeRate: data.role === "admin" || data.role === "manager",
-          });
-        } else {
-          setProfile(null);
-        }
+        window.setTimeout(() => {
+          void getUserProfile(supabase, activeUser.id).then((data) => {
+            if (data) {
+              setProfile({
+                first_name: data.first_name ?? null,
+                last_name: data.last_name ?? null,
+                tz: data.tz ?? null,
+                birth_date: data.birth_date ?? null,
+                email: data.email ?? null,
+                role: data.role ?? null,
+                recruiter_bonus_rate: data.recruiter_bonus_rate ?? null,
+                isAdmin: data.role === "admin",
+                isRecruiter: data.role === "recruiter",
+                isFieldManager: data.role === "manager",
+                canSetEmployeeRate: data.role === "admin" || data.role === "manager",
+              });
+            } else {
+              setProfile(null);
+            }
+          }).finally(() => setLoading(false));
+        }, 0);
       } else {
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => authSubscription.data.subscription.unsubscribe();

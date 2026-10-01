@@ -8,6 +8,18 @@ In Progress — current sprint priority / active bottleneck
 
 Planned — on the roadmap, not yet started
 
+<!-- // TODO(pre-launch): remove dev email verification bypass -->
+Email verification is currently bypassed during development.
+
+# Pre-launch
+- [ ] Re-enable two-step email verification (mandatory before launch)
+	- Purchase a domain and verify it in Resend (SPF, DKIM, MX, DMARC); a subdomain like `mail.<domain>` is preferred
+	- Configure Custom SMTP in Supabase (`smtp.resend.com`, port 465) using a sender address from the verified domain
+	- Ensure the "Confirm signup" template uses `{{ .Token }}` and is correctly formatted for RTL/Hebrew
+	- Increase the email rate limit in Supabase
+	- Remove `DEV_SKIP_EMAIL_VERIFICATION` from the code, `.env.example`, and all environments (search for: "pre-launch")
+	- Test the end-to-end sign-up flow using Gmail, Outlook, and iCloud
+
 # Phase 0: Infrastructure, Stack & Build Pipeline
 Done — Next.js (App Router) + TypeScript
 
