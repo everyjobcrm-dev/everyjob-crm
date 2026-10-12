@@ -11,6 +11,7 @@ const STATUS_LABEL: Record<RegistrationStatus, string> = {
   rejected: "נדחה",
   waitlisted: "ברשימת המתנה",
   cancelled: "בוטל",
+  removed: "הוסרת מהמשמרת",
 };
 
 // "registered" and "confirmed" aren't in STATUS_LABEL, let's just make it a partial map
@@ -22,6 +23,7 @@ const STATUS_STYLE: Record<RegistrationStatus, string> = {
   rejected: "bg-rose-500/15 text-rose-400",
   waitlisted: "bg-[#D4FF00]/15 text-[#D4FF00]",
   cancelled: "bg-cream/10 text-cream/50",
+  removed: "bg-cream/10 text-cream/50",
 };
 
 const getStatusStyle = (s: RegistrationStatus) => STATUS_STYLE[s] || "bg-cream/10 text-cream/70";

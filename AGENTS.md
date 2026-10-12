@@ -26,6 +26,7 @@ Primary business constraint: the system does **not** integrate with external acc
 ## 3. Repository Conventions & File Map
 
 - `app/admin/actions.ts` — all Admin-role server actions live here. Do not create parallel `actions.ts` files elsewhere in the admin tree for new Admin functionality; extend this file.
+- `lib/auth/permissions.ts` — the **single source of truth for the role hierarchy** (Admin ⊇ Manager ⊇ Recruiter) on the app side; pure, importable from client components. The database mirrors it (`app_can_manage_event()`, the `events.status` trigger, the registration write guard). `lib/auth/guards.ts` is the server-side `requireRole()` used at the top of every server action. `lib/events/status.ts` holds the event status model and transition table (UI + pre-checks only; the DB trigger is authoritative) and `lib/events/errors.ts` maps DB errors to Hebrew.
 - `auth-context.tsx` — client-side role/session context. This is a UX convenience layer only. It is never a security boundary (see §5.2).
 - Database views, not application code, are the source of truth for derived data (see §5.1). If you find yourself computing staffing status, hour totals, or approval state in a component or server action, stop — check whether a view already exists first.
 
@@ -94,6 +95,9 @@ New Admin-role logic belongs in `app/admin/actions.ts`. Don't fragment Admin ser
   npx supabase gen types typescript --linked > types/supabase.ts
   ```
   And ensure `types/supabase.ts` is saved with UTF-8 encoding.
+  Windows PowerShell 5.1 writes UTF-16 for `>`; run the command from bash/WSL (or PowerShell 7, or `| Out-File -Encoding utf8`) and verify with `file types/supabase.ts` (expect UTF-8/ASCII, LF).
+- The **live database is the source of truth**. Objects that exist live but were never committed are captured read-only in `supabase/live_snapshot/` (documentation, not migrations; md5-verified against `pg_get_*def`). Rollback artifacts for replaced definitions are `supabase/*_v1_live.sql`. Migrations applied by hand in the SQL Editor are noted in `supabase/live_snapshot/README.md`.
+- The Supabase MCP `apply_migration` tool hangs on statements containing `DROP`; run such migrations by hand in the SQL Editor (prefer `IF EXISTS`) and verify read-only afterwards.
 
 ### 5.7 Unverified-account cleanup
 Unverified Auth users can otherwise reserve unique `profiles.email` and `profiles.tz` values indefinitely, preventing a legitimate retry. The cleanup implementation is `supabase/functions/cleanup-unverified-users/index.ts` and uses the Supabase Admin Auth API; it does not directly delete from `auth.users`.
@@ -106,25 +110,46 @@ Before any deletion, the function checks all known profile foreign-key paths. An
 
 Flat `role` column on `profiles`: `admin | manager | recruiter | employee`.
 
+**Hierarchy: Admin ⊇ Manager ⊇ Recruiter.** Anything a Recruiter can do in event management, a Manager can do; anything a Manager can do, an Admin can do. Admin and Manager act on **all** events and registrations; a Recruiter acts only on events they own (`events.recruiter_id = auth.uid()`). It is encoded once in `lib/auth/permissions.ts` and mirrored in the database (§6.1). Admin does **not** gain employee-side actions that are about the person themself (own Form 101 / bank details).
+
 | Capability | Admin | Manager | Recruiter | Employee |
 |---|:---:|:---:|:---:|:---:|
 | Requires 2FA | Yes | No | No | No |
 | View Form 101 / bank details | Yes | No | No | Own only, via form-fill flow |
-| Approve final hour reports | Yes | No | No | No |
+| Approve final hour reports | Yes (never for hours they worked themselves) | No | No | No |
 | Set client pricing / billing rules | Yes | No | No | No |
 | Set per-recruiter recruitment-credit rate | Yes | No | No | No |
-| Create events | No | No | Yes | No |
-| Approve/reject/remove event signups | No | Yes (live event) | Yes (own recruits) | No |
+| Change user roles; delete events | Yes | No | No | No |
+| Create events | Yes | Yes | Yes (requires `can_create_events`) | No |
+| Open / close registration, cancel an event | Yes (any event) | Yes (any event) | Yes (own events only) | No |
+| Restore a cancelled event | Yes | Yes | No | No |
+| Approve/reject/remove event signups, promote from waitlist, handle cancellation requests | Yes (any event) | Yes (any event) | Yes (own events only) | No |
 | Set employee hourly rate at assignment | Yes (no time restriction) | Yes (through the 10th of the following month) | No | No |
-| Enter shift attendance/hours | No | Yes (manual entry) | No | No |
-| Rate employees post-shift | No | Yes | No | No |
-| Submit hour report for approval | No | Yes | No | No |
-| Sign up for a shift | No | No | No | Yes (pending approval) |
-| Cancel own shift signup | No | No | No | No — can only request cancellation |
+| Enter shift attendance/hours, rate employees, submit hour report for approval | Yes | Yes | No | No |
+| Sign up for a shift | Yes — as a worker, placed directly as approved (`משובץ`) when the role has capacity, else waitlisted | Yes — same | Yes — same | Yes (pending approval; waitlisted when full) |
+| Cancel own shift signup | No — can only request cancellation | No — same | No — same | No — can only request cancellation |
 | Fill Form 101 / bank details (own) | — | — | — | Yes |
 | View own hours / estimated pay | — | — | — | Yes |
 
-Note on employee cancellation: an employee can never unilaterally cancel a confirmed shift signup. They can only *request* cancellation; a Manager, Recruiter, or Admin performs the actual removal. Any feature that lets an employee directly cancel a shift is a spec violation, not an edge case to handle differently.
+Notes:
+- **Cancellation and removal.** Nobody cancels their own confirmed signup directly; they *request* it, and a staff member with authority over the event performs the change. A cancellation request approved by staff sets the registration to `cancelled` (the person **may** re-register; the same row is revived and goes to the back of the waitlist). Staff removal on their own initiative sets `removed` (the person may **not** self re-register; staff may re-schedule them). `rejected` also cannot re-apply to the same event. Any feature that lets an employee directly cancel a shift is a spec violation.
+- **Staff as workers.** Admin, Manager and Recruiter may register as workers. They are exempt from `min_rating`, **not** from `min_age`. A staff member never approves, rejects or removes their own registration, and never approves hours they worked (a Recruiter never earns a recruitment credit for their own hours).
+- **Capacity.** `pending` and `approved` registrations occupy capacity; `waitlisted`, `rejected`, `cancelled` and `removed` do not. Staffing status is derived from `event_role_fill_counts`, never stored, and an event is never auto-closed when it fills.
+- **Deferred.** The hours flow (attendance entry guards, RLS on `shift_hour_submissions`/`employee_ratings`/`recruiter_bonuses`, approval self-review constraint) is being reworked in a separate session; do not extend it as part of event-lifecycle work.
+
+### 6.1 Event status model (`events.status`)
+
+`closed` means **closed for registration** — it is not the financial closure (`completed`).
+
+| Status | New signups (incl. waitlist joins) | Staff approve / assign / remove | Visible to employees | Counted in derived data |
+|---|:---:|:---:|:---:|:---:|
+| `pending_rates` | No | n/a | No | Yes |
+| `open` | Yes (a full role routes to the waitlist) | Yes | Yes | Yes |
+| `closed` | No | Yes | Only through "My shifts" | Yes |
+| `cancelled` | No | No (Admin must restore first) | No | **No** — excluded everywhere; registrations are left untouched |
+| `completed`, `paused` | No | Admin only (`completed`) | History only | Yes |
+
+Allowed transitions, enforced by the DB trigger `enforce_event_status_transition` (UI/server pre-checks mirror it): `open ↔ closed`; `open|closed|pending_rates → cancelled`; `pending_rates → open` (only when every role has a rate); `cancelled → open|closed|pending_rates` for Admin/Manager only — the default restore target is `events.cancelled_from_status` (null/`completed`/`paused` → `closed`), and `open`/`closed` still require every role to have a rate. A Recruiter may do the open/close/cancel/`pending_rates → open` transitions on **own** events only and can never restore. **`completed` and `paused` are frozen**: no transition into or out of them through the app (service_role / direct DB only). Cancelling an event is refused while an approved hour report exists for it. Deleting an event is Admin-only, and refused when audit history exists (cancel instead).
 
 ## 7. RTL, Design System, and UI Conventions
 

@@ -22,6 +22,7 @@ export default async function AdminDashboardPage() {
     supabase
       .from("events")
       .select("id", { count: "exact", head: true })
+      .neq("status", "cancelled") // cancelled events are excluded from every dashboard count
       .gte("event_date", todayStr)
       .lte("event_date", weekStr),
   ]);

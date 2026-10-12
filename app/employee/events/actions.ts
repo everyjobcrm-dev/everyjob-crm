@@ -3,8 +3,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { mapDbError } from "@/lib/events/errors";
 
-export type RegistrationStatus = "pending" | "approved" | "rejected" | "waitlisted" | "cancelled";
+export type RegistrationStatus = "pending" | "approved" | "rejected" | "waitlisted" | "cancelled" | "removed";
 
 export type EmployeeEventRole = {
   id: string;
@@ -184,25 +185,11 @@ export async function registerForRole(
 
   if (error) {
     console.error("[registerForRole]", error.message);
-    if (error.message.includes("already_registered")) {
-      return { success: false, error: "כבר נרשמת לתפקיד זה." };
-    }
-    if (error.message.includes("not_eligible: age")) {
-      return { success: false, error: "לא ניתן להירשם: יש לעדכן תאריך לידה ולעמוד בגיל המינימלי לאירוע." };
-    }
-    if (error.message.includes("not_eligible: rating")) {
-      return { success: false, error: "לא ניתן להירשם: הדירוג שלך נמוך מהדירוג המינימלי לאירוע." };
-    }
-    if (error.message.includes("not_eligible: role_skill")) {
-      return { success: false, error: "לא ניתן להירשם: הרשאת התפקיד שלך עדיין לא הוגדרה במערכת." };
-    }
-    if (error.message.includes("not_eligible")) {
-      return { success: false, error: "אינך עומד/ת בתנאי הקבלה למשמרת זו." };
-    }
-    if (error.message.includes("not_open")) {
-      return { success: false, error: "האירוע אינו פתוח להרשמה יותר." };
-    }
-    return { success: false, error: "ההרשמה נכשלה. נסה/י שוב." };
+    // 23505 (unique_violation) = already registered for this event (AGENTS.md 5.4); 40P01/40001 -> "try again".
+    return {
+      success: false,
+      error: mapDbError(error, { uniqueMessage: "כבר נרשמת לאירוע זה.", fallback: "ההרשמה נכשלה. נסה/י שוב." }),
+    };
   }
 
   revalidatePath("/employee/events");
@@ -216,16 +203,23 @@ export async function requestCancellation(registrationId: string): Promise<Actio
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "לא מחובר/ת למערכת." };
 
-  const { error } = await supabase
+  // An employee can only REQUEST cancellation (never cancel directly). Only an active registration of an
+  // open/closed event qualifies; the DB guard (guard_event_registration_write) enforces the same rule.
+  const { data, error } = await supabase
     .from("event_registrations")
     .update({ cancellation_requested_at: new Date().toISOString() })
     .eq("id", registrationId)
     .eq("user_id", user.id)
-    .not("status", "in", '("cancelled","no_show")');
+    .in("status", ["pending", "approved", "waitlisted"])
+    .is("cancellation_requested_at", null)
+    .select("id");
 
   if (error) {
     console.error("[requestCancellation]", error.message);
-    return { success: false, error: "שגיאה בבקשת הביטול. ייתכן והמשמרת כבר בוטלה." };
+    return { success: false, error: mapDbError(error, { fallback: "שגיאה בבקשת הביטול. נסה/י שוב." }) };
+  }
+  if (!data?.length) {
+    return { success: false, error: "לא ניתן לשלוח בקשת ביטול: ההרשמה אינה פעילה או שכבר נשלחה בקשה." };
   }
 
   revalidatePath("/employee/events");

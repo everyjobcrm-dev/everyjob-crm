@@ -1,5 +1,5 @@
 //app/admin/events/new/page.tsx
-import { fetchClients } from "@/app/admin/events/actions";
+import { fetchClients } from "@/app/admin/actions";
 import { CreateEventForm } from "@/components/events/CreateEventForm";
 
 export default async function NewEventPage() {

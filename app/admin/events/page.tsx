@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { fetchEvents } from "@/app/admin/events/actions";
+import { fetchEvents } from "@/app/admin/actions";
 import { EventsTable } from "@/components/admin/events-table";
 
 export default async function AdminEventsPage() {
