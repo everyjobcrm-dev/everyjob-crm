@@ -43,13 +43,34 @@ function genericDuplicateError() {
   );
 }
 
+const SERVICE_UNAVAILABLE_MESSAGE = "שירות ההרשמה אינו זמין כרגע.";
+
+/**
+ * Never lets an exception escape as a non-JSON error page: the browser always gets { success, error } JSON.
+ * Only a masked tz may ever be logged (the real tz never appears in logs).
+ */
 export async function POST(request: Request) {
+  try {
+    return await handleRegistration(request);
+  } catch (caughtError) {
+    console.error("Signup handler failed", {
+      name: caughtError instanceof Error ? caughtError.name : typeof caughtError,
+      message: caughtError instanceof Error ? caughtError.message : "non-error thrown",
+    });
+    return NextResponse.json({ success: false, error: SERVICE_UNAVAILABLE_MESSAGE }, { status: 500 });
+  }
+}
+
+async function handleRegistration(request: Request) {
   // TODO(pre-launch): remove dev email verification bypass
   const skipEmailVerification =
     process.env.DEV_SKIP_EMAIL_VERIFICATION?.trim().toLowerCase() === "true";
 
+  // The bypass must never run in production. Fail CLOSED (refuse the signup) with a JSON response - throwing here
+  // returned a non-JSON 500 page that the browser then failed to parse.
   if (skipEmailVerification && process.env.NODE_ENV === "production") {
-    throw new Error("DEV_SKIP_EMAIL_VERIFICATION cannot be enabled in production");
+    console.error("DEV_SKIP_EMAIL_VERIFICATION is enabled in production; refusing signups until it is removed");
+    return NextResponse.json({ success: false, error: SERVICE_UNAVAILABLE_MESSAGE }, { status: 503 });
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -58,7 +79,7 @@ export async function POST(request: Request) {
 
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
     return NextResponse.json(
-      { success: false, error: "שירות ההרשמה אינו זמין כרגע." },
+      { success: false, error: SERVICE_UNAVAILABLE_MESSAGE },
       { status: 503 },
     );
   }
@@ -217,7 +238,7 @@ export async function POST(request: Request) {
 
     console.info("Signup user_metadata payload", {
       keys: Object.keys(userMetadata),
-      values: { ...userMetadata, tz: maskTz(tz) },
+      tz: maskTz(tz), // masked only - names, phone and birth date are never logged
     });
 
     // TODO(pre-launch): remove dev email verification bypass
