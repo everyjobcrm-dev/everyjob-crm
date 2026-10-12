@@ -1,74 +1,84 @@
 # AGENTS.md — everyJob CRM
 
-Authoritative, tool-agnostic context for any coding agent (Antigravity, Claude Code, or otherwise) working in this repository. If a tool-specific config file (e.g. a legacy GEMINI.md) still exists and conflicts with this file, this file wins — it is the single source of truth. Do not fork rules into a second file; extend this one.
+The single source of truth for any coding agent working in this repository: Claude Code, Antigravity, or anything else. Tool-specific files (`CLAUDE.md`, a legacy `GEMINI.md`) may only add tool mechanics. They must not restate or override rules from this file. If one of them, or any doc under `docs/`, conflicts with this file, **stop and ask the human**. Don't resolve the conflict yourself.
+
+**Precedence:** §8 deny rules > the rest of this file > `docs/*` > the task prompt. If a task conflicts with §8, say so and pause. Never quietly follow the task.
 
 ---
 
 ## 1. Project Overview
 
-everyJob CRM is a full-stack workforce management platform for the Israeli gig-shift labor market: it connects businesses that need hourly shift workers with a pool of workers, and manages the entire lifecycle — recruitment, scheduling, attendance, ratings, payroll reporting, and client billing — through a strict four-role permission system.
+everyJob CRM is a workforce-management platform for the Israeli gig-shift labor market. It connects businesses that need hourly shift workers with a pool of workers. It covers recruitment, scheduling, attendance, ratings, payroll reporting and client billing, all behind a strict four-role permission system.
 
-The product is Hebrew-first and RTL-native. It is not a Hebrew localization of an English product — Hebrew and RTL are the default assumption throughout the UI layer, and English-first patterns (e.g. `ml-`/`mr-` Tailwind classes, LTR-only component libraries) are defects, not neutral choices.
-
-Primary business constraint: the system does **not** integrate with external accounting or payroll systems. Billing and payroll output are internal reports and Excel exports only. Do not build toward, or assume the future existence of, an external accounting API unless a task explicitly says otherwise (see Phase 9 in the roadmap).
+- **Hebrew-first, RTL-native.** Hebrew and RTL are the default, not a localization layer. English-first patterns such as `ml-`/`mr-` classes or LTR-only components are defects.
+- **No external accounting or payroll integration.** Billing and payroll output are internal reports and Excel exports only. Don't build toward an external accounting API unless a task explicitly asks (roadmap Phase 9).
 
 ## 2. Tech Stack
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Frontend/server framework | Next.js (App Router) | TypeScript throughout, no `pages/` router |
+| Framework | Next.js 16 (App Router), React 19 | TypeScript only. No `pages/` router |
 | Database / BaaS | Supabase (PostgreSQL) | RLS is the primary authorization boundary at the DB layer |
-| Styling | Tailwind CSS v4 | RTL via logical properties only — see §6 |
+| Styling | Tailwind CSS v4 | Logical properties only (§7) |
 | Animation | Framer Motion | |
-| Forms/validation | Zod + react-hook-form | Specific type-inference pattern required — see §5.3 |
-| Native (planned, Phase 2, not started) | React Native / Expo | Do not scaffold this unless a task explicitly asks for it |
+| Forms / validation | Zod 3 + react-hook-form 7 | Required generic pattern (§5.3) |
+| Native app | React Native / Expo | Not started. Don't scaffold it unless asked |
 
-## 3. Repository Conventions & File Map
+Fast checks (run only what your change touches): `npm run typecheck`, `npm run lint`. Run `npm run build` only when asked.
 
-- `app/admin/actions.ts` — all Admin-role server actions live here. Do not create parallel `actions.ts` files elsewhere in the admin tree for new Admin functionality; extend this file.
-- `auth-context.tsx` — client-side role/session context. This is a UX convenience layer only. It is never a security boundary (see §5.2).
-- Database views, not application code, are the source of truth for derived data (see §5.1). If you find yourself computing staffing status, hour totals, or approval state in a component or server action, stop — check whether a view already exists first.
+## 3. Repository Map
 
-When a task requires touching more than one file across the events, permissions, or billing modules, state your plan (files touched, order of operations) before editing. These modules are tightly coupled through the views and triggers described below, and an out-of-order edit (e.g. changing a column before updating the view that depends on it) is the most common source of regressions in this codebase.
+| Path | Purpose |
+|---|---|
+| `app/admin/actions.ts` | The home for Admin-role server actions (§5.5) |
+| `app/admin/events/actions.ts` | Legacy exception to §5.5. Don't add new Admin logic here, and don't move it without being asked |
+| `app/manager/actions.ts` | Manager-role server actions |
+| `lib/auth-context.tsx` | Client role/session context. A UX layer only, never a security boundary (§5.2) |
+| `types/supabase.ts` | Generated DB types. Never hand-edit (§5.6) |
+| `supabase/*.sql` (root) | Legacy SQL, already applied. Read-only reference |
+| `supabase/pending/` | Proposed, **not yet applied** SQL written by agents (§5.6) |
+| `supabase/migrations/` | Applied SQL, timestamped, mirrors the remote migration history (§5.6) |
+| `supabase/functions/` | Edge Functions |
 
-## 4. Domain Glossary (Hebrew term → code identifier)
+**Multi-file changes:** if a task touches more than one file across the events, permissions or billing modules, state the plan first: files touched and order of operations. These modules are coupled through views and triggers, and an out-of-order edit (changing a column before the view that depends on it) is the most common source of regressions here.
 
-The spec and product conversations happen in Hebrew; the codebase is in English. Use this table to translate — do not guess or transliterate a Hebrew term into a new English field name.
+## 4. Domain Glossary (Hebrew → code)
 
-| Hebrew | English concept | Code identifier |
+Product discussions are in Hebrew and the code is in English. Translate with this table. Never invent or transliterate a new identifier. If a term is missing, check `docs/spec-full.md`, then ask.
+
+| Hebrew | Concept | Code identifier |
 |---|---|---|
-| אדמין | Admin | `role = 'admin'` |
-| מנהל שטח / הרשאת Skill | Field Manager | `role = 'manager'` |
-| מגייס | Recruiter | `role = 'recruiter'` |
-| עובד | Employee | `role = 'employee'` |
-| טופס 101 | Form 101 (tax withholding form) | `employee_documents` (Admin-only, 2FA-gated) |
-| זיכוי גיוס | Recruitment credit ledger record | `recruiter_bonuses`; one record per approved recruited employee/event, redeemed FIFO by Manager or Admin |
-| תעריף זיכוי גיוס | Per-recruiter recruitment-credit rate | `profiles.recruiter_bonus_rate`; NIS per approved hour, Admin-set only, separate from the employee's `wage_rate` |
+| אדמין | Admin | `profiles.role = 'admin'` |
+| מנהל שטח / הרשאת Skill | Field Manager | `profiles.role = 'manager'` |
+| מגייס | Recruiter | `profiles.role = 'recruiter'` |
+| עובד | Employee | `profiles.role = 'employee'` |
+| טופס 101 / פרטי בנק | Form 101 / bank details | `employee_documents`, `form_101_submissions` (sensitive, §8.2) |
+| זיכוי גיוס | Recruitment-credit ledger record | `recruiter_bonuses`: one per approved recruited employee/event, redeemed FIFO by Manager or Admin |
+| תעריף זיכוי גיוס | Per-recruiter credit rate | `profiles.recruiter_bonus_rate`: NIS per approved hour, Admin-set only, separate from `wage_rate` |
 | דוח שעות | Hour report | `shift_hour_submissions` |
-| רשימת המתנה | Waitlist | waitlist entity on event/role signup (Phase 3, in progress) |
-| דירוג | Rating (post-shift, star-based) | rolls into employee's average rating |
-| תעריף בסיס | Base rate | `base_rate` (nullable; see `pending_rates` status) |
+| רשימת המתנה | Waitlist | waitlist + trigger `auto_promote_from_waitlist` |
+| בקשת ביטול | Cancellation request | `cancellation_requests` |
+| דירוג | Post-shift star rating | rolls into the employee's average rating |
+| תעריף בסיס | Base rate | `base_rate` (nullable; see `pending_rates`) |
 | תקציב נסיעות | Travel budget | `travel_budget_per_worker` |
-| סטטוס איוש | Staffing status | derived only, from `event_role_fill_counts` view — never a stored column |
+| סטטוס איוש | Staffing status | derived only, from view `event_role_fill_counts` |
 
-If a task uses a Hebrew term not in this table, ask for the English identifier rather than inventing one, or check `docs/spec-full.md` for context first.
+## 5. Architecture Rules
 
-## 5. Architecture Rules — Do Not Violate
+### 5.1 Derived state lives in views, never in stored columns
+Staffing status, hour totals and approval aggregates come from views such as `event_role_fill_counts`. They are never stored columns updated imperatively; that pattern caused aggregate drift and was removed on purpose. If a feature seems to need a stored aggregate, write a view instead. Before computing any of these in a component or action, check whether a view already exists.
 
-### 5.1 Derived state lives in views, never in columns
-Staffing status, hour totals, and approval aggregates are computed from views (e.g. `event_role_fill_counts`), never persisted as columns and updated imperatively. This was a deliberate fix for a class of bugs where stored aggregates drifted from reality. If a feature seems to need a new stored aggregate, treat that as a signal to write a view instead.
-
-Related, already-corrected mistakes — do not reintroduce them:
-- `events` has no `end_time` column. Derive it as `MAX(event_roles.end_time)`.
-- The correct field name is `min_rating`, not `required_rank`.
-- `events` has no `title` or `wage_rate` column.
-- There is no `user_roles` table. Role checks and RLS policies reference `profiles.role`.
+Corrected mistakes. Do not reintroduce them:
+- `events` has no `end_time`. Derive it as `MAX(event_roles.end_time)`.
+- `events` has no `title` and no `wage_rate`.
+- The field is `min_rating`, not `required_rank`.
+- There is no `user_roles` table. Roles and RLS use `profiles.role`.
 
 ### 5.2 Server-side authorization is independent of the client
-`auth-context.tsx` controls what the UI shows, and nothing else. Every server action must independently re-verify the caller's role and permissions before acting — never treat a passed-in role, a client-side check, or the shape of the request as sufficient. This is a hard rule, not a style preference: removing or weakening a server-side permission check to "simplify" an action is a deny-listed change (see §8).
+`lib/auth-context.tsx` decides what the UI shows, nothing more. Every server action re-verifies the caller's session and `profiles.role` on the server before it acts. A passed-in role, a client-side check, or the shape of the request is never sufficient. Weakening this is a deny-listed change (§8.3).
 
 ### 5.3 Form validation pattern
-Zod schemas used with react-hook-form must split `z.input<>` and `z.output<>` and use the three-generic `useForm` signature:
+Split the input and output types and use the three-generic `useForm`:
 
 ```ts
 type FormInput = z.input<typeof schema>;
@@ -79,83 +89,98 @@ const form = useForm<FormInput, unknown, FormOutput>({
 });
 ```
 
-This exists because the naive single-generic pattern produced a type-inference failure in this codebase (fields silently typed as `unknown` after a schema transform). Do not "simplify" back to the single-generic form even if it looks equivalent.
+The single-generic form silently typed transformed fields as `unknown` in this codebase. Don't "simplify" it back. When a schema and its form both change, change them in the same edit.
 
-### 5.4 Postgres unique-violation handling
-Any insert against a column with a uniqueness constraint (e.g. duplicate client detection) must catch Postgres error code `23505` explicitly and surface a Hebrew, user-facing message — not a generic error toast. This pattern is established in the Clients module; mirror it rather than reinventing error handling per-module.
+### 5.4 Unique-violation handling
+Every insert against a unique constraint catches Postgres code `23505` explicitly and returns a specific Hebrew message, never a generic error toast. Mirror the Clients module implementation.
 
 ### 5.5 Server action organization
-New Admin-role logic belongs in `app/admin/actions.ts`. Don't fragment Admin server actions across multiple files "to keep files small" — the consolidation was a deliberate cleanup after the opposite pattern caused permission-check duplication and drift.
+New Admin logic goes in `app/admin/actions.ts`. Don't create new `actions.ts` files under `app/admin/`. Fragmenting them caused permission-check duplication and drift.
 
-### 5.6 Supabase Workflow & Automatic Type Syncing
-- All SQL scripts, triggers, functions, procedures, and views modified, created, or provided for Supabase MUST be saved as `.sql` files in the `supabase/` folder in this repository.
-- After creating or modifying any database schema, function, or trigger (with user confirmation as per §8), automatically update the local TypeScript database types by running:
-  ```powershell
-  npx supabase gen types typescript --linked > types/supabase.ts
-  ```
-  And ensure `types/supabase.ts` is saved with UTF-8 encoding.
+### 5.6 Database change workflow
+Agents **never** execute DDL or DML against any Supabase database: dev, staging or prod. This holds through the CLI (`supabase db push`, `npm run db:push`, `migration up`), the Supabase MCP (`apply_migration`, `execute_sql` with anything other than read-only `SELECT`, branch create/merge/reset/rebase, `deploy_edge_function`), or any other route.
+
+1. **Propose.** Write the SQL to `supabase/pending/<short_name>.sql` and show it to the human. One logical change per file. Make it idempotent where practical (`IF NOT EXISTS`, `CREATE OR REPLACE`), and include any view, RLS and grant changes the column change depends on, in dependency order.
+2. **Human applies.** The human runs it in the Supabase SQL Editor. Wait.
+3. **Record.** Only after the human confirms it was applied, move it to `supabase/migrations/<YYYYMMDDHHMMSS>_<short_name>.sql` (UTC timestamp) and delete the pending copy.
+4. **Repair history.** Give the human this command to run:
+   `npx supabase migration repair --status applied <YYYYMMDDHHMMSS> --linked`
+   This keeps dev, staging and prod migration history aligned.
+5. **Regenerate types.** Write them to `types/supabase.ts` as UTF-8 without a BOM:
+   - bash / PowerShell 7: `npx supabase gen types typescript --linked > types/supabase.ts`
+   - Windows PowerShell 5.1: its `>` writes UTF-16, so use `cmd /c "npx supabase gen types typescript --linked > types\supabase.ts"`
+   - Supabase MCP: `generate_typescript_types`, writing the result to `types/supabase.ts`
+
+   Then run `npm run typecheck`.
+
+Read-only DB access through the MCP or CLI (listing tables, migrations, advisors, logs; `SELECT`) is allowed, except for any read of the §8.2 tables.
 
 ### 5.7 Unverified-account cleanup
-Unverified Auth users can otherwise reserve unique `profiles.email` and `profiles.tz` values indefinitely, preventing a legitimate retry. The cleanup implementation is `supabase/functions/cleanup-unverified-users/index.ts` and uses the Supabase Admin Auth API; it does not directly delete from `auth.users`.
+Unverified Auth users can hold unique `profiles.email` / `profiles.tz` values and block a legitimate retry. The cleanup is `supabase/functions/cleanup-unverified-users/index.ts`. It uses the Admin Auth API and never deletes from `auth.users` directly.
 
-The hard eligibility rule is: `auth.users.email_confirmed_at IS NULL` and `auth.users.created_at` is older than 24 hours. Rows with `email_confirmed_at IS NOT NULL` must never be selected or deleted. The function defaults to `dry-run`; it is not scheduled and real deletion is not enabled until dry-run output has been reviewed and explicitly approved.
+- Eligible users have `email_confirmed_at IS NULL` and `created_at` older than 24 hours. Confirmed users are never selected or deleted.
+- The default mode is `dry-run`. The function is not scheduled, and real deletion stays disabled until the human reviews dry-run output and approves it.
+- Before deleting, it checks every known profile FK path. Any dependent row, missing table/column, or missing profile blocks deletion of that user.
+- Logs contain the user id, a **masked** `tz`, creation time, deletion time and exact age. Raw `tz` never appears in logs.
+- The read-only inspection queries are in `supabase/unverified_account_cleanup_inspection.sql`.
 
-Before any deletion, the function checks all known profile foreign-key paths. Any dependent row, missing table/column, or missing profile blocks deletion for that user. Deletion logs include the user id, masked `tz`, creation time, deletion time, and exact age in seconds/minutes; raw `tz` values must never appear in logs. The read-only inspection queries are in `supabase/unverified_account_cleanup_inspection.sql`.
+### 5.8 Pre-launch items: don't touch unless asked
+- **2FA** (Admin, mandatory before launch) is deferred to the end of the project. Don't implement, scaffold or change 2FA/MFA code now. Until it ships, §8.2 applies to Admin too.
+- **Email verification** is bypassed in development through `DEV_SKIP_EMAIL_VERIFICATION`. Don't remove or extend the bypass. Its removal is tracked in `docs/roadmap.md` → Pre-launch.
 
-## 6. Role-Based Access Control (RBAC)
+## 6. Role-Based Access Control
 
-Flat `role` column on `profiles`: `admin | manager | recruiter | employee`.
+`profiles.role` ∈ `admin | manager | recruiter | employee`. The table shows the target state. Rows marked † are blocked for every role until 2FA ships (§5.8, §8.2).
 
 | Capability | Admin | Manager | Recruiter | Employee |
 |---|:---:|:---:|:---:|:---:|
-| Requires 2FA | Yes | No | No | No |
-| View Form 101 / bank details | Yes | No | No | Own only, via form-fill flow |
+| Requires 2FA | Yes (pre-launch) | No | No | No |
+| View Form 101 / bank details † | Yes, aal2 only | No | No | Own only, through the fill flow |
 | Approve final hour reports | Yes | No | No | No |
 | Set client pricing / billing rules | Yes | No | No | No |
-| Set per-recruiter recruitment-credit rate | Yes | No | No | No |
+| Set per-recruiter credit rate | Yes | No | No | No |
 | Create events | No | No | Yes | No |
-| Approve/reject/remove event signups | No | Yes (live event) | Yes (own recruits) | No |
-| Set employee hourly rate at assignment | Yes (no time restriction) | Yes (through the 10th of the following month) | No | No |
-| Enter shift attendance/hours | No | Yes (manual entry) | No | No |
+| Approve / reject / remove event signups | No | Yes (live event) | Yes (own recruits) | No |
+| Set employee hourly rate at assignment | Yes (any time) | Yes (until the 10th of the following month) | No | No |
+| Enter shift attendance / hours | No | Yes (manual) | No | No |
 | Rate employees post-shift | No | Yes | No | No |
 | Submit hour report for approval | No | Yes | No | No |
 | Sign up for a shift | No | No | No | Yes (pending approval) |
-| Cancel own shift signup | No | No | No | No — can only request cancellation |
-| Fill Form 101 / bank details (own) | — | — | — | Yes |
+| Cancel own confirmed signup | No | No | No | **No.** Can only request cancellation |
+| Fill own Form 101 / bank details | — | — | — | Yes |
 | View own hours / estimated pay | — | — | — | Yes |
 
-Note on employee cancellation: an employee can never unilaterally cancel a confirmed shift signup. They can only *request* cancellation; a Manager, Recruiter, or Admin performs the actual removal. Any feature that lets an employee directly cancel a shift is a spec violation, not an edge case to handle differently.
+An employee never cancels a confirmed signup directly. They submit a `cancellation_requests` row, and a Manager, Recruiter or Admin performs the removal. A direct-cancel path is a spec violation, not an edge case.
 
-## 7. RTL, Design System, and UI Conventions
+## 7. RTL, Design System, UI Copy
 
-- Tailwind: logical properties only — `ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`. Never `ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`. This applies even in code that looks purely presentational (icons, dividers, absolute-positioned badges).
-- Design tokens: Electric Indigo `#4F46E5` (primary), Hyper Lime `#D4FF00` (accent).
-- Design direction is explicitly "anti-template": no default SaaS gradients, no pill-shaped buttons, intentional asymmetry over centered/symmetric layouts. When a component's design isn't specified, deviate from the most generic Tailwind-UI-esque default rather than defaulting to it.
-- All user-facing copy — labels, buttons, error messages, empty states — is in Hebrew. Code identifiers, comments, and commit messages are in English.
+- Tailwind uses logical properties only: `ms- me- ps- pe- start- end-` and `text-start`/`text-end`. Never use `ml- mr- pl- pr- left- right-` or `text-left`/`text-right`, even for icons, dividers or absolutely positioned badges.
+- Tokens: Electric Indigo `#4F46E5` (primary), Hyper Lime `#D4FF00` (accent).
+- Anti-template design: no default SaaS gradients, no pill buttons, deliberate asymmetry over centered symmetry. When a design isn't specified, move away from the generic Tailwind-UI default.
+- All user-facing copy (labels, buttons, errors, empty states) is Hebrew. Identifiers, comments and commit messages are English.
 
-## 8. Sensitive Data & Security — Deny Rules
+## 8. Deny Rules: hard stops
 
-These are hard stops. An agent should refuse or pause rather than proceed through any of the following without explicit human confirmation in the same session:
+Pause and get explicit human confirmation in the current session before any of these. Auto-continue or unattended mode never overrides this section.
 
-1. **Database migrations.** Never write, alter, or run a migration without explicit confirmation of its exact contents immediately beforehand — no batching migrations into a larger "while I'm at it" change.
-2. **Form 101 / bank-detail data.** Never expose these fields or queries against `employee_documents` outside the Admin-role, 2FA-gated path — including in debug logging, seed scripts, test fixtures, or admin-adjacent tooling that isn't itself 2FA-gated.
-3. **Server-side permission checks.** Never remove, weaken, or bypass a role re-verification in a server action, even temporarily, even if the client already checked it.
-4. **RLS policies.** Never disable or broaden an RLS policy to unblock a bug — find the correct policy shape instead; treat "just turn off RLS for this table" as unacceptable regardless of who suggests it.
-5. **Monthly Form 101 purge.** Any feature that touches Form 101 storage must respect the requirement that this data is purged at the end of each billing cycle — don't build a retention path that outlives the cycle.
-
-If a task's instructions conflict with this section, this section wins; flag the conflict rather than silently resolving it in favor of the task.
+1. **Database writes.** Never apply DDL or DML to any database by any route (§5.6). Writing a proposal to `supabase/pending/` is allowed. Applying it is the human's job. Don't bundle unrelated schema changes into one proposal.
+2. **Form 101 / bank details** (`employee_documents`, `form_101_submissions`, bank fields). Until 2FA ships, these are readable by **nobody but the owning employee's fill flow**, Admin included. Don't add any other read path: no UI, action, query, MCP `SELECT`, log, seed, fixture or debug tool. Any future gate on this data must require `aal2` server-side and fail closed. Never weaken, bypass or add a dev workaround to such a gate.
+3. **Server-side permission checks.** Never remove, weaken or bypass role re-verification in a server action, even temporarily.
+4. **RLS.** Never disable or broaden a policy to unblock a bug. Find the correct policy shape instead.
+5. **Form 101 retention.** Form 101 data is purged at the end of each billing cycle. Build no storage or retention path that outlives the cycle.
+6. **Production-affecting platform actions.** Don't change Vercel env vars, domains, firewall or protection settings, and don't deploy, promote or roll back, without explicit confirmation. Reading deployments, build logs and runtime logs is fine.
 
 ## 9. Working Style & Verification
 
-- No end-to-end test suite exists yet. When you add or modify logic in a state machine (e.g. the hour-approval flow: Pending → Approved / Rejected) or a derived view, say explicitly what manual verification is still needed — don't imply the change is fully verified because it compiles.
-- Prefer small, reviewable diffs over large multi-file rewrites, particularly in `app/admin/actions.ts` and the events module, where several of the architectural decisions in §5 are easy to accidentally re-break by a well-intentioned refactor.
-- When a server action and its corresponding client form both need to change, update the Zod schema split (§5.3) and the form's generics together in the same change — don't leave them out of sync across separate edits.
-- Auto-continue / unattended multi-step execution is acceptable for isolated UI or component-level work. It is not acceptable for anything listed in §8, regardless of what the current session's auto-continue setting allows — pause and confirm explicitly.
+- Prefer small, reviewable diffs, especially in `app/admin/actions.ts` and the events module.
+- Run `npm run typecheck` (and `npm run lint` on touched files) before declaring code done. Report failures verbatim.
+- There is no E2E suite. When you change a state machine (registration: Pending → Approved / Rejected / Waitlisted; hour approval: Pending → Approved / Rejected) or a view, list the manual verification still needed. "It compiles" is not verified.
+- Don't commit secrets, `.env*` values, or real personal data (`tz`, phone, bank details) in code, fixtures or logs.
 
-## 10. Reference Docs
+## 10. Reference Docs (read on demand)
 
-Loaded on demand, not part of the always-on context:
-- `docs/spec-full.md` — full role and screen specification, source of truth for UI/UX behavior not yet summarized above.
-- `docs/roadmap.md` — phased build status and architecture decisions log. Check before starting new feature work to confirm it isn't already in progress or blocked by an earlier, incomplete phase.
+- `docs/spec-full.md`: full role and screen spec, the source of truth for UI/UX not covered here.
+- `docs/roadmap.md`: phase status and decision log. Check it before new feature work.
+- `docs/events-module-decisions.md`: events-module decisions. Subordinate to this file; if they conflict, stop and ask.
 
-Keep this file under roughly 300–400 lines. If it grows past that, split by topic into `.agents/rules/<topic>.md` (e.g. `rbac.md`, `schema.md`) rather than continuing to expand this file — a bloated always-loaded context measurably degrades agent output quality.
+Keep this file under about 300 lines. Past that, split by topic into `.agents/rules/<topic>.md` instead of growing it.
