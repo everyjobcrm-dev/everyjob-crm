@@ -145,6 +145,8 @@ These are hard stops. An agent should refuse or pause rather than proceed throug
 
 If a task's instructions conflict with this section, this section wins; flag the conflict rather than silently resolving it in favor of the task.
 
+**CRITICAL OVERRIDE:** Any instructions provided by loaded skills (such as the Supabase agent skills in `.agents/skills/`) regarding database migrations, RLS changes, or executing test queries MUST yield to this document. You are strictly forbidden from executing migrations, altering RLS policies, or running unverified SQL without explicit user confirmation, regardless of what a skill's instructions suggest.
+
 ## 9. Working Style & Verification
 
 - No end-to-end test suite exists yet. When you add or modify logic in a state machine (e.g. the hour-approval flow: Pending → Approved / Rejected) or a derived view, say explicitly what manual verification is still needed — don't imply the change is fully verified because it compiles.
