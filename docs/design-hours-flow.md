@@ -75,7 +75,7 @@ documented here); the proposal makes them correct (DEFINER, DELETE-safe) instead
 2. `app/admin/actions.ts` `reviewShiftSubmission` → `approve_shift_hours` / `reject_shift_hours`; add `voidShiftSubmission`.
 3. `redeemRecruitmentCredits` → a redeem RPC (a separate, later proposal), because the live table uses `applied_*`, not `redeemed_*`.
 4. `AttendanceModal` sends ISO timestamps built from the event date + times; it shows the rejection reason and void state from `get_event_roster` (already returns `submission_status`).
-5. `lib/events/errors.ts`: `hours_not_allowed`, `hours_already_approved`, `self_review`, `two_person_review`, `credit_already_applied`, `shift_not_started`.
+5. `lib/events/errors.ts`: `hours_not_allowed`, `hours_already_approved`, `self_review`, `credit_already_applied`, `shift_not_started` (done).
 6. Employee home and "My shifts": monthly hours and estimated pay from `v_my_monthly_hours`.
 
 ## 7. Decisions (answered 2026-10-13)

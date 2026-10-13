@@ -7,7 +7,6 @@ import { mapDbError } from "@/lib/events/errors";
 import type { RosterRole, RosterRow } from "@/lib/events/roster";
 import { RosterBoard } from "@/components/manager/RosterBoard";
 import { EventStatusControl } from "@/components/manager/EventStatusControl";
-import { RecruitmentCreditControls } from "@/components/manager/recruitment-credit-controls";
 
 type Props = {
   params: Promise<{ eventId: string }>;
@@ -61,10 +60,6 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
   }));
   const rows = (rosterData ?? []) as RosterRow[];
 
-  const recruiterResult = event.recruiter_id
-    ? await supabase.from("profiles").select("id, first_name, last_name").eq("id", event.recruiter_id).maybeSingle()
-    : { data: null };
-  const recruiter = recruiterResult.data;
 
   const client = Array.isArray(event.clients) ? event.clients[0] : event.clients;
   const clientName =
@@ -112,6 +107,7 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
         ) : (
           <RosterBoard
             eventId={event.id}
+            eventDate={event.event_date}
             eventStatus={event.status}
             viewerId={ctx.userId}
             canSeeRates={roleAtLeast(ctx.role, "manager")}
@@ -122,15 +118,7 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
         )}
       </section>
 
-      {recruiter && roleAtLeast(ctx.role, "manager") && (
-        <RecruitmentCreditControls
-          eventId={event.id}
-          recruiter={{
-            id: recruiter.id,
-            name: [recruiter.first_name, recruiter.last_name].filter(Boolean).join(" "),
-          }}
-        />
-      )}
+      {/* Recruitment-credit redemption is hidden until the FIFO redeem RPC (supabase/p6_h6_redeem_credits.sql, PROPOSED) is approved. */}
     </div>
   );
 }

@@ -59,6 +59,16 @@ const BY_MESSAGE: ReadonlyArray<readonly [string, string]> = [
   ["cancellation_already_requested", "כבר נשלחה בקשת ביטול למשמרת זו. הבקשה ממתינה לטיפול הצוות."],
   ["event_past", "האירוע כבר התקיים - לא ניתן לבקש ביטול."],
   ["event_not_found", "האירוע לא נמצא."],
+  // hours flow (submit_shift_hours / approve / reject / void_shift_hours)
+  ["invalid_hours", "שעות לא תקינות: שעת הסיום חייבת להיות אחרי שעת ההתחלה, ועד 24 שעות."],
+  ["invalid_rating", "הדירוג חייב להיות בין 1 ל-5."],
+  ["hours_not_allowed", "לא ניתן לדווח שעות לאירוע בסטטוס הנוכחי."],
+  ["shift_not_started", "לא ניתן לדווח שעות לפני מועד המשמרת."],
+  ["hours_already_approved", "דוח השעות כבר אושר. כדי לתקן יש לבטל אותו תחילה (אדמין)."],
+  ["submission_not_found", "דוח השעות לא נמצא."],
+  ["invalid_submission_transition", "לא ניתן לבצע פעולה זו על דוח השעות במצבו הנוכחי."],
+  ["self_review", "לא ניתן לאשר או לדחות שעות שעבדת בעצמך."],
+  ["credit_already_applied", "לא ניתן לבטל: זיכוי הגיוס עבור שעות אלה כבר מומש."],
   ["event_not_historical", "הפעולה זמינה רק לאירועים שהסתיימו."],
   ["already_assigned", "העובד/ת כבר משובץ/ת לתפקיד."],
   // profiles guard

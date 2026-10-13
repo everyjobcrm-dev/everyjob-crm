@@ -97,6 +97,29 @@ Abbreviations: **ADM** admin · **MGR** manager · **REC1** recruiter with `can_
 | 7.3 | REC1 | open the roster of an own event where REC1 is also registered | Own row shows **את/ה** and has **no** action buttons |
 | 7.4 | REC1 | המשמרות שלי → בקש ביטול | Works (requests only); approval must come from another staff member |
 
+## 7b. Hours flow (Phase 6)
+Setup: an event dated **yesterday or earlier**, status **סגור להרשמה**, owned by REC1 (`events.recruiter_id`), EMP1 approved with a rate (3.7),
+and ADM registered as a worker on the same event (approved). Set REC1's credit rate to **2** with SQL:
+`UPDATE public.profiles SET recruiter_bonus_rate = 2 WHERE email = 'you+rec1@gmail.com';`
+
+| # | Who | Action | Expected |
+|---|---|---|---|
+| 7b.1 | REC1 | roster of the event | **No** "דיווח שעות" button (recruiters never enter hours) |
+| 7b.2 | MGR | EMP1 → דיווח שעות → start 10:00, end 16:00, hours **30** → הגשה לאישור | **לא ניתן לדווח יותר מ-24 שעות** |
+| 7b.3 | MGR | same, hours **6**, rating 4 → הגשה לאישור | Modal closes; row shows **דוח שעות: הוגש (6 שעות)** |
+| 7b.4 | MGR | ADM's row (admin as worker) → דיווח שעות 5 | Submitted |
+| 7b.5 | MGR | a future event's approved row → דיווח שעות | **לא ניתן לדווח שעות לפני מועד המשמרת.** |
+| 7b.6 | EMP1 | המשמרות שלי | The shift shows **דוח שעות: הוגש, ממתין לאישור (6 שעות)**; monthly card still 0 |
+| 7b.7 | ADM | אדמין → **אישור שעות** | Grouped by event; EMP1's row has אישור/דחייה; ADM's own row shows **השעות שלך**, no אישור/דחייה |
+| 7b.8 | ADM | EMP1 → דחייה with empty reason | **יש להזין סיבה** |
+| 7b.9 | ADM | EMP1 → אישור | Row disappears; `/admin/recruiters` shows REC1 **1 credit, ₪12** |
+| 7b.10 | EMP1 | המשמרות שלי | **דוח שעות: אושר**; monthly card **6 שעות**, estimated pay = 6 × rate |
+| 7b.11 | MGR | EMP1 → דיווח שעות | Modal says the report is approved and a fix needs an admin void |
+| 7b.12 | ADM | (resubmit flow) ask MGR to submit hours for a second employee → ADM **ביטול דוח** with reason | Report disappears from the board; MGR can submit again |
+| 7b.13 | MGR | a pending report → דיווח שעות → **ביטול הדוח (הוזן בטעות)** + reason | Voided; can be re-entered |
+| 7b.14 | REC1 | `/manager/events/<id>` | No credit-redemption control (hidden until p6_h6 is approved) |
+| 7b.15 | ADM | `/admin/employees` | The list renders (Form 101 / totals columns show "—") |
+
 ## 8. Done criteria
 All rows ✅. After that, run M6c by hand (`supabase/p4_m6c_drop_legacy_registration_policy.sql`) and repeat **4.1, 4.5, 4.6, 2.2** to
 confirm nothing depended on the dropped policy.

@@ -245,6 +245,9 @@ export type MyShift = {
   roleName: string | null;
   startTime: string | null;
   endTime: string | null;
+  // own hour report (RLS shs_select_own); voided reports are treated as absent
+  hoursStatus: "pending" | "approved" | "rejected" | null;
+  reportedHours: number | null;
 };
 
 /**
@@ -263,6 +266,10 @@ export async function fetchMyShifts(): Promise<{ shifts: MyShift[]; today: strin
     created_at: string;
     events: { id: string; event_date: string; status: string; location: string; clients: { name: string } | null } | null;
     event_roles: { role_name: string; start_time: string | null; end_time: string | null } | null;
+    shift_hour_submissions:
+      | { status: string; reported_hours: number; voided_at: string | null }
+      | { status: string; reported_hours: number; voided_at: string | null }[]
+      | null;
   };
 
   const { data, error } = await auth.supabase
@@ -270,7 +277,8 @@ export async function fetchMyShifts(): Promise<{ shifts: MyShift[]; today: strin
     .select(
       `id, status, cancellation_requested_at, created_at,
        events ( id, event_date, status, location, clients ( name ) ),
-       event_roles ( role_name, start_time, end_time )`,
+       event_roles ( role_name, start_time, end_time ),
+       shift_hour_submissions ( status, reported_hours, voided_at )`,
     )
     .eq("user_id", auth.userId)
     .returns<Raw[]>();
@@ -295,8 +303,49 @@ export async function fetchMyShifts(): Promise<{ shifts: MyShift[]; today: strin
       roleName: r.event_roles?.role_name ?? null,
       startTime: r.event_roles?.start_time ?? null,
       endTime: r.event_roles?.end_time ?? null,
+      ...hoursOf(r.shift_hour_submissions),
     }))
     .sort((a, b) => a.eventDate.localeCompare(b.eventDate));
 
   return { shifts, today };
+}
+
+type RawSubmission = { status: string; reported_hours: number; voided_at: string | null };
+
+function hoursOf(raw: RawSubmission | RawSubmission[] | null): Pick<MyShift, "hoursStatus" | "reportedHours"> {
+  const sub = Array.isArray(raw) ? raw[0] : raw;
+  if (!sub || sub.voided_at) return { hoursStatus: null, reportedHours: null };
+  const status = sub.status === "approved" || sub.status === "rejected" ? sub.status : "pending";
+  return { hoursStatus: status, reportedHours: Number(sub.reported_hours) };
+}
+
+export type MyMonthlyHours = {
+  month: string; // YYYY-MM-01
+  approvedHours: number;
+  estimatedPay: number;
+  shiftsWithoutRate: number;
+};
+
+/** Own approved hours and estimated pay per month - derived by the view v_my_monthly_hours (security_invoker + RLS). */
+export async function fetchMyMonthlyHours(): Promise<MyMonthlyHours[]> {
+  const auth = await getAuthContext();
+  if (!auth.ok) return [];
+  const { data, error } = await auth.supabase
+    .from("v_my_monthly_hours")
+    .select("month, approved_hours, estimated_pay, shifts_without_rate")
+    .eq("employee_id", auth.userId)
+    .order("month", { ascending: false })
+    .limit(6);
+  if (error) {
+    console.error("[fetchMyMonthlyHours]", error.message);
+    return [];
+  }
+  return ((data ?? []) as { month: string; approved_hours: number; estimated_pay: number | null; shifts_without_rate: number }[]).map(
+    (r) => ({
+      month: r.month,
+      approvedHours: Number(r.approved_hours ?? 0),
+      estimatedPay: Number(r.estimated_pay ?? 0),
+      shiftsWithoutRate: Number(r.shifts_without_rate ?? 0),
+    }),
+  );
 }

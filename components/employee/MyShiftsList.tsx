@@ -23,6 +23,12 @@ const UPCOMING_GROUPS: { status: (typeof ACTIVE)[number]; label: string; tone: s
   { status: "waitlisted", label: "ברשימת המתנה", tone: "border-[#D4FF00]" },
 ];
 
+const HOURS_LABEL: Record<"pending" | "approved" | "rejected", string> = {
+  pending: "הוגש, ממתין לאישור",
+  approved: "אושר",
+  rejected: "נדחה - המנהל/ת יגיש/תגיש מחדש",
+};
+
 const HISTORY_LABEL: Record<string, string> = {
   approved: "שובצת",
   pending: "לא אושר עד מועד האירוע",
@@ -125,6 +131,12 @@ function ShiftRow({
             </span>
           </p>
           {note && <p className="mt-1 text-xs text-cream/45">{note}</p>}
+          {shift.hoursStatus && (
+            <p className="mt-1 text-xs text-cream/60">
+              דוח שעות: {HOURS_LABEL[shift.hoursStatus]}
+              {shift.reportedHours != null ? ` (${shift.reportedHours} שעות)` : ""}
+            </p>
+          )}
           {canRequest && shift.eventStatus === "closed" && (
             <p className="mt-1 text-xs text-cream/40">האירוע סגור להרשמות חדשות.</p>
           )}

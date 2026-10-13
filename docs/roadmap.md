@@ -80,7 +80,7 @@ Waitlisted: Shift is full; employee joins queue.
 
 Cancellation semantics (decided): an approved cancellation request -> `cancelled` (employee may re-register); staff removal -> `removed` (no self re-registration); `rejected` cannot re-apply.
 
-Next (design ready, docs/design-hours-flow.md; nothing applied) — Hours flow: attendance guards, RLS policies for shift_hour_submissions / employee_ratings / recruiter_bonuses, two-person review constraint, recruiter-credit trigger (supabase/recruiter_compensation_redesign.sql was never applied live and is superseded: it re-adds events.recruiter_id).
+Done (October 2026, Phase 6 h0-h5 applied; docs/design-hours-flow.md) — Hours flow; remaining: credit redemption semantics + p6_h6 (PROPOSED), optional removal of the duplicate rating trigger. Original scope: attendance guards, RLS policies for shift_hour_submissions / employee_ratings / recruiter_bonuses, two-person review constraint, recruiter-credit trigger (supabase/recruiter_compensation_redesign.sql was never applied live and is superseded: it re-adds events.recruiter_id).
 
 Planned — Smart Shift Filtering: Ensure employees only see and can request shifts matching their profiles.role arrays and age constraints.
 

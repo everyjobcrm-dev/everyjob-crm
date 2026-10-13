@@ -8,9 +8,6 @@ type ProfileRow = {
   last_name: string | null;
   tz: string | null;
   role: "admin" | "manager" | "employee" | "recruiter" | null;
-  form_101_status: "missing" | "pending" | "complete" | null;
-  total_earnings: number | null;
-  total_hours: number | null;
 };
 
 export default async function AdminEmployeesPage() {
@@ -21,7 +18,8 @@ export default async function AdminEmployeesPage() {
 
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, tz, role, form_101_status, total_earnings, total_hours")
+    // Only columns that exist live. No Form 101 / employee_documents data here (AGENTS.md 8.2).
+    .select("id, first_name, last_name, tz, role")
     .order("last_name", { ascending: true })
     .returns<ProfileRow[]>();
 
@@ -30,9 +28,9 @@ export default async function AdminEmployeesPage() {
     name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "ללא שם",
     tz: p.tz ?? "—",
     role: p.role ?? "employee",
-    form101Status: p.form_101_status ?? "missing",
-    totalEarnings: p.total_earnings ?? 0,
-    totalHours: p.total_hours ?? 0,
+    form101Status: null,
+    totalEarnings: null,
+    totalHours: null,
   }));
 
   return (

@@ -48,6 +48,7 @@ import { AttendanceModal, type AttendanceTarget } from "@/components/manager/Att
 
 type Props = {
   eventId: string;
+  eventDate: string;
   eventStatus: string;
   viewerId: string;
   canSeeRates: boolean; // admin / manager
@@ -67,7 +68,7 @@ const BUCKET_TONE: Record<RosterBucket, string> = {
 const btn =
   "inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer";
 
-export function RosterBoard({ eventId, eventStatus, viewerId, canSeeRates, canEnterAttendance, roles, rows }: Props) {
+export function RosterBoard({ eventId, eventDate, eventStatus, viewerId, canSeeRates, canEnterAttendance, roles, rows }: Props) {
   const [attendance, setAttendance] = useState<AttendanceTarget | null>(null);
   const actionable = acceptsStaffActions(eventStatus);
 
@@ -111,11 +112,15 @@ export function RosterBoard({ eventId, eventStatus, viewerId, canSeeRates, canEn
                 onAttendance={(row) =>
                   setAttendance({
                     registrationId: row.registration_id,
+                    eventId,
+                    eventDate,
                     name: displayName(row),
                     roleName: role.roleName,
                     startTime: role.startTime,
                     endTime: role.endTime,
                     reportedHours: row.reported_hours,
+                    submissionId: row.submission_id,
+                    submissionStatus: row.submission_status,
                   })
                 }
               />
@@ -369,7 +374,7 @@ function RegRow({
                 className={`${btn} bg-[#4F46E5] text-white hover:bg-indigo-600`}
               >
                 <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                {row.submission_id ? "עדכון דיווח" : "דיווח שעות"}
+                {row.submission_status === "approved" ? "שעות אושרו" : row.submission_id ? "עדכון דיווח" : "דיווח שעות"}
               </button>
             )}
 

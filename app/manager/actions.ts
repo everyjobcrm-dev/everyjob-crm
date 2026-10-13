@@ -11,6 +11,7 @@ import {
   transitionArgsSchema,
   type StaffTransitionAction,
 } from "@/lib/validations/registration";
+import { attendanceArgsSchema, shiftInstants, submissionReasonArgsSchema } from "@/lib/validations/hours";
 
 type ActionResult<T = undefined> =
   | ({ success: true } & (T extends undefined ? object : T))
@@ -194,67 +195,68 @@ export async function searchEmployeesForEvent(
 
 export type SubmitShiftAttendanceInput = {
   registrationId: string;
-  reportedStart: string;
-  reportedEnd: string;
+  eventId: string;
+  eventDate: string; // YYYY-MM-DD (event local date, Asia/Jerusalem)
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM; at or before the start = next day
   reportedHours: number;
-  performanceRating?: number;
-  performanceNotes?: string;
+  rating?: number;
+  notes?: string;
 };
 
+/**
+ * Enter / re-enter a worker's hours (and optional rating) for approval - submit_shift_hours (p6_h2).
+ * Manager and Admin only; the RPC re-checks role, scope, the event status/date, not-own-registration and the
+ * approved-registration rule, writes the rating (DEFINER triggers keep profiles.average_rating) and the history row.
+ */
 export async function submitShiftAttendance(input: SubmitShiftAttendanceInput): Promise<ActionResult> {
   const auth = await requireRole("manager");
   if (!auth.ok) return { success: false, error: auth.error };
 
-  if (!input.registrationId || input.reportedHours <= 0) {
-    return { success: false, error: "יש להזין מספר שעות חיובי." };
+  const args = attendanceArgsSchema.safeParse(input);
+  if (!args.success) return { success: false, error: args.error.issues[0]?.message ?? "פרטי הדיווח אינם תקינים." };
+
+  const { start, end } = shiftInstants(args.data.eventDate, args.data.startTime, args.data.endTime);
+  const { error } = await auth.supabase.rpc("submit_shift_hours", {
+    p_registration_id: args.data.registrationId,
+    p_reported_start: start,
+    p_reported_end: end,
+    p_reported_hours: args.data.reportedHours,
+    p_rating: args.data.rating ?? null,
+    p_notes: args.data.notes || null,
+  });
+  if (error) {
+    console.error("[submit_shift_hours]", error.code, error.message);
+    return { success: false, error: mapDbError(error, { fallback: "הגשת דוח השעות נכשלה." }) };
   }
 
-  const { data: reg, error: regError } = await auth.supabase
-    .from("event_registrations")
-    .select("id, user_id, event_id")
-    .eq("id", input.registrationId)
-    .single();
+  revalidateRoster(args.data.eventId);
+  revalidatePath("/admin/hours");
+  return { success: true };
+}
 
-  if (regError || !reg) {
-    return { success: false, error: "הרשמת המשמרת לא נמצאה." };
+/**
+ * Void a pending or rejected hour report (Manager); Admin may also void approved reports from the admin screen.
+ * void_shift_hours re-checks the role, the scope and the status rule; a reason is required.
+ */
+export async function voidShiftHoursAsManager(eventId: string, submissionId: string, reason: string): Promise<ActionResult> {
+  const auth = await requireRole("manager");
+  if (!auth.ok) return { success: false, error: auth.error };
+
+  const args = submissionReasonArgsSchema.safeParse({ submissionId, reason });
+  if (!args.success) return { success: false, error: args.error.issues[0]?.message ?? "בקשה לא תקינה." };
+
+  const { error } = await auth.supabase.rpc("void_shift_hours", {
+    p_submission_id: args.data.submissionId,
+    p_reason: args.data.reason,
+  });
+  if (error) {
+    console.error("[void_shift_hours]", error.code, error.message);
+    return { success: false, error: mapDbError(error, { fallback: "ביטול דוח השעות נכשל." }) };
   }
 
-  const { error: subError } = await auth.supabase
-    .from("shift_hour_submissions")
-    .upsert(
-      {
-        registration_id: reg.id,
-        employee_id: reg.user_id,
-        event_id: reg.event_id,
-        reported_start: input.reportedStart,
-        reported_end: input.reportedEnd,
-        reported_hours: input.reportedHours,
-        performance_rating: input.performanceRating ?? null,
-        performance_notes: input.performanceNotes?.trim() || null,
-        submitted_by: auth.userId,
-        submitted_at: new Date().toISOString(),
-        status: "pending",
-      },
-      { onConflict: "registration_id" }
-    );
-
-  if (subError) {
-    console.error("[submitShiftAttendance]", subError.message);
-    return { success: false, error: "הגשת דוח השעות נכשלה." };
-  }
-
-  if (input.performanceRating && input.performanceRating >= 1 && input.performanceRating <= 5) {
-    await auth.supabase.from("employee_ratings").insert({
-      employee_id: reg.user_id,
-      rater_id: auth.userId,
-      event_id: reg.event_id,
-      rating: input.performanceRating,
-      review_notes: input.performanceNotes?.trim() || null,
-    });
-  }
-
-  revalidatePath("/manager/events");
-  revalidatePath("/admin/dashboard");
+  revalidateRoster(eventId);
+  revalidatePath("/admin/hours");
   return { success: true };
 }
 
@@ -287,50 +289,6 @@ export async function setEmployeeRate(
   return { success: true };
 }
 
-export async function redeemRecruitmentCredits(
-  eventId: string,
-  recruiterId: string,
-  creditCount: number,
-): Promise<ActionResult<{ redeemedCount: number }>> {
-  const auth = await requireRole("manager");
-  if (!auth.ok) return { success: false, error: auth.error };
-  if (!Number.isInteger(creditCount) || creditCount < 1) {
-    return { success: false, error: "יש לבחור מספר זיכויים חיובי." };
-  }
-
-  const { data: credits, error: creditsError } = await auth.supabase
-    .from("recruiter_bonuses")
-    .select("id")
-    .eq("recruiter_id", recruiterId)
-    .is("redeemed_at", null)
-    .order("created_at", { ascending: true })
-    .order("id", { ascending: true })
-    .limit(creditCount);
-
-  if (creditsError) return { success: false, error: "שליפת הזיכויים נכשלה." };
-  if (!credits || credits.length < creditCount) {
-    return { success: false, error: "אין מספיק זיכויים ממתינים למימוש." };
-  }
-
-  const ids = credits.map((credit) => credit.id);
-  const { data: redeemed, error: redeemError } = await auth.supabase
-    .from("recruiter_bonuses")
-    .update({
-      redeemed_at: new Date().toISOString(),
-      redeemed_by: auth.userId,
-      redeemed_context_event_id: eventId,
-    })
-    .in("id", ids)
-    .is("redeemed_at", null)
-    .select("id");
-
-  if (redeemError || redeemed?.length !== ids.length) {
-    return { success: false, error: "מימוש הזיכויים נכשל. נסה/י שוב." };
-  }
-
-  revalidatePath(`/manager/events/${eventId}`);
-  revalidatePath("/employee/profile");
-  revalidatePath("/admin/recruiters");
-  return { success: true, redeemedCount: redeemed.length };
-}
-
+// Recruitment-credit redemption is intentionally absent: the live recruiter_bonuses table uses applied_* columns and the
+// FIFO redeem RPC is PROPOSED (supabase/p6_h6_redeem_credits.sql), not applied. The previous action wrote redeemed_*
+// columns that do not exist.

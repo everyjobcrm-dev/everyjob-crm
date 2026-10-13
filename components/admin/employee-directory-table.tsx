@@ -9,9 +9,10 @@ export type AdminEmployee = {
   name: string;
   tz: string;
   role: "admin" | "manager" | "employee" | "recruiter";
-  form101Status: "missing" | "pending" | "complete";
-  totalEarnings: number;
-  totalHours: number;
+  // null = not available from the live schema (profiles has no form_101_status / totals columns); shown as "—"
+  form101Status: "missing" | "pending" | "complete" | null;
+  totalEarnings: number | null;
+  totalHours: number | null;
 };
 
 const ROLE_LABEL: Record<AdminEmployee["role"], string> = {
@@ -21,7 +22,7 @@ const ROLE_LABEL: Record<AdminEmployee["role"], string> = {
   recruiter: "מגייס/ת",
 };
 
-const FORM_LABEL: Record<AdminEmployee["form101Status"], string> = {
+const FORM_LABEL: Record<NonNullable<AdminEmployee["form101Status"]>, string> = {
   missing: "חסר",
   pending: "בבדיקה",
   complete: "אושר",
@@ -93,7 +94,9 @@ export function EmployeeDirectoryTable({ employees }: { employees: AdminEmployee
                     </select>
                   </td>
                   <td className="px-4 py-3.5">
-                    {emp.form101Status === "complete" ? (
+                    {emp.form101Status == null ? (
+                      <span className="text-xs text-cream/40">—</span>
+                    ) : emp.form101Status === "complete" ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-brass/10 px-2 py-1 text-[11px] font-semibold text-brass">
                         <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
                         {FORM_LABEL.complete}
@@ -120,9 +123,9 @@ export function EmployeeDirectoryTable({ employees }: { employees: AdminEmployee
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3.5 tabular-nums text-cream/70">{emp.totalHours}</td>
+                  <td className="px-4 py-3.5 tabular-nums text-cream/70">{emp.totalHours ?? "—"}</td>
                   <td className="px-4 py-3.5 font-semibold tabular-nums text-brass">
-                    ₪{emp.totalEarnings.toLocaleString("he-IL")}
+                    {emp.totalEarnings == null ? "—" : `₪${emp.totalEarnings.toLocaleString("he-IL")}`}
                   </td>
                 </tr>
               );
