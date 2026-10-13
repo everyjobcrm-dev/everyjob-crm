@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CalendarDays, History, UserRound } from "lucide-react";
+import { Home, CalendarDays, History, UserRound, ClipboardList } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/employee/dashboard", label: "בית", icon: Home },
@@ -11,8 +11,13 @@ const NAV_ITEMS = [
   { href: "/employee/profile", label: "פרופיל", icon: UserRound },
 ] as const;
 
-export function PortalNav() {
+// Staff (admin / manager / recruiter) can also work shifts, so they see the employee portal too; `staffHref` adds an
+// entry back to their staff area. Purely navigational - the staff layout re-checks the role server-side.
+export function PortalNav({ staffHref }: { staffHref?: string | null }) {
   const pathname = usePathname();
+  const items = staffHref
+    ? [...NAV_ITEMS, { href: staffHref, label: "ניהול", icon: ClipboardList }]
+    : NAV_ITEMS;
 
   return (
     <>
@@ -22,7 +27,7 @@ export function PortalNav() {
         className="hidden lg:flex fixed inset-y-0 start-0 z-40 w-20 flex-col items-center gap-1 border-e border-brass/10 bg-obsidian py-8"
       >
         <div className="mb-8 h-9 w-9 rounded-full bg-brass" aria-hidden="true" />
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {items.map(({ href, label, icon: Icon }) => {
           const active = pathname?.startsWith(href);
           return (
             <Link
@@ -49,7 +54,7 @@ export function PortalNav() {
         aria-label="ניווט ראשי"
         className="lg:hidden fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-brass/10 bg-obsidian/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]"
       >
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {items.map(({ href, label, icon: Icon }) => {
           const active = pathname?.startsWith(href);
           return (
             <Link

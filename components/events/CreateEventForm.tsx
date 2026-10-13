@@ -30,7 +30,13 @@ const SECTIONS = [
   { id: "roster", label: "מצבת כוח אדם", eyebrow: "04" },
 ] as const;
 
-export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
+export function CreateEventForm({
+  clients,
+  afterCreateHref = "/admin/events",
+}: {
+  clients: ClientOption[];
+  afterCreateHref?: string;
+}) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -87,7 +93,7 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
       setServerError(result.error);
       return;
     }
-    router.push("/admin/events");
+    router.push(afterCreateHref);
     router.refresh();
   }
 

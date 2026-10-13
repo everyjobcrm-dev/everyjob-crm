@@ -1,153 +1,130 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Calendar, MapPin, Building2 } from "lucide-react";
-import { RosterTable } from "@/components/manager/RosterTable";
+import { ArrowRight, Building2, Calendar, MapPin } from "lucide-react";
+import { getAuthContext } from "@/lib/auth/guards";
+import { canManageEvent, roleAtLeast } from "@/lib/auth/permissions";
+import { mapDbError } from "@/lib/events/errors";
+import type { RosterRole, RosterRow } from "@/lib/events/roster";
+import { RosterBoard } from "@/components/manager/RosterBoard";
+import { EventStatusControl } from "@/components/manager/EventStatusControl";
 import { RecruitmentCreditControls } from "@/components/manager/recruitment-credit-controls";
 
 type Props = {
   params: Promise<{ eventId: string }>;
 };
 
+// Staff event page: status control + roster. The roster comes from get_event_roster (SECURITY DEFINER, scoped by
+// app_can_manage_event, no tz/email/documents, rates for admin/manager only). The canManageEvent check below is a UX
+// pre-check; the RPC refuses out-of-scope callers on its own.
 export default async function ManagerEventDetailsPage({ params }: Props) {
   const { eventId } = await params;
-  const supabase = await createServerSupabaseClient();
-  if (!supabase) return <div className="p-6 text-cream/70">שגיאת התחברות למסד הנתונים.</div>;
+  const ctx = await getAuthContext();
+  if (!ctx.ok) redirect(ctx.reason === "unauthenticated" ? "/login" : "/employee/dashboard");
+  if (!roleAtLeast(ctx.role, "recruiter")) redirect("/employee/dashboard");
+  const { supabase, profile } = ctx;
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, location, event_date, notes, recruiter_id, clients(name)")
+    .select("id, location, event_date, notes, status, cancelled_from_status, recruiter_id, clients(name)")
     .eq("id", eventId)
-    .single();
+    .maybeSingle();
 
-  if (!event) {
-    notFound();
-  }
+  if (!event) notFound();
 
-  const { data: recruiter } = event.recruiter_id
-    ? await supabase.from("profiles").select("id, first_name, last_name").eq("id", event.recruiter_id).single()
-    : { data: null };
-
-  const { data: registrations } = await supabase
-    .from("event_registrations")
-    .select(`
-      id,
-      status,
-      wage_rate,
-      cancellation_requested_at,
-      created_at,
-      profiles!event_registrations_user_id_fkey (
-        id,
-        first_name,
-        last_name,
-        phone_number,
-        average_rating
-      ),
-      event_roles (
-        id,
-        role_name,
-        start_time,
-        end_time
-      ),
-      shift_hour_submissions (
-        id,
-        status,
-        reported_hours,
-        performance_rating,
-        performance_notes
-      )
-    `)
-    .eq("event_id", eventId)
-    .order("created_at", { ascending: true });
-
-  const formattedRegistrations = (registrations || []).map((reg) => {
-    const profile = Array.isArray(reg.profiles) ? reg.profiles[0] : reg.profiles;
-    const role = Array.isArray(reg.event_roles) ? reg.event_roles[0] : reg.event_roles;
-    const submission = Array.isArray(reg.shift_hour_submissions)
-      ? reg.shift_hour_submissions[0]
-      : reg.shift_hour_submissions;
-
-    return {
-      id: reg.id,
-      wage_rate: reg.wage_rate,
-      status: reg.status,
-      cancellation_requested_at: reg.cancellation_requested_at,
-      created_at: reg.created_at,
-      profiles: profile
-        ? {
-            id: profile.id,
-            first_name: profile.first_name,
-            last_name: profile.last_name,
-            phone: profile.phone_number,
-            average_rating: profile.average_rating,
-          }
-        : null,
-      event_roles: role
-        ? {
-            id: role.id,
-            role_name: role.role_name,
-            start_time: role.start_time,
-            end_time: role.end_time,
-          }
-        : null,
-      submission: submission
-        ? {
-            id: submission.id,
-            status: submission.status,
-            reported_hours: submission.reported_hours,
-            performance_rating: submission.performance_rating,
-            performance_notes: submission.performance_notes,
-          }
-        : null,
-    };
-  });
-
-  return (
-    <div className="space-y-6 pb-12" dir="rtl">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/manager/events"
-          className="inline-flex items-center gap-1.5 text-xs text-cream/50 hover:text-cream transition-colors"
-        >
-          <ArrowRight className="h-4 w-4" /> בחזרה לאירועים
+  if (!canManageEvent(profile, event)) {
+    return (
+      <div className="mx-auto max-w-md py-16 text-center">
+        <h1 className="font-display text-xl text-cream">אין לך הרשאה לנהל אירוע זה</h1>
+        <p className="mt-2 text-sm text-cream/50">מגייס/ת יכול/ה לנהל רק אירועים שבאחריותו/ה.</p>
+        <Link href="/manager/events" className="mt-6 inline-block text-sm font-semibold text-indigo-400">
+          חזרה לאירועים
         </Link>
       </div>
+    );
+  }
 
-      <div className="rounded-2xl border border-brass/15 bg-surface p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+  const [{ data: roleRows }, { data: rosterData, error: rosterError }] = await Promise.all([
+    supabase
+      .from("event_roles")
+      .select("id, role_name, headcount, start_time, end_time")
+      .eq("event_id", eventId)
+      .order("start_time", { ascending: true }),
+    supabase.rpc("get_event_roster", { p_event_id: eventId }),
+  ]);
+
+  const roles: RosterRole[] = (roleRows ?? []).map((r) => ({
+    id: r.id,
+    roleName: r.role_name,
+    headcount: r.headcount,
+    startTime: r.start_time,
+    endTime: r.end_time,
+  }));
+  const rows = (rosterData ?? []) as RosterRow[];
+
+  const recruiterResult = event.recruiter_id
+    ? await supabase.from("profiles").select("id, first_name, last_name").eq("id", event.recruiter_id).maybeSingle()
+    : { data: null };
+  const recruiter = recruiterResult.data;
+
+  const client = Array.isArray(event.clients) ? event.clients[0] : event.clients;
+  const clientName =
+    (client && typeof client === "object" && "name" in client ? (client as { name: string }).name : null) || "לקוח";
+
+  return (
+    <div className="space-y-6 pb-12">
+      <Link
+        href="/manager/events"
+        className="inline-flex items-center gap-1.5 text-xs text-cream/50 transition-colors hover:text-cream"
+      >
+        <ArrowRight className="h-4 w-4" aria-hidden="true" /> חזרה לאירועים
+      </Link>
+
+      <div className="border-s-4 border-[#4F46E5] bg-surface p-6">
+        <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 text-indigo-400 text-sm font-semibold mb-1">
-              <Building2 className="h-4 w-4" />
-              <span>
-                {(() => {
-                  const c = Array.isArray(event.clients) ? event.clients[0] : event.clients;
-                  return (c && typeof c === "object" && "name" in c ? (c as { name: string }).name : null) || "לקוח";
-                })()}
-              </span>
-            </div>
-            <h1 className="font-display text-2xl text-cream flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-brass" /> {event.location}
+            <p className="mb-1 flex items-center gap-2 text-sm font-semibold text-indigo-400">
+              <Building2 className="h-4 w-4" aria-hidden="true" /> {clientName}
+            </p>
+            <h1 className="flex items-center gap-2 font-display text-2xl text-cream">
+              <MapPin className="h-5 w-5 text-brass" aria-hidden="true" /> {event.location}
             </h1>
-            <p className="text-sm text-cream/50 flex items-center gap-2 mt-1">
-              <Calendar className="h-4 w-4" /> {event.event_date}
+            <p className="mt-1 flex items-center gap-2 text-sm text-cream/50">
+              <Calendar className="h-4 w-4" aria-hidden="true" /> {event.event_date}
             </p>
           </div>
+          <EventStatusControl
+            eventId={event.id}
+            status={event.status}
+            cancelledFromStatus={event.cancelled_from_status}
+            role={ctx.role}
+            isOwner={event.recruiter_id === ctx.userId}
+          />
         </div>
         {event.notes && (
-          <div className="mt-4 rounded-xl border border-brass/10 bg-surface2 p-3 text-xs text-cream/70">
-            {event.notes}
-          </div>
+          <p className="mt-4 border-t border-brass/10 pt-3 text-xs text-cream/70">{event.notes}</p>
         )}
       </div>
 
       <section>
-        <h2 className="font-display text-xl text-cream mb-4">ניהול צוות ודיווחי נוכחות</h2>
-        <RosterTable eventId={eventId} registrations={formattedRegistrations} />
+        <h2 className="mb-4 font-display text-xl text-cream">צוות האירוע</h2>
+        {rosterError ? (
+          <p className="text-sm text-rose-400">{mapDbError(rosterError, { fallback: "טעינת רשימת הצוות נכשלה." })}</p>
+        ) : (
+          <RosterBoard
+            eventId={event.id}
+            eventStatus={event.status}
+            viewerId={ctx.userId}
+            canSeeRates={roleAtLeast(ctx.role, "manager")}
+            canEnterAttendance={roleAtLeast(ctx.role, "manager")}
+            roles={roles}
+            rows={rows}
+          />
+        )}
       </section>
 
-      {recruiter && (
+      {recruiter && roleAtLeast(ctx.role, "manager") && (
         <RecruitmentCreditControls
-          eventId={eventId}
+          eventId={event.id}
           recruiter={{
             id: recruiter.id,
             name: [recruiter.first_name, recruiter.last_name].filter(Boolean).join(" "),

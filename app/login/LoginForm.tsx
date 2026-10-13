@@ -136,9 +136,9 @@ export default function LoginForm() {
       redirectTo ??
       (role === "admin"
         ? "/admin/dashboard"
-        : role === "manager"
+        : role === "manager" || role === "recruiter"
         ? "/manager/events"
-        : role === "employee" || role === "recruiter"
+        : role === "employee"
         ? "/employee/dashboard"
         : null);
 

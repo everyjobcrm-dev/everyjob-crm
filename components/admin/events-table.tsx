@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useState, useTransition } from "react";
-import { ChevronDown, ChevronUp, Trash2, Users, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, ChevronUp, ClipboardList, Trash2, Users, AlertTriangle } from "lucide-react";
 import { updateEventStatus, restoreEvent, deleteEvent, type AdminEvent } from "@/app/admin/actions";
 export type { AdminEvent };
 import { FinancialClosureSummary } from "@/components/admin/financial-closure-summary";
@@ -160,6 +161,7 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
                       />
                     </td>
                     <td className="px-4 py-3.5 text-end">
+                      <RosterLink eventId={event.id} />
                       <button
                         type="button"
                         disabled={busy}
@@ -280,6 +282,7 @@ function EventCard({
         <div className="w-full">
           <StatusControl event={event} busy={busy} onChange={onStatusChange} onRestore={onRestore} />
         </div>
+        <RosterLink eventId={event.id} />
         <button
           type="button"
           disabled={busy}
@@ -346,5 +349,20 @@ function StatusControl({
         </button>
       )}
     </div>
+  );
+}
+
+/** Roster / staffing actions for the event (staff event page, reachable by admin through the staff layout). */
+function RosterLink({ eventId }: { eventId: string }) {
+  return (
+    <Link
+      href={`/manager/events/${eventId}`}
+      aria-label="רשימת צוות וניהול שיבוצים"
+      title="רשימת צוות וניהול שיבוצים"
+      className="inline-flex shrink-0 items-center gap-1 rounded-lg p-2 text-xs text-cream/50 transition-colors hover:bg-indigo-500/10 hover:text-indigo-300"
+    >
+      <ClipboardList className="h-4 w-4" aria-hidden="true" />
+      <span>צוות</span>
+    </Link>
   );
 }

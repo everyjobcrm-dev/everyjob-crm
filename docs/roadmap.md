@@ -66,7 +66,7 @@ Done — Waitlist: signup for full shifts with automatic promotion trigger on ca
 
 Done — cancellation_requests: controlled cancellation flow, not self-service
 
-In Progress — Events lifecycle (October 2026): DB enforcement done (event status state machine incl. frozen completed/paused, registration write guard, registration RPC with staff-as-worker, waitlist trigger fixes, role hierarchy Admin ⊇ Manager ⊇ Recruiter with recruiter scope on `events.recruiter_id`); Phase 2 app layer done (consolidated actions, hierarchy helpers, Hebrew error mapping, manager portal guard). Remaining: staff approval UI (roster, status control, recruiter nav) on top of schedule_employee / remove_scheduled_employee, and the employee "My shifts" screen with cancellation requests.
+In Progress — Events lifecycle (October 2026): DB enforcement done (event status state machine incl. frozen completed/paused, registration write guard, registration RPC with staff-as-worker, waitlist trigger fixes, role hierarchy Admin ⊇ Manager ⊇ Recruiter with recruiter scope on `events.recruiter_id`); Phase 2 app layer done (consolidated actions, hierarchy helpers, Hebrew error mapping, manager portal guard). Phase 3 done (staff RPCs schedule_employee v2 / remove_scheduled_employee v2 / staff_transition_registration / get_event_roster / set_registration_wage_rate, roster screen with buckets, status control, recruiter nav and routing). Remaining (Phase 4): request_registration_cancellation RPC, the employee "My shifts" screen, then dropping the legacy "users manage own registrations" policy (M6c).
 
 Planned — Shift Registration State Machine: Full UI/Server implementation of the registration lifecycle:
 
