@@ -4,6 +4,7 @@ import { getUserRole } from "@/lib/supabase/auth";
 
 const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password"];
 const ADMIN_PREFIX = "/admin";
+const MANAGER_PREFIX = "/manager";
 const EMPLOYEE_PREFIX = "/employee";
 
 export async function middleware(request: NextRequest) {
@@ -67,6 +68,11 @@ export async function middleware(request: NextRequest) {
   const role = await getUserRole(supabase, user.id);
 
   if (pathname.startsWith(ADMIN_PREFIX) && role !== "admin") {
+    return NextResponse.redirect(new URL("/employee/dashboard", request.url));
+  }
+
+  // Staff portal (admin >= manager >= recruiter). The layout re-checks server-side; this is the early redirect.
+  if (pathname.startsWith(MANAGER_PREFIX) && role !== "admin" && role !== "manager" && role !== "recruiter") {
     return NextResponse.redirect(new URL("/employee/dashboard", request.url));
   }
 

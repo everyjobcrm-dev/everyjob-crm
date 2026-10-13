@@ -21,7 +21,7 @@ import {
   type CreateEventInput,
   type EventRoleFormValues,
 } from "@/lib/validations/event";
-import { createEvent, type ClientOption } from "@/app/admin/events/actions";
+import { createEvent, type ClientOption } from "@/app/admin/actions";
 
 const SECTIONS = [
   { id: "client", label: "לקוח ותאריך", eyebrow: "01" },

@@ -16,7 +16,7 @@ export type HistoryEvent = {
   eventDate: string;
   startTime: string;
   // null until the event is closed (end_time is now set at closeEvent(),
-  // not at creation) — mirrors AdminEvent in app/admin/events/actions.ts.
+  // not at creation) — mirrors AdminEvent in app/admin/actions.ts.
   endTime: string | null;
   status: "pending_rates" | "open" | "closed" | "cancelled" | "completed";
   roles: HistoryRole[];

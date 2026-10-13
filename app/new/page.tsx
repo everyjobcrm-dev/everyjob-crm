@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { getCurrentProfile, canCreateEvents } from "@/lib/auth/permissions";
-import { fetchClients } from "@/app/admin/events/actions";
+import { getCurrentProfile } from "@/lib/auth/guards";
+import { canCreateEvents } from "@/lib/auth/permissions";
+import { fetchClients } from "@/app/admin/actions";
 import { CreateEventForm } from "@/components/events/CreateEventForm";
 
 export default async function NewEventPage() {

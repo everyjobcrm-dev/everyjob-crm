@@ -7,6 +7,7 @@ import { useState, useMemo } from "react";
 import { AuthCard } from "@/components/AuthCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isValidIsraeliId } from "@/lib/validations/israeli-id";
+import { readJsonResponse } from "@/lib/http/read-json";
 
 // Helper to calculate age dynamically
 const calculateAge = (dob: string): number | null => {
@@ -117,7 +118,19 @@ export default function RegisterPage() {
           gender: form.gender,
         }),
       });
-      const registrationPayload = await registrationResponse.json();
+      // Defensive parse: a proxy/redirect/5xx can return HTML or an empty body instead of JSON.
+      const registrationPayload = await readJsonResponse<{
+        success?: boolean;
+        error?: string;
+        email?: string;
+        verificationRequired?: boolean;
+      }>(registrationResponse);
+
+      if (!registrationPayload) {
+        setError("שירות ההרשמה אינו זמין כרגע. נסה שוב מאוחר יותר.");
+        setLoading(false);
+        return;
+      }
 
       if (!registrationResponse.ok || !registrationPayload.success) {
         setError(registrationPayload.error ?? "ההרשמה נכשלה. נסה שוב.");
@@ -133,7 +146,7 @@ export default function RegisterPage() {
         return;
       }
 
-      setPendingEmail(registrationPayload.email);
+      setPendingEmail(registrationPayload.email ?? "");
     } catch (caughtError) {
       const thrownError = caughtError as {
         message?: unknown;

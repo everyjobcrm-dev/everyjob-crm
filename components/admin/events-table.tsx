@@ -2,25 +2,16 @@
 
 import { Fragment, useState, useTransition } from "react";
 import { ChevronDown, ChevronUp, Trash2, Users, AlertTriangle } from "lucide-react";
-import { updateEventStatus, deleteEvent, type AdminEvent } from "@/app/admin/events/actions";
+import { updateEventStatus, restoreEvent, deleteEvent, type AdminEvent } from "@/app/admin/actions";
 export type { AdminEvent };
 import { FinancialClosureSummary } from "@/components/admin/financial-closure-summary";
-
-const STATUS_LABEL: Record<AdminEvent["status"], string> = {
-  pending_rates: "ממתין לתעריפים",
-  open: "פתוח להרשמה",
-  closed: "סגור להרשמה",
-  completed: "נסגר פיננסית",
-  cancelled: "בוטל",
-};
-
-const STATUS_STYLE: Record<AdminEvent["status"], string> = {
-  pending_rates: "bg-[#D4FF00]/15 text-[#D4FF00]",
-  open: "bg-indigo-500/15 text-indigo-400",
-  closed: "bg-cream/10 text-cream/60",
-  completed: "bg-cream/10 text-cream/60",
-  cancelled: "bg-rose-500/15 text-rose-400",
-};
+import {
+  EVENT_STATUS_LABEL as STATUS_LABEL,
+  EVENT_STATUS_STYLE as STATUS_STYLE,
+  allowedEventTransitions,
+  defaultRestoreStatus,
+  type EventStatus,
+} from "@/lib/events/status";
 
 type Staffing = { filled: number; total: number; label: string; tone: "ok" | "warn" | "danger" };
 
@@ -56,11 +47,21 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  function handleStatusChange(id: string, status: "open" | "closed" | "cancelled") {
+  function handleStatusChange(id: string, status: EventStatus) {
     setError(null);
     setPendingId(id);
     startTransition(async () => {
       const result = await updateEventStatus(id, status);
+      if (!result.success) setError(result.error);
+      setPendingId(null);
+    });
+  }
+
+  function handleRestore(id: string) {
+    setError(null);
+    setPendingId(id);
+    startTransition(async () => {
+      const result = await restoreEvent(id);
       if (!result.success) setError(result.error);
       setPendingId(null);
     });
@@ -94,6 +95,7 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
             busy={isPending && pendingId === event.id}
             onToggle={() => setExpandedId(expandedId === event.id ? null : event.id)}
             onStatusChange={(s) => handleStatusChange(event.id, s)}
+            onRestore={() => handleRestore(event.id)}
             onDelete={() => handleDelete(event.id, `${event.clientName} · ${event.eventDate}`)}
           />
         ))}
@@ -150,26 +152,12 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
                       </button>
                     </td>
                     <td className="px-4 py-3.5">
-                      <select
-                        value={event.status === "pending_rates" ? "open" : event.status}
-                        disabled={busy || event.status === "pending_rates" || event.status === "completed"}
-                        onChange={(e) => handleStatusChange(event.id, e.target.value as "open" | "closed" | "cancelled")}
-                        className="rounded-lg border border-brass/15 bg-surface2 px-2.5 py-1.5 text-xs font-semibold text-cream outline-none focus:border-brass disabled:opacity-60"
-                      >
-                        <option value="open">{STATUS_LABEL.open}</option>
-                        <option value="closed">{STATUS_LABEL.closed}</option>
-                        <option value="cancelled">{STATUS_LABEL.cancelled}</option>
-                      </select>
-                      {event.status === "pending_rates" && (
-                        <p className={`mt-1 rounded-full px-2 py-0.5 text-center text-[10px] font-semibold ${STATUS_STYLE.pending_rates}`}>
-                          {STATUS_LABEL.pending_rates}
-                        </p>
-                      )}
-                      {event.status === "completed" && (
-                        <p className={`mt-1 rounded-full px-2 py-0.5 text-center text-[10px] font-semibold ${STATUS_STYLE.completed}`}>
-                          {STATUS_LABEL.completed}
-                        </p>
-                      )}
+                      <StatusControl
+                        event={event}
+                        busy={busy}
+                        onChange={(next) => handleStatusChange(event.id, next)}
+                        onRestore={() => handleRestore(event.id)}
+                      />
                     </td>
                     <td className="px-4 py-3.5 text-end">
                       <button
@@ -240,13 +228,15 @@ function EventCard({
   busy,
   onToggle,
   onStatusChange,
+  onRestore,
   onDelete,
 }: {
   event: AdminEvent;
   expanded: boolean;
   busy: boolean;
   onToggle: () => void;
-  onStatusChange: (status: "open" | "closed" | "cancelled") => void;
+  onStatusChange: (status: EventStatus) => void;
+  onRestore: () => void;
   onDelete: () => void;
 }) {
   const staffing = computeStaffing(event);
@@ -287,16 +277,9 @@ function EventCard({
       )}
 
       <div className="mt-3 flex items-center justify-between gap-2 border-t border-brass/10 pt-3">
-        <select
-          value={event.status === "pending_rates" ? "open" : event.status}
-          disabled={busy || event.status === "pending_rates" || event.status === "completed"}
-          onChange={(e) => onStatusChange(e.target.value as "open" | "closed" | "cancelled")}
-          className="w-full rounded-xl border border-brass/15 bg-surface2 px-3 py-2 text-xs font-semibold text-cream outline-none focus:border-brass disabled:opacity-60"
-        >
-          <option value="open">{STATUS_LABEL.open}</option>
-          <option value="closed">{STATUS_LABEL.closed}</option>
-          <option value="cancelled">{STATUS_LABEL.cancelled}</option>
-        </select>
+        <div className="w-full">
+          <StatusControl event={event} busy={busy} onChange={onStatusChange} onRestore={onRestore} />
+        </div>
         <button
           type="button"
           disabled={busy}
@@ -307,6 +290,61 @@ function EventCard({
           <Trash2 className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
+    </div>
+  );
+}
+/**
+ * Status control: only the transitions the caller is allowed to make (mirrors the DB trigger).
+ * completed / paused are frozen (read-only); a cancelled event offers a one-click restore to the status it was
+ * cancelled from (or "closed"). This screen is Admin-only, so the role is "admin"; the server action re-verifies.
+ */
+function StatusControl({
+  event,
+  busy,
+  onChange,
+  onRestore,
+}: {
+  event: AdminEvent;
+  busy: boolean;
+  onChange: (status: EventStatus) => void;
+  onRestore: () => void;
+}) {
+  const allowed = allowedEventTransitions("admin", event.status, true);
+
+  if (allowed.length === 0) {
+    return (
+      <p className={`rounded-lg px-2.5 py-1.5 text-center text-xs font-semibold ${STATUS_STYLE[event.status]}`}>
+        {STATUS_LABEL[event.status]} · קפוא
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <select
+        value={event.status}
+        disabled={busy}
+        onChange={(e) => onChange(e.target.value as EventStatus)}
+        aria-label="סטטוס האירוע"
+        className="w-full rounded-lg border border-brass/15 bg-surface2 px-2.5 py-1.5 text-xs font-semibold text-cream outline-none focus:border-brass disabled:opacity-60"
+      >
+        <option value={event.status}>{STATUS_LABEL[event.status]}</option>
+        {allowed.map((status) => (
+          <option key={status} value={status}>
+            {STATUS_LABEL[status]}
+          </option>
+        ))}
+      </select>
+      {event.status === "cancelled" && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onRestore}
+          className="w-full rounded-md bg-brass/15 px-2.5 py-1.5 text-xs font-semibold text-brass transition-colors hover:bg-brass/25 disabled:opacity-50"
+        >
+          שחזור ל{STATUS_LABEL[defaultRestoreStatus(event.cancelledFromStatus)]}
+        </button>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { AuthCard } from "@/components/AuthCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getUserRole } from "@/lib/supabase/auth";
+import { readJsonResponse } from "@/lib/http/read-json";
 
 const LOGIN_REQUEST_TIMEOUT_MS = 15_000;
 
@@ -56,8 +57,15 @@ export default function LoginForm() {
           signal: AbortSignal.timeout(LOGIN_REQUEST_TIMEOUT_MS),
         });
 
-        const payload = await response.json();
-        
+        // Defensive parse: never crash on an HTML/empty response.
+        const payload = await readJsonResponse<{ success?: boolean; email?: string; error?: string }>(response);
+
+        if (!payload) {
+          setError("שירות ההתחברות אינו זמין כרגע. נסו שוב מאוחר יותר או התחברו עם אימייל וסיסמה.");
+          setLoading(false);
+          return;
+        }
+
         if (!response.ok || !payload.success || !payload.email) {
           setError(payload.error ?? "We could not find an account for this TZ. Please try your email instead.");
           setLoading(false);

@@ -1,45 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth/guards";
 
 type ActionResult<T = undefined> =
   | ({ success: true } & (T extends undefined ? object : T))
   | { success: false; error: string };
 
-async function requireManager() {
-  const supabase = await createServerSupabaseClient();
-  if (!supabase) return { ok: false as const, error: "שגיאת תצורה בשרת." };
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false as const, error: "לא מחובר/ת למערכת." };
-
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  
-  if (profile?.role !== "manager" && profile?.role !== "admin" && profile?.role !== "recruiter") {
-    return { ok: false as const, error: "אין לך הרשאה." };
-  }
-
-  return { ok: true as const, supabase, userId: user.id };
-}
-
-async function requireManagerOrAdmin() {
-  const supabase = await createServerSupabaseClient();
-  if (!supabase) return { ok: false as const, error: "שגיאת תצורה בשרת." };
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false as const, error: "לא מחובר/ת למערכת." };
-
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "manager" && profile?.role !== "admin") {
-    return { ok: false as const, error: "אין לך הרשאה." };
-  }
-
-  return { ok: true as const, supabase, userId: user.id, role: profile.role };
-}
+// Role checks use the hierarchy Admin >= Manager >= Recruiter (lib/auth/permissions.ts) and are re-verified from the
+// database on every call (AGENTS.md 5.2). Registration actions below are replaced by DB-backed RPCs in the next phase.
 
 export async function approveCancellation(registrationId: string): Promise<ActionResult> {
-  const auth = await requireManager();
+  const auth = await requireRole("recruiter");
   if (!auth.ok) return { success: false, error: auth.error };
 
   const { error } = await auth.supabase
@@ -60,7 +32,7 @@ export async function approveCancellation(registrationId: string): Promise<Actio
 }
 
 export async function rejectCancellation(registrationId: string): Promise<ActionResult> {
-  const auth = await requireManager();
+  const auth = await requireRole("recruiter");
   if (!auth.ok) return { success: false, error: auth.error };
 
   const { error } = await auth.supabase
@@ -78,7 +50,7 @@ export async function rejectCancellation(registrationId: string): Promise<Action
 }
 
 export async function promoteWaitlist(registrationId: string): Promise<ActionResult> {
-    const auth = await requireManager();
+    const auth = await requireRole("recruiter");
     if (!auth.ok) return { success: false, error: auth.error };
   
     const { error } = await auth.supabase
@@ -105,7 +77,7 @@ export type SubmitShiftAttendanceInput = {
 };
 
 export async function submitShiftAttendance(input: SubmitShiftAttendanceInput): Promise<ActionResult> {
-  const auth = await requireManager();
+  const auth = await requireRole("manager");
   if (!auth.ok) return { success: false, error: auth.error };
 
   if (!input.registrationId || input.reportedHours <= 0) {
@@ -166,7 +138,7 @@ export async function setEmployeeRate(
   registrationId: string,
   wageRate: number,
 ): Promise<ActionResult> {
-  const auth = await requireManagerOrAdmin();
+  const auth = await requireRole("manager");
   if (!auth.ok) return { success: false, error: auth.error };
   if (!Number.isFinite(wageRate) || wageRate <= 0) {
     return { success: false, error: "יש להזין תעריף שעתי חיובי." };
@@ -203,7 +175,7 @@ export async function redeemRecruitmentCredits(
   recruiterId: string,
   creditCount: number,
 ): Promise<ActionResult<{ redeemedCount: number }>> {
-  const auth = await requireManagerOrAdmin();
+  const auth = await requireRole("manager");
   if (!auth.ok) return { success: false, error: auth.error };
   if (!Number.isInteger(creditCount) || creditCount < 1) {
     return { success: false, error: "יש לבחור מספר זיכויים חיובי." };

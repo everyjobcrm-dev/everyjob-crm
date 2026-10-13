@@ -66,6 +66,8 @@ Done — Waitlist: signup for full shifts with automatic promotion trigger on ca
 
 Done — cancellation_requests: controlled cancellation flow, not self-service
 
+In Progress — Events lifecycle (October 2026): DB enforcement done (event status state machine incl. frozen completed/paused, registration write guard, registration RPC with staff-as-worker, waitlist trigger fixes, role hierarchy Admin ⊇ Manager ⊇ Recruiter with recruiter scope on `events.recruiter_id`); Phase 2 app layer done (consolidated actions, hierarchy helpers, Hebrew error mapping, manager portal guard). Remaining: staff approval UI (roster, status control, recruiter nav) on top of schedule_employee / remove_scheduled_employee, and the employee "My shifts" screen with cancellation requests.
+
 Planned — Shift Registration State Machine: Full UI/Server implementation of the registration lifecycle:
 
 Pending: Employee requests a shift.
@@ -75,6 +77,10 @@ Approved: Manager/Recruiter approves request; employee is assigned; event_role_f
 Rejected: Manager/Recruiter denies request; slot remains open.
 
 Waitlisted: Shift is full; employee joins queue.
+
+Cancellation semantics (decided): an approved cancellation request -> `cancelled` (employee may re-register); staff removal -> `removed` (no self re-registration); `rejected` cannot re-apply.
+
+Deferred (separate session) — Hours flow: attendance guards, RLS policies for shift_hour_submissions / employee_ratings / recruiter_bonuses, two-person review constraint, recruiter-credit trigger (supabase/recruiter_compensation_redesign.sql was never applied live and is superseded: it re-adds events.recruiter_id).
 
 Planned — Smart Shift Filtering: Ensure employees only see and can request shifts matching their profiles.role arrays and age constraints.
 
@@ -132,3 +138,15 @@ Recruiter Overview: Add a read-only Admin screen backed by the shared pending-cr
 Fixed RLS policies to reference profiles.role rather than a nonexistent user_roles table
 
 Dropped the created_by foreign key to unblock user deletion; removed dressCode from the client schema
+
+Role hierarchy Admin ⊇ Manager ⊇ Recruiter (anything a Recruiter can do in event management a Manager can do, anything a Manager can do an Admin can do); Recruiter acts only on events they own (events.recruiter_id). Encoded once in lib/auth/permissions.ts and mirrored by DB triggers/RLS (app_can_manage_event)
+
+Staff roles may register as workers: placed directly as approved when capacity allows, else waitlisted; exempt from min_rating, not from min_age
+
+Capacity = pending + approved; event_role_fill_counts derives it and excludes cancelled events; no auto-close when an event fills
+
+Event status model: completed and paused are frozen (no app transition in or out); cancelled records cancelled_from_status and is restored by Admin/Manager only; deleting an event is Admin-only and refused when audit history exists
+
+Direct client writes to event_registrations are blocked by a DB guard (inserts only via SECURITY DEFINER RPCs); employees may only raise their own cancellation request
+
+The live database is the source of truth: live-only objects are captured read-only in supabase/live_snapshot/; DROP-containing migrations are run by hand in the SQL Editor
