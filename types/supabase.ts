@@ -1656,6 +1656,10 @@ export type Database = {
         Returns: boolean
       }
       app_lock_event_status: { Args: { p_event_id: string }; Returns: string }
+      app_manager_rate_deadline: {
+        Args: { p_event_date: string }
+        Returns: string
+      }
       app_registration_initial_status: {
         Args: { p_event_role_id: string; p_uid: string }
         Returns: Database["public"]["Enums"]["registration_status"]
@@ -1693,6 +1697,30 @@ export type Database = {
           role_name: string
           total_ratings: number
           tz: string
+        }[]
+      }
+      get_event_roster: {
+        Args: { p_event_id: string }
+        Returns: {
+          age: number
+          average_rating: number
+          cancellation_requested_at: string
+          event_role_id: string
+          first_name: string
+          last_name: string
+          phone_number: string
+          rate_set_at: string
+          registered_at: string
+          registration_id: string
+          reported_hours: number
+          role_name: string
+          status: Database["public"]["Enums"]["registration_status"]
+          submission_id: string
+          submission_status: string
+          user_id: string
+          wage_rate: number
+          waitlist_position: number
+          worker_role: string
         }[]
       }
       is_current_user_admin: { Args: never; Returns: boolean }
@@ -1780,6 +1808,58 @@ export type Database = {
           wage_rate: number
           warnings: string[]
         }[]
+      }
+      set_registration_wage_rate: {
+        Args: { p_registration_id: string; p_wage_rate: number }
+        Returns: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          cancellation_requested_at: string | null
+          created_at: string
+          created_by: string | null
+          event_id: string
+          event_role_id: string | null
+          hours_reported: number | null
+          id: string
+          rate_set_at: string | null
+          rate_set_by: string | null
+          recruiter_id: string | null
+          status: Database["public"]["Enums"]["registration_status"]
+          user_id: string
+          wage_rate: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "event_registrations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      staff_transition_registration: {
+        Args: { p_action: string; p_reason?: string; p_registration_id: string }
+        Returns: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          cancellation_requested_at: string | null
+          created_at: string
+          created_by: string | null
+          event_id: string
+          event_role_id: string | null
+          hours_reported: number | null
+          id: string
+          rate_set_at: string | null
+          rate_set_by: string | null
+          recruiter_id: string | null
+          status: Database["public"]["Enums"]["registration_status"]
+          user_id: string
+          wage_rate: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "event_registrations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {
