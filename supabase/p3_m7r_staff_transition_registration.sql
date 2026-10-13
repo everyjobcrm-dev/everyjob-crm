@@ -72,6 +72,7 @@ BEGIN
     v_to := 'cancelled'; v_history_action := 'organizer_approved_cancellation';
 
   ELSE -- dismiss_cancellation
+    IF v_old.status NOT IN ('pending','approved','waitlisted') THEN RAISE EXCEPTION 'registration_not_active'; END IF;
     IF v_old.cancellation_requested_at IS NULL THEN RAISE EXCEPTION 'no_cancellation_request'; END IF;
     v_to := v_old.status; v_history_action := 'organizer_dismissed_cancellation';
   END IF;

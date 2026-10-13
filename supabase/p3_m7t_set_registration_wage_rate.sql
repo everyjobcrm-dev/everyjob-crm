@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION public.app_manager_rate_deadline(p_event_date date)
  SECURITY INVOKER
  SET search_path TO 'pg_catalog', 'public'
 AS $function$
-  SELECT (date_trunc('month', p_event_date) + interval '1 month' + interval '9 days')::date
+  SELECT (date_trunc('month', p_event_date::timestamp) + interval '1 month' + interval '9 days')::date
 $function$;
 REVOKE ALL ON FUNCTION public.app_manager_rate_deadline(date) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.app_manager_rate_deadline(date) TO authenticated, service_role;
