@@ -1,4 +1,4 @@
--- PROPOSED - not applied. Needs an explicit approval line (AGENTS.md 8.1). Apply after p6_h2 (the RPCs become the only write path).
+-- APPLIED 2026-10-13 via apply_migration (approved: P6-H0..H5 with E1/E2, Q3-Q5). Apply after p6_h2 (the RPCs become the only write path).
 -- p6_h3 (L13): RLS on the three hours tables. Live: RLS enabled, NO policies (every client read and write denied), while
 -- anon and authenticated still hold ALL table grants. This narrows grants and adds SELECT-only policies; nothing is
 -- broadened for writes - INSERT/UPDATE/DELETE stay RPC-only (SECURITY DEFINER, p6_h2).

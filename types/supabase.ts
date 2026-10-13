@@ -994,6 +994,7 @@ export type Database = {
           last_name: string
           phone_number: string | null
           phone_verified: boolean | null
+          recruiter_bonus_rate: number
           role: Database["public"]["Enums"]["user_role"] | null
           total_ratings: number | null
           tz: string
@@ -1011,6 +1012,7 @@ export type Database = {
           last_name: string
           phone_number?: string | null
           phone_verified?: boolean | null
+          recruiter_bonus_rate?: number
           role?: Database["public"]["Enums"]["user_role"] | null
           total_ratings?: number | null
           tz: string
@@ -1028,6 +1030,7 @@ export type Database = {
           last_name?: string
           phone_number?: string | null
           phone_verified?: boolean | null
+          recruiter_bonus_rate?: number
           role?: Database["public"]["Enums"]["user_role"] | null
           total_ratings?: number | null
           tz?: string
@@ -1585,6 +1588,83 @@ export type Database = {
         }
         Relationships: []
       }
+      v_my_monthly_hours: {
+        Row: {
+          approved_hours: number | null
+          employee_id: string | null
+          estimated_pay: number | null
+          month: string | null
+          shifts_without_rate: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
+      v_recruiter_pending_credits: {
+        Row: {
+          oldest_pending_at: string | null
+          pending_amount: number | null
+          pending_count: number | null
+          recruiter_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       v_shift_submissions_dashboard: {
         Row: {
           employee_id: string | null
@@ -1663,6 +1743,35 @@ export type Database = {
       app_registration_initial_status: {
         Args: { p_event_role_id: string; p_uid: string }
         Returns: Database["public"]["Enums"]["registration_status"]
+      }
+      approve_shift_hours: {
+        Args: { p_submission_id: string }
+        Returns: {
+          employee_id: string | null
+          event_id: string | null
+          id: string
+          performance_notes: string | null
+          performance_rating: number | null
+          registration_id: string
+          rejection_reason: string | null
+          reported_end: string
+          reported_hours: number
+          reported_start: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submitted_at: string | null
+          submitted_by: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shift_hour_submissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       consume_signup_tz_attempt: {
         Args: {
@@ -1784,6 +1893,35 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      reject_shift_hours: {
+        Args: { p_reason: string; p_submission_id: string }
+        Returns: {
+          employee_id: string | null
+          event_id: string | null
+          id: string
+          performance_notes: string | null
+          performance_rating: number | null
+          registration_id: string
+          rejection_reason: string | null
+          reported_end: string
+          reported_hours: number
+          reported_start: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submitted_at: string | null
+          submitted_by: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shift_hour_submissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       release_signup_tz_lease: {
         Args: { p_lease_token: string; p_tz_hash: string }
         Returns: boolean
@@ -1892,6 +2030,71 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "event_registrations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_shift_hours: {
+        Args: {
+          p_notes?: string
+          p_rating?: number
+          p_registration_id: string
+          p_reported_end: string
+          p_reported_hours: number
+          p_reported_start: string
+        }
+        Returns: {
+          employee_id: string | null
+          event_id: string | null
+          id: string
+          performance_notes: string | null
+          performance_rating: number | null
+          registration_id: string
+          rejection_reason: string | null
+          reported_end: string
+          reported_hours: number
+          reported_start: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submitted_at: string | null
+          submitted_by: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shift_hour_submissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      void_shift_hours: {
+        Args: { p_reason: string; p_submission_id: string }
+        Returns: {
+          employee_id: string | null
+          event_id: string | null
+          id: string
+          performance_notes: string | null
+          performance_rating: number | null
+          registration_id: string
+          rejection_reason: string | null
+          reported_end: string
+          reported_hours: number
+          reported_start: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submitted_at: string | null
+          submitted_by: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shift_hour_submissions"
           isOneToOne: true
           isSetofReturn: false
         }

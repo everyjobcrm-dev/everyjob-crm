@@ -1,4 +1,4 @@
--- PROPOSED - not applied. Needs an explicit approval line (AGENTS.md 8.1). Order: h0 -> h1 -> h4 -> h2 -> h3 -> h5.
+-- APPLIED 2026-10-13 via apply_migration (approved: P6-H0..H5 with E1/E2, Q3-Q5). Order: h0 -> h1 -> h4 -> h2 -> h3 -> h5.
 -- p6_h0: profiles.recruiter_bonus_rate (NIS per approved hour, Admin-set; spec default 1). Referenced by the glossary,
 -- docs/spec-full.md, app/admin/actions.ts setRecruiterBonusRate and lib/supabase/auth.ts, but missing live.
 -- Non-admin clients cannot change it: guard_profile_protected_columns only allows first/last name, phone, gender, birth_date.

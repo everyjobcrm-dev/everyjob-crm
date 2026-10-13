@@ -1,4 +1,4 @@
--- PROPOSED - not applied. Needs an explicit approval line (AGENTS.md 8.1).
+-- APPLIED 2026-10-13 via apply_migration (approved: P6-H0..H5 with E1/E2, Q3-Q5).
 -- p6_h1: nobody reviews hours they worked and nobody submits own hours (hard rule, AGENTS.md 6).
 -- Q1 answered "worker only": no two-person rule (there is exactly one admin, so it would deadlock admin-entered hours).
 -- Live table has 0 rows, so the constraints validate immediately.

@@ -1,4 +1,4 @@
--- PROPOSED - not applied. Needs an explicit approval line (AGENTS.md 8.1). Apply after p6_h3 (relies on its SELECT policies).
+-- APPLIED 2026-10-13 via apply_migration (approved: P6-H0..H5 with E1/E2, Q3-Q5). Apply after p6_h3 (relies on its SELECT policies).
 -- p6_h5: derived totals as views (AGENTS.md 5.1). security_invoker, so callers see only what RLS lets them see.
 
 -- A worker's own approved hours and estimated pay per month (Asia/Jerusalem month of the event).

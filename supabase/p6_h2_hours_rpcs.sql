@@ -1,4 +1,4 @@
--- PROPOSED - not applied. Needs an explicit approval line (AGENTS.md 8.1). Requires p6_h0 (recruiter_bonus_rate),
+-- APPLIED 2026-10-13 via apply_migration (approved: P6-H0..H5 with E1/E2, Q3-Q5). Requires p6_h0 (recruiter_bonus_rate),
 -- p6_h1 (constraints) and p6_h4 (DEFINER rating triggers) first.
 -- p6_h2: hours-flow RPCs. All SECURITY DEFINER with a fixed search_path; the tables stay closed to direct client DML (p6_h3).
 -- Lock order: events (SHARE) -> event_registrations (SHARE) -> shift_hour_submissions (UPDATE) -> recruiter_bonuses.

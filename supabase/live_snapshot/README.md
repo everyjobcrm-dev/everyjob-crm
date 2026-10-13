@@ -42,3 +42,11 @@ repo. **The live DB is the source of truth** (decision of 2026-10-12). These fil
   `p4_m8_request_registration_cancellation`, `p4_m8b_staff_event_request_counts` (body md5 match).
 - `fn_search_employees.sql` in this folder remains the pre-Phase-4 definition = rollback R7u.
 - NOT applied: `p4_m6c_drop_legacy_registration_policy.sql` (contains DROP - run by hand in the SQL Editor, then verify read-only).
+
+## Phase 6 migrations - hours flow (2026-10-13)
+- Applied through `apply_migration`, one at a time: `p6_h0_recruiter_bonus_rate`, `p6_h1_self_review_constraint` (E1: no two-person rule),
+  `p6_h4_rating_triggers_definer`, `p6_h2_hours_rpcs` (E2: credit to events.recruiter_id), `p6_h3_hours_rls`, `p6_h5_hours_views`.
+- Verified read-only: body md5 = file for all 6 functions; DEFINER + search_path; anon no EXECUTE; pg_policies (5 SELECT policies);
+  anon has no table privileges, authenticated SELECT only; both views security_invoker=true.
+- `fn_recalc_employee_rating.sql` / `fn_update_employee_average_rating.sql` in this folder remain the pre-h4 definitions = rollback.
+- Not applied: the optional `DROP TRIGGER IF EXISTS trigger_update_rating` (by hand, Q5); `p6_h6_redeem_credits.sql` (PROPOSED).

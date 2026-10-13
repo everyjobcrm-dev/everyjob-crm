@@ -1,4 +1,4 @@
--- PROPOSED - not applied. Needs an explicit approval line (AGENTS.md 8.1).
+-- APPLIED 2026-10-13 via apply_migration (approved: P6-H0..H5 with E1/E2, Q3-Q5).
 -- p6_h4: rating triggers run as the table owner (SECURITY DEFINER, fixed search_path). As INVOKER they update
 -- profiles.average_rating as the calling manager, which guard_profile_protected_columns refuses (protected field),
 -- so every rating insert by a manager fails. update_employee_average_rating also used NEW only (no-op on DELETE).
