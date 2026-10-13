@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireRole, type AuthOk } from "@/lib/auth/guards";
 import { canCreateEvents, canManageEvent } from "@/lib/auth/permissions";
 import { createEventSchema, type CreateEventInput } from "@/lib/validations/event";
@@ -344,6 +345,42 @@ export async function updateUserRole(
   if (error) {
     return fail(mapDbError(error, { fallback: "עדכון ההרשאה נכשל." }));
   }
+
+  revalidatePath("/admin/employees");
+  return { success: true };
+}
+
+const setRecruitedBySchema = z.object({
+  employeeId: z.string().uuid(),
+  recruiterId: z.string().uuid().nullable(),
+});
+
+/**
+ * Admin only: who recruited this employee (profiles.recruited_by). Drives recruitment credits (p6_h7): a credit is created
+ * on hours approval only when the event's recruiter is the employee's recruited_by. The profile guard lets only admins
+ * change this column; the target must be an employee and the recruiter a recruiter.
+ */
+export async function setRecruitedBy(employeeId: string, recruiterId: string | null): Promise<ActionResult> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  const args = setRecruitedBySchema.safeParse({ employeeId, recruiterId });
+  if (!args.success) return fail("בקשה לא תקינה.");
+
+  const ids = [args.data.employeeId, ...(args.data.recruiterId ? [args.data.recruiterId] : [])];
+  const { data: people, error: lookupError } = await auth.supabase.from("profiles").select("id, role").in("id", ids);
+  if (lookupError) return fail("בדיקת המשתמשים נכשלה.");
+  const roleOf = new Map((people ?? []).map((p) => [p.id as string, p.role as string]));
+  if (roleOf.get(args.data.employeeId) !== "employee") return fail("ניתן לשייך מגייס/ת לעובדים בלבד.");
+  if (args.data.recruiterId && roleOf.get(args.data.recruiterId) !== "recruiter") return fail("המשתמש שנבחר אינו מגייס/ת.");
+
+  const { data, error } = await auth.supabase
+    .from("profiles")
+    .update({ recruited_by: args.data.recruiterId })
+    .eq("id", args.data.employeeId)
+    .eq("role", "employee")
+    .select("id");
+  if (error) return fail(mapDbError(error, { fallback: "עדכון המגייס/ת נכשל." }));
+  if (!data?.length) return fail("העדכון לא בוצע - העובד/ת לא נמצא/ה.");
 
   revalidatePath("/admin/employees");
   return { success: true };

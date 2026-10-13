@@ -8,6 +8,7 @@ type ProfileRow = {
   last_name: string | null;
   tz: string | null;
   role: "admin" | "manager" | "employee" | "recruiter" | null;
+  recruited_by: string | null;
 };
 
 export default async function AdminEmployeesPage() {
@@ -19,7 +20,7 @@ export default async function AdminEmployeesPage() {
   const { data: profiles } = await supabase
     .from("profiles")
     // Only columns that exist live. No Form 101 / employee_documents data here (AGENTS.md 8.2).
-    .select("id, first_name, last_name, tz, role")
+    .select("id, first_name, last_name, tz, role, recruited_by")
     .order("last_name", { ascending: true })
     .returns<ProfileRow[]>();
 
@@ -31,6 +32,7 @@ export default async function AdminEmployeesPage() {
     form101Status: null,
     totalEarnings: null,
     totalHours: null,
+    recruitedBy: p.recruited_by,
   }));
 
   return (
@@ -40,7 +42,10 @@ export default async function AdminEmployeesPage() {
         <h1 className="font-display text-3xl text-cream">ניהול עובדים</h1>
       </header>
 
-      <EmployeeDirectoryTable employees={rows} />
+      <EmployeeDirectoryTable
+        employees={rows}
+        recruiters={rows.filter((r) => r.role === "recruiter").map((r) => ({ id: r.id, name: r.name }))}
+      />
     </div>
   );
 }

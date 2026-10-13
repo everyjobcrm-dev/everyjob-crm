@@ -99,7 +99,7 @@ Abbreviations: **ADM** admin · **MGR** manager · **REC1** recruiter with `can_
 
 ## 7b. Hours flow (Phase 6)
 Setup: an event dated **yesterday or earlier**, status **סגור להרשמה**, owned by REC1 (`events.recruiter_id`), EMP1 approved with a rate (3.7),
-and ADM registered as a worker on the same event (approved). Set REC1's credit rate to **2** with SQL:
+and ADM registered as a worker on the same event (approved). In **אדמין → עובדים** set EMP1's **גויס ע״י** to REC1 (EMP2 stays **ללא**). Set REC1's credit rate to **2** with SQL:
 `UPDATE public.profiles SET recruiter_bonus_rate = 2 WHERE email = 'you+rec1@gmail.com';`
 
 | # | Who | Action | Expected |
@@ -117,7 +117,12 @@ and ADM registered as a worker on the same event (approved). Set REC1's credit r
 | 7b.11 | MGR | EMP1 → דיווח שעות | Modal says the report is approved and a fix needs an admin void |
 | 7b.12 | ADM | (resubmit flow) ask MGR to submit hours for a second employee → ADM **ביטול דוח** with reason | Report disappears from the board; MGR can submit again |
 | 7b.13 | MGR | a pending report → דיווח שעות → **ביטול הדוח (הוזן בטעות)** + reason | Voided; can be re-entered |
-| 7b.14 | REC1 | `/manager/events/<id>` | No credit-redemption control (hidden until p6_h6 is approved) |
+| 7b.14 | REC1 | `/manager/events/<id>` | **No** credit-redemption control (recruiters never see it) |
+| 7b.14a | ADM | EMP2 (גויס ע״י = ללא) approve hours | Approved; `/admin/recruiters` count for REC1 does **not** change |
+| 7b.14b | MGR | event page → "זיכויי גיוס: REC1" → N = 5 → מימוש → אישור | **אין מספיק זיכויים ממתינים למימוש.** (when fewer than 5 are pending) |
+| 7b.14c | MGR | N = 1 → מימוש → אישור מימוש | **מומשו 1 זיכויים.**; the pending count drops by 1 (oldest first) |
+| 7b.14d | ADM | **ביטול דוח** on the hours whose credit was just redeemed | **לא ניתן לבטל: זיכוי הגיוס עבור שעות אלה כבר מומש.** |
+| 7b.14e | MGR | an event with no recruiter | No credit-redemption section |
 | 7b.15 | ADM | `/admin/employees` | The list renders (Form 101 / totals columns show "—") |
 
 ## 8. Done criteria

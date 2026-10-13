@@ -69,6 +69,10 @@ const BY_MESSAGE: ReadonlyArray<readonly [string, string]> = [
   ["invalid_submission_transition", "לא ניתן לבצע פעולה זו על דוח השעות במצבו הנוכחי."],
   ["self_review", "לא ניתן לאשר או לדחות שעות שעבדת בעצמך."],
   ["credit_already_applied", "לא ניתן לבטל: זיכוי הגיוס עבור שעות אלה כבר מומש."],
+  // recruitment-credit redemption (redeem_recruiter_credits)
+  ["invalid_count", "יש לבחור מספר זיכויים חיובי."],
+  ["event_has_no_recruiter", "לאירוע אין מגייס/ת אחראי/ת - אין זיכויים למימוש."],
+  ["insufficient_credits", "אין מספיק זיכויים ממתינים למימוש."],
   ["event_not_historical", "הפעולה זמינה רק לאירועים שהסתיימו."],
   ["already_assigned", "העובד/ת כבר משובץ/ת לתפקיד."],
   // profiles guard

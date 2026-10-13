@@ -67,3 +67,11 @@ export function shiftInstants(eventDate: string, startTime: string, endTime: str
   }
   return { start, end };
 }
+
+// Recruitment-credit redemption (redeem_recruiter_credits, p6_h6v2)
+export const redeemCreditsSchema = z.object({
+  count: z.coerce.number({ invalid_type_error: "יש להזין מספר" }).int("יש להזין מספר שלם").min(1, "יש לבחור לפחות זיכוי אחד").max(1000),
+});
+export type RedeemCreditsFormInput = z.input<typeof redeemCreditsSchema>;
+export type RedeemCreditsFormOutput = z.output<typeof redeemCreditsSchema>;
+export const redeemArgsSchema = redeemCreditsSchema.extend({ eventId: uuid });

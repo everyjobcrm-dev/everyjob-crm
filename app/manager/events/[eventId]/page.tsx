@@ -7,6 +7,7 @@ import { mapDbError } from "@/lib/events/errors";
 import type { RosterRole, RosterRow } from "@/lib/events/roster";
 import { RosterBoard } from "@/components/manager/RosterBoard";
 import { EventStatusControl } from "@/components/manager/EventStatusControl";
+import { RedeemCreditsControl } from "@/components/manager/RedeemCreditsControl";
 
 type Props = {
   params: Promise<{ eventId: string }>;
@@ -60,6 +61,21 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
   }));
   const rows = (rosterData ?? []) as RosterRow[];
 
+
+  // Recruitment credits of the EVENT's recruiter - Manager/Admin only (never fetched or shown for recruiters).
+  const canRedeem = roleAtLeast(ctx.role, "manager") && event.recruiter_id != null;
+  const [recruiterRes, creditsRes] = canRedeem
+    ? await Promise.all([
+        supabase.from("profiles").select("first_name, last_name").eq("id", event.recruiter_id).maybeSingle(),
+        supabase
+          .from("v_recruiter_pending_credits")
+          .select("pending_count, pending_amount")
+          .eq("recruiter_id", event.recruiter_id)
+          .maybeSingle(),
+      ])
+    : [{ data: null }, { data: null }];
+  const recruiterName =
+    [recruiterRes.data?.first_name, recruiterRes.data?.last_name].filter(Boolean).join(" ") || "המגייס/ת";
 
   const client = Array.isArray(event.clients) ? event.clients[0] : event.clients;
   const clientName =
@@ -118,7 +134,14 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
         )}
       </section>
 
-      {/* Recruitment-credit redemption is hidden until the FIFO redeem RPC (supabase/p6_h6_redeem_credits.sql, PROPOSED) is approved. */}
+      {canRedeem && (
+        <RedeemCreditsControl
+          eventId={event.id}
+          recruiterName={recruiterName}
+          pendingCount={Number(creditsRes.data?.pending_count ?? 0)}
+          pendingAmount={Number(creditsRes.data?.pending_amount ?? 0)}
+        />
+      )}
     </div>
   );
 }

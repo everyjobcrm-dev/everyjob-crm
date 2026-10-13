@@ -11,7 +11,7 @@ import {
   transitionArgsSchema,
   type StaffTransitionAction,
 } from "@/lib/validations/registration";
-import { attendanceArgsSchema, shiftInstants, submissionReasonArgsSchema } from "@/lib/validations/hours";
+import { attendanceArgsSchema, redeemArgsSchema, shiftInstants, submissionReasonArgsSchema } from "@/lib/validations/hours";
 
 type ActionResult<T = undefined> =
   | ({ success: true } & (T extends undefined ? object : T))
@@ -289,6 +289,31 @@ export async function setEmployeeRate(
   return { success: true };
 }
 
-// Recruitment-credit redemption is intentionally absent: the live recruiter_bonuses table uses applied_* columns and the
-// FIFO redeem RPC is PROPOSED (supabase/p6_h6_redeem_credits.sql), not applied. The previous action wrote redeemed_*
-// columns that do not exist.
+/**
+ * Redeem the event recruiter's N oldest pending recruitment credits (FIFO) in the context of this event -
+ * redeem_recruiter_credits (p6_h6v2). Manager and Admin only; records redeemed_by and redeemed_event_id.
+ */
+export async function redeemRecruiterCredits(
+  eventId: string,
+  count: number,
+): Promise<ActionResult<{ redeemedCount: number }>> {
+  const auth = await requireRole("manager");
+  if (!auth.ok) return { success: false, error: auth.error };
+
+  const args = redeemArgsSchema.safeParse({ eventId, count });
+  if (!args.success) return { success: false, error: args.error.issues[0]?.message ?? "בקשה לא תקינה." };
+
+  const { data, error } = await auth.supabase.rpc("redeem_recruiter_credits", {
+    p_event_id: args.data.eventId,
+    p_count: args.data.count,
+  });
+  if (error) {
+    console.error("[redeem_recruiter_credits]", error.code, error.message);
+    return { success: false, error: mapDbError(error, { fallback: "מימוש הזיכויים נכשל." }) };
+  }
+
+  revalidateRoster(args.data.eventId);
+  revalidatePath("/admin/recruiters");
+  revalidatePath("/employee/profile");
+  return { success: true, redeemedCount: Number(data ?? 0) };
+}

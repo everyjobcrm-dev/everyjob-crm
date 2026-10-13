@@ -45,9 +45,15 @@ Live state was read on 2026-10-13, read-only.
 | Read credits | all | all | own | ❌ | |
 
 Recruitment credit, created only by `approve_shift_hours`, exactly once per registration (`UNIQUE(source_registration_id)`):
-- **Who (Q2):** the **event's** recruiter, `events.recruiter_id`, when that profile is a `recruiter` and **is not the worker themself**.
-  (`event_registrations.recruiter_id` is never populated live, so it is not used.)
+- **Who (H7, per docs/spec-full.md 4):** the **event's** recruiter (`events.recruiter_id`), and **only when that recruiter recruited
+  the worker**: `profiles.recruited_by = events.recruiter_id`. No credit when `recruited_by` is NULL or a different recruiter, and
+  never for the recruiter's own hours. `profiles.recruited_by` is Admin-set (outside the profile guard's allow-list), from
+  `/admin/employees` → "גויס ע״י" (`setRecruitedBy`).
 - **Amount:** `reported_hours × profiles.recruiter_bonus_rate` (Admin-set, default 1 NIS/hour). A credit that was voided is revived by the next approval.
+- **Redemption (H6v2):** `redeem_recruiter_credits(event, n)` - Manager/Admin, from the staff event screen; takes the event
+  recruiter's `n` oldest `pending` credits (FIFO by `created_at, id`) → `applied`, setting `applied_at`, `redeemed_by` (actor) and
+  `redeemed_event_id` (context). Errors: `invalid_count`, `event_has_no_recruiter`, `insufficient_credits`. Hours whose credit is
+  `applied` can no longer be voided (`credit_already_applied`).
 
 ## 4. Lock order
 
@@ -73,7 +79,7 @@ documented here); the proposal makes them correct (DEFINER, DELETE-safe) instead
 1. `app/manager/actions.ts` `submitShiftAttendance` → RPC `submit_shift_hours` (`requireRole("manager")`, Zod, Hebrew
    errors). Remove the direct `employee_ratings` insert (the RPC writes the rating).
 2. `app/admin/actions.ts` `reviewShiftSubmission` → `approve_shift_hours` / `reject_shift_hours`; add `voidShiftSubmission`.
-3. `redeemRecruitmentCredits` → a redeem RPC (a separate, later proposal), because the live table uses `applied_*`, not `redeemed_*`.
+3. Redemption → `redeemRecruiterCredits` (manager action) → `redeem_recruiter_credits` (H6v2, applied); `RedeemCreditsControl` on the staff event page (Manager/Admin only).
 4. `AttendanceModal` sends ISO timestamps built from the event date + times; it shows the rejection reason and void state from `get_event_roster` (already returns `submission_status`).
 5. `lib/events/errors.ts`: `hours_not_allowed`, `hours_already_approved`, `self_review`, `credit_already_applied`, `shift_not_started` (done).
 6. Employee home and "My shifts": monthly hours and estimated pay from `v_my_monthly_hours`.
@@ -81,7 +87,7 @@ documented here); the proposal makes them correct (DEFINER, DELETE-safe) instead
 ## 7. Decisions (answered 2026-10-13)
 
 1. **Q1, two-person rule:** **worker only.** `reviewed_by <> employee_id` and `submitted_by <> employee_id`; no reviewer ≠ submitter rule, because there is exactly one admin and the rule would deadlock admin-entered hours.
-2. **Q2, credit attribution:** credit the **event's recruiter** (`events.recruiter_id`), never the worker themself.
+2. **Q2, credit attribution:** credit the **event's recruiter** (`events.recruiter_id`) only when it equals the worker's `profiles.recruited_by` (H7, superseding E2), never the worker themself.
 3. **Q3:** only Admin may enter hours on a `completed` event.
 4. **Q4:** employees see their average rating only.
 5. **Q5:** remove the duplicate rating trigger `trigger_update_rating` by hand, after h4.
