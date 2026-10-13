@@ -26,3 +26,12 @@ repo. **The live DB is the source of truth** (decision of 2026-10-12). These fil
 - `p1_m6a_drop_duplicate_waitlist_trigger` was also applied **manually in the SQL Editor** (as `DROP TRIGGER IF EXISTS ...`, because the hung tool call may have applied it); absent from the migration history. Verified read-only: only `trg_auto_promote_from_waitlist` remains on `event_registrations`.
 - RULE: the migration tool hangs on any statement containing `DROP`; such migrations (M6c and later) are run by hand in the SQL Editor.
 - All other `p1_*` migrations were applied through `apply_migration` and appear in the migration history.
+
+## Phase 3 migrations (2026-10-13)
+- Applied through `apply_migration`, one at a time, in this order: `p3_m7p_schedule_employee_v2`, `p3_m7q_remove_scheduled_employee_v2`,
+  `p3_m7r_staff_transition_registration`, `p3_m7s_get_event_roster`, `p3_m7t_set_registration_wage_rate`, `p3_m0d_revoke_fill_views_anon`
+  (the files' top-level `--` comment lines were stripped from the payload because the rollback notes contain `DROP`; function bodies were sent verbatim).
+- Verified read-only right after each one: `md5(prosrc)` equals the body between the `$function$` markers in the file (all six functions);
+  `md5(pg_get_functiondef)` equals the whole file statement for M7p (f8461097…) and M7q (0b060076…). For M7r/M7s/M7t Postgres re-renders the
+  header (`DEFAULT NULL::text`, `RETURNS event_registrations`, `RETURNS TABLE(...)` on one line), so only the body md5 is comparable.
+- `fn_schedule_employee.sql` / `fn_remove_scheduled_employee.sql` in this folder remain the pre-Phase-3 definitions = rollbacks R7p / R7q.
