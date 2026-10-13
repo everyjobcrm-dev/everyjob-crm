@@ -1723,6 +1723,15 @@ export type Database = {
           worker_role: string
         }[]
       }
+      get_staff_event_request_counts: {
+        Args: never
+        Returns: {
+          cancellation_request_count: number
+          event_id: string
+          pending_count: number
+          waitlisted_count: number
+        }[]
+      }
       is_current_user_admin: { Args: never; Returns: boolean }
       list_employees: {
         Args: {
@@ -1782,6 +1791,32 @@ export type Database = {
       remove_scheduled_employee: {
         Args: { p_reason: string; p_registration_id: string }
         Returns: string
+      }
+      request_registration_cancellation: {
+        Args: { p_reason?: string; p_registration_id: string }
+        Returns: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          cancellation_requested_at: string | null
+          created_at: string
+          created_by: string | null
+          event_id: string
+          event_role_id: string | null
+          hours_reported: number | null
+          id: string
+          rate_set_at: string | null
+          rate_set_by: string | null
+          recruiter_id: string | null
+          status: Database["public"]["Enums"]["registration_status"]
+          user_id: string
+          wage_rate: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "event_registrations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       schedule_employee: {
         Args: { p_employee_id: string; p_event_role_id: string }
