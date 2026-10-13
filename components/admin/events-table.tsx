@@ -137,7 +137,7 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
                       <button
                         type="button"
                         onClick={() => setExpandedId(expanded ? null : event.id)}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${STAFFING_TONE[staffing.tone]}`}
+                        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${STAFFING_TONE[staffing.tone]}`}
                       >
                         {staffing.tone === "danger" ? (
                           <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
@@ -252,7 +252,7 @@ function EventCard({
             {event.eventDate} · {formatTimeRange(event.startTime, event.endTime)}
           </p>
         </div>
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${STATUS_STYLE[event.status]}`}>
+        <span className={`shrink-0 rounded-sm px-2.5 py-1 text-[11px] font-semibold ${STATUS_STYLE[event.status]}`}>
           {STATUS_LABEL[event.status]}
         </span>
       </div>
@@ -260,7 +260,7 @@ function EventCard({
       <button
         type="button"
         onClick={onToggle}
-        className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${STAFFING_TONE[staffing.tone]}`}
+        className={`mt-3 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${STAFFING_TONE[staffing.tone]}`}
       >
         {staffing.tone === "danger" ? (
           <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />

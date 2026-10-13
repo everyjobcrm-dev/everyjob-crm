@@ -137,6 +137,20 @@ Notes:
 - **Capacity.** `pending` and `approved` registrations occupy capacity; `waitlisted`, `rejected`, `cancelled` and `removed` do not. Staffing status is derived from `event_role_fill_counts`, never stored, and an event is never auto-closed when it fills.
 - **Deferred.** The hours flow (attendance entry guards, RLS on `shift_hour_submissions`/`employee_ratings`/`recruiter_bonuses`, approval self-review constraint) is being reworked in a separate session; do not extend it as part of event-lifecycle work.
 
+### 6.0 Registration write paths (DB)
+`event_registrations` is never written directly by the app (`trg_guard_event_registration_write` blocks client DML). Every write is a SECURITY DEFINER RPC that re-checks role, scope (`app_can_manage_event`), not-own-registration and the lock order `events (SHARE) -> event_roles (UPDATE) -> event_registrations`:
+
+| RPC | Who | Effect / history `action` |
+|---|---|---|
+| `register_for_event_role(role)` | any worker, own | `pending` / `approved` (staff) / `waitlisted`; `self_registered`, `self_reregistered` |
+| `request_registration_cancellation(reg, reason?)` | the worker, own row only | sets `cancellation_requested_at`; `cancellation_requested` |
+| `schedule_employee(role, employee)` | staff (scope) | `approved`, enforces `min_age`, warns `below_min_rating`/`overlap`; `organizer_scheduled`, `organizer_readded` |
+| `remove_scheduled_employee(reg, reason)` | staff (scope) | `removed` (reason required); `organizer_removed` |
+| `staff_transition_registration(reg, action, reason?)` | staff (scope) | `approve`, `reject`, `promote` (capacity), `approve_cancellation` (-> `cancelled`), `dismiss_cancellation`; `organizer_approved`, `organizer_rejected`, `organizer_promoted`, `organizer_approved_cancellation`, `organizer_dismissed_cancellation` |
+| `set_registration_wage_rate(reg, rate)` | Admin any time; Manager until the 10th of the following month (`app_manager_rate_deadline`) | `rate_set` |
+
+Reads: `get_event_roster(event)` (staff scope; no tz/email/documents; rates for Admin/Manager only), `get_staff_event_request_counts()`, `search_employees(query, event)` (scoped). Migrations: `supabase/p3_*`, `supabase/p4_*`; tests: `supabase/tests/`.
+
 ### 6.1 Event status model (`events.status`)
 
 `closed` means **closed for registration** — it is not the financial closure (`completed`).

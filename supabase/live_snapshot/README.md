@@ -35,3 +35,10 @@ repo. **The live DB is the source of truth** (decision of 2026-10-12). These fil
   `md5(pg_get_functiondef)` equals the whole file statement for M7p (f8461097…) and M7q (0b060076…). For M7r/M7s/M7t Postgres re-renders the
   header (`DEFAULT NULL::text`, `RETURNS event_registrations`, `RETURNS TABLE(...)` on one line), so only the body md5 is comparable.
 - `fn_schedule_employee.sql` / `fn_remove_scheduled_employee.sql` in this folder remain the pre-Phase-3 definitions = rollbacks R7p / R7q.
+
+## Phase 4 migrations (2026-10-13)
+- Applied through `apply_migration`, one at a time: `p4_m7u_search_employees_scope` (snapshot body + one scope line; body and full
+  `pg_get_functiondef` md5 match the file), `p4_m7v_history_policy_scope` (qual = `app_can_manage_event(event_id)`),
+  `p4_m8_request_registration_cancellation`, `p4_m8b_staff_event_request_counts` (body md5 match).
+- `fn_search_employees.sql` in this folder remains the pre-Phase-4 definition = rollback R7u.
+- NOT applied: `p4_m6c_drop_legacy_registration_policy.sql` (contains DROP - run by hand in the SQL Editor, then verify read-only).

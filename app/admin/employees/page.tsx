@@ -7,7 +7,7 @@ type ProfileRow = {
   first_name: string | null;
   last_name: string | null;
   tz: string | null;
-  role: "admin" | "employee" | "recruiter" | null;
+  role: "admin" | "manager" | "employee" | "recruiter" | null;
   form_101_status: "missing" | "pending" | "complete" | null;
   total_earnings: number | null;
   total_hours: number | null;

@@ -8,7 +8,7 @@ export type AdminEmployee = {
   id: string;
   name: string;
   tz: string;
-  role: "admin" | "employee" | "recruiter";
+  role: "admin" | "manager" | "employee" | "recruiter";
   form101Status: "missing" | "pending" | "complete";
   totalEarnings: number;
   totalHours: number;
@@ -16,6 +16,7 @@ export type AdminEmployee = {
 
 const ROLE_LABEL: Record<AdminEmployee["role"], string> = {
   admin: "מנהל/ת",
+  manager: "מנהל/ת שטח",
   employee: "עובד/ת",
   recruiter: "מגייס/ת",
 };
@@ -87,6 +88,7 @@ export function EmployeeDirectoryTable({ employees }: { employees: AdminEmployee
                     >
                       <option value="employee">{ROLE_LABEL.employee}</option>
                       <option value="recruiter">{ROLE_LABEL.recruiter}</option>
+                      <option value="manager">{ROLE_LABEL.manager}</option>
                       <option value="admin">{ROLE_LABEL.admin}</option>
                     </select>
                   </td>
