@@ -37,7 +37,7 @@ Live state was read on 2026-10-13, read-only.
 | Action | Admin | Manager | Recruiter | Employee | Extra rules |
 |---|:---:|:---:|:---:|:---:|---|
 | Submit / re-submit hours (+ optional rating) | ✅ | ✅ | ❌ | ❌ | registration `approved`; event `open`/`closed` (admin also `completed`); `event_date <= today (Asia/Jerusalem)`; **never own registration**; not when already `approved` |
-| Approve | ✅ | ❌ | ❌ | ❌ | `pending`, not voided; **reviewer ≠ worker**, and **reviewer ≠ submitter** (two-person rule) |
+| Approve | ✅ | ❌ | ❌ | ❌ | `pending`, not voided; **reviewer ≠ worker** (Q1: no two-person rule; the admin may approve hours the admin entered) |
 | Reject | ✅ | ❌ | ❌ | ❌ | `pending`; reason required |
 | Void | ✅ any status | ✅ only `pending`/`rejected` | ❌ | ❌ | reason required; voiding an `approved` row voids its *pending* credit and is refused if the credit was already applied |
 | Read submissions | all | all | ❌ | own rows | via RLS SELECT policies; writes RPC-only |
@@ -45,8 +45,9 @@ Live state was read on 2026-10-13, read-only.
 | Read credits | all | all | own | ❌ | |
 
 Recruitment credit, created only by `approve_shift_hours`, exactly once per registration (`UNIQUE(source_registration_id)`):
-- **Who:** `event_registrations.recruiter_id`, but only when it equals `events.recruiter_id` (the event's recruiter recruited this person), the profile is a `recruiter`, and **it is not the worker themself**.
-- **Amount:** `reported_hours × profiles.recruiter_bonus_rate` (Admin-set, default 1 NIS/hour).
+- **Who (Q2):** the **event's** recruiter, `events.recruiter_id`, when that profile is a `recruiter` and **is not the worker themself**.
+  (`event_registrations.recruiter_id` is never populated live, so it is not used.)
+- **Amount:** `reported_hours × profiles.recruiter_bonus_rate` (Admin-set, default 1 NIS/hour). A credit that was voided is revived by the next approval.
 
 ## 4. Lock order
 
@@ -77,10 +78,10 @@ documented here); the proposal makes them correct (DEFINER, DELETE-safe) instead
 5. `lib/events/errors.ts`: `hours_not_allowed`, `hours_already_approved`, `self_review`, `two_person_review`, `credit_already_applied`, `shift_not_started`.
 6. Employee home and "My shifts": monthly hours and estimated pay from `v_my_monthly_hours`.
 
-## 7. Open questions (with recommended defaults)
+## 7. Decisions (answered 2026-10-13)
 
-1. **Two-person rule:** should the approver also differ from the submitter, or only from the worker? *Default: both* (`reviewed_by <> employee_id AND reviewed_by <> submitted_by`). With one admin, the hours an admin entered need a second admin; managers normally enter hours, so this rarely bites.
-2. **Credit attribution:** credit the event's recruiter only when `event_registrations.recruiter_id = events.recruiter_id`? *Default: yes.* A `profiles.recruited_by` column does not exist, and adding one is a separate decision.
-3. **Who may enter hours on a `completed` event:** *Default: Admin only* (consistent with the registration guard).
-4. **Rating visibility to the employee:** *Default: average only*, no individual ratings or notes.
-5. **The duplicate rating trigger** `trigger_update_rating`: remove it (by hand, `DROP TRIGGER IF EXISTS`) or keep both? *Default: remove it by hand* after h4 makes both functions correct. Until then the two triggers compute the same value twice, which is harmless.
+1. **Q1, two-person rule:** **worker only.** `reviewed_by <> employee_id` and `submitted_by <> employee_id`; no reviewer ≠ submitter rule, because there is exactly one admin and the rule would deadlock admin-entered hours.
+2. **Q2, credit attribution:** credit the **event's recruiter** (`events.recruiter_id`), never the worker themself.
+3. **Q3:** only Admin may enter hours on a `completed` event.
+4. **Q4:** employees see their average rating only.
+5. **Q5:** remove the duplicate rating trigger `trigger_update_rating` by hand, after h4.

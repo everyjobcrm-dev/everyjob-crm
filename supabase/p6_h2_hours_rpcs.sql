@@ -86,7 +86,7 @@ $function$;
 -- ── shared loader for the admin review actions ─────────────────────────────────────────────────────────
 -- (inlined in each function to keep the lock order explicit)
 
--- ── approve (Admin only; never own hours; two-person rule) + recruitment credit ────────────────────────
+-- ── approve (Admin only; never own hours) + recruitment credit to the event's recruiter ────────────────────────
 CREATE OR REPLACE FUNCTION public.approve_shift_hours(p_submission_id uuid)
  RETURNS public.shift_hour_submissions
  LANGUAGE plpgsql
@@ -114,19 +114,18 @@ BEGIN
 
   IF v_sub.voided_at IS NOT NULL OR v_sub.status <> 'pending' THEN RAISE EXCEPTION 'invalid_submission_transition'; END IF;
   IF v_sub.employee_id = v_uid THEN RAISE EXCEPTION 'self_review'; END IF;
-  IF v_sub.submitted_by = v_uid THEN RAISE EXCEPTION 'two_person_review'; END IF;
 
   UPDATE public.shift_hour_submissions s SET status = 'approved', reviewed_by = v_uid, reviewed_at = now()
    WHERE s.id = p_submission_id RETURNING s.* INTO v_new;
 
-  -- recruitment credit: the event's own recruiter recruited this worker; never for the recruiter's own hours
-  IF v_reg.recruiter_id IS NOT NULL AND v_reg.recruiter_id = v_event.recruiter_id AND v_reg.recruiter_id <> v_reg.user_id THEN
-    SELECT p.recruiter_bonus_rate INTO v_rate FROM public.profiles p WHERE p.id = v_reg.recruiter_id AND p.role = 'recruiter';
+  -- recruitment credit: goes to the EVENT's recruiter (Q2); never for the recruiter's own hours
+  IF v_event.recruiter_id IS NOT NULL AND v_event.recruiter_id <> v_reg.user_id THEN
+    SELECT p.recruiter_bonus_rate INTO v_rate FROM public.profiles p WHERE p.id = v_event.recruiter_id AND p.role = 'recruiter';
     IF v_rate IS NOT NULL AND v_rate > 0 THEN
       INSERT INTO public.recruiter_bonuses (recruiter_id, source_registration_id, bonus_amount, status)
-      VALUES (v_reg.recruiter_id, v_reg.id, round(v_sub.reported_hours * v_rate, 2), 'pending')
+      VALUES (v_event.recruiter_id, v_reg.id, round(v_sub.reported_hours * v_rate, 2), 'pending')
       ON CONFLICT (source_registration_id) DO UPDATE
-        SET bonus_amount = EXCLUDED.bonus_amount, status = 'pending', created_at = now()
+        SET recruiter_id = EXCLUDED.recruiter_id, bonus_amount = EXCLUDED.bonus_amount, status = 'pending', created_at = now()
         WHERE public.recruiter_bonuses.status = 'voided';
     END IF;
   END IF;
