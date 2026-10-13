@@ -47,6 +47,14 @@ export const rateArgsSchema = wageRateSchema.extend({ eventId: uuid, registratio
 export const scheduleArgsSchema = z.object({ eventId: uuid, eventRoleId: uuid, employeeId: uuid });
 export const searchArgsSchema = employeeSearchSchema.extend({ eventId: uuid });
 
+// Worker's own cancellation request (request_registration_cancellation). The reason is optional.
+export const cancellationRequestSchema = z.object({
+  reason: z.string().trim().max(500, "הסיבה ארוכה מדי").optional(),
+});
+export type CancellationRequestFormInput = z.input<typeof cancellationRequestSchema>;
+export type CancellationRequestFormOutput = z.output<typeof cancellationRequestSchema>;
+export const cancellationArgsSchema = cancellationRequestSchema.extend({ registrationId: uuid });
+
 /** Hebrew labels for schedule_employee's non-blocking warnings. */
 export const SCHEDULE_WARNING_LABEL: Record<string, string> = {
   below_min_rating: "דירוג העובד/ת נמוך מהדירוג המינימלי לאירוע.",

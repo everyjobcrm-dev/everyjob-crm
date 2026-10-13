@@ -55,6 +55,10 @@ const BY_MESSAGE: ReadonlyArray<readonly [string, string]> = [
   ["rate_window_closed", "חלון עדכון התעריף למנהל/ת הסתיים ב-10 לחודש שלאחר האירוע. פנה/י לאדמין."],
   ["registration_not_approved", "ניתן לקבוע תעריף רק לעובד/ת משובץ/ת (מאושר/ת)."],
   ["invalid_rate", "יש להזין תעריף שעתי חיובי."],
+  // worker self-service (request_registration_cancellation) and lookups
+  ["cancellation_already_requested", "כבר נשלחה בקשת ביטול למשמרת זו. הבקשה ממתינה לטיפול הצוות."],
+  ["event_past", "האירוע כבר התקיים - לא ניתן לבקש ביטול."],
+  ["event_not_found", "האירוע לא נמצא."],
   ["event_not_historical", "הפעולה זמינה רק לאירועים שהסתיימו."],
   ["already_assigned", "העובד/ת כבר משובץ/ת לתפקיד."],
   // profiles guard

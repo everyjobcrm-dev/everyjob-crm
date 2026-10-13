@@ -13,6 +13,9 @@ type EventItem = {
   clientName: string;
   filled: number;
   headcount: number;
+  pending: number;
+  waitlisted: number;
+  requests: number;
 };
 
 const ACTIVE_STATUSES = ["open", "closed", "pending_rates"];
@@ -43,6 +46,22 @@ export default async function ManagerEventsPage() {
     ? await supabase.from("event_role_fill_counts").select("event_id, headcount, filled_count").in("event_id", ids)
     : { data: [] as { event_id: string; headcount: number; filled_count: number }[] };
 
+  // per-event pending / waitlisted / open cancellation requests (get_staff_event_request_counts: scoped, cancelled excluded)
+  const { data: requestCounts } = await supabase.rpc("get_staff_event_request_counts");
+  const countsByEvent = new Map<string, { pending: number; waitlisted: number; requests: number }>();
+  for (const c of (requestCounts ?? []) as {
+    event_id: string;
+    pending_count: number;
+    waitlisted_count: number;
+    cancellation_request_count: number;
+  }[]) {
+    countsByEvent.set(c.event_id, {
+      pending: Number(c.pending_count ?? 0),
+      waitlisted: Number(c.waitlisted_count ?? 0),
+      requests: Number(c.cancellation_request_count ?? 0),
+    });
+  }
+
   const totals = new Map<string, { filled: number; headcount: number }>();
   for (const f of fills ?? []) {
     const t = totals.get(f.event_id) ?? { filled: 0, headcount: 0 };
@@ -55,7 +74,8 @@ export default async function ManagerEventsPage() {
     const c = Array.isArray(e.clients) ? e.clients[0] : e.clients;
     const clientName = (c && typeof c === "object" && "name" in c ? (c as { name: string }).name : null) || "לקוח";
     const t = totals.get(e.id) ?? { filled: 0, headcount: 0 };
-    return { id: e.id, location: e.location, event_date: e.event_date, status: e.status, clientName, ...t };
+    const counts = countsByEvent.get(e.id) ?? { pending: 0, waitlisted: 0, requests: 0 };
+    return { id: e.id, location: e.location, event_date: e.event_date, status: e.status, clientName, ...t, ...counts };
   });
 
   const today = jerusalemToday();
@@ -132,6 +152,19 @@ function EventGrid({ items, empty }: { items: EventItem[]; empty: string }) {
             </div>
             <h3 className="mt-1 font-display text-lg text-cream">{event.location}</h3>
             <p className="text-xs text-cream/50">{event.event_date}</p>
+            {(event.requests > 0 || event.pending > 0 || event.waitlisted > 0) && (
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+                {event.requests > 0 && (
+                  <span className="rounded-sm bg-rose-500/15 px-2 py-0.5 text-rose-300">{event.requests} בקשות ביטול</span>
+                )}
+                {event.pending > 0 && (
+                  <span className="rounded-sm bg-cream/10 px-2 py-0.5 text-cream/75">{event.pending} ממתינים לאישור</span>
+                )}
+                {event.waitlisted > 0 && (
+                  <span className="rounded-sm bg-[#D4FF00]/10 px-2 py-0.5 text-[#D4FF00]">{event.waitlisted} בהמתנה</span>
+                )}
+              </div>
+            )}
             <div className="mt-4 flex items-center justify-between text-xs">
               <span className={full ? "font-semibold text-[#D4FF00]" : "text-cream/55"}>
                 {event.status === "cancelled" ? "—" : `${event.filled}/${event.headcount} מקומות תפוסים`}
