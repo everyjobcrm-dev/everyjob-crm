@@ -994,6 +994,7 @@ export type Database = {
           last_name: string
           phone_number: string | null
           phone_verified: boolean | null
+          recruited_by: string | null
           recruiter_bonus_rate: number
           role: Database["public"]["Enums"]["user_role"] | null
           total_ratings: number | null
@@ -1012,6 +1013,7 @@ export type Database = {
           last_name: string
           phone_number?: string | null
           phone_verified?: boolean | null
+          recruited_by?: string | null
           recruiter_bonus_rate?: number
           role?: Database["public"]["Enums"]["user_role"] | null
           total_ratings?: number | null
@@ -1030,12 +1032,42 @@ export type Database = {
           last_name?: string
           phone_number?: string | null
           phone_verified?: boolean | null
+          recruited_by?: string | null
           recruiter_bonus_rate?: number
           role?: Database["public"]["Enums"]["user_role"] | null
           total_ratings?: number | null
           tz?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_recruited_by_fkey"
+            columns: ["recruited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_recruited_by_fkey"
+            columns: ["recruited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_recruited_by_fkey"
+            columns: ["recruited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_recruited_by_fkey"
+            columns: ["recruited_by"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
       }
       recruiter_bonuses: {
         Row: {
@@ -1045,6 +1077,8 @@ export type Database = {
           created_at: string
           id: string
           recruiter_id: string
+          redeemed_by: string | null
+          redeemed_event_id: string | null
           source_registration_id: string
           status: Database["public"]["Enums"]["bonus_status"]
         }
@@ -1055,6 +1089,8 @@ export type Database = {
           created_at?: string
           id?: string
           recruiter_id: string
+          redeemed_by?: string | null
+          redeemed_event_id?: string | null
           source_registration_id: string
           status?: Database["public"]["Enums"]["bonus_status"]
         }
@@ -1065,6 +1101,8 @@ export type Database = {
           created_at?: string
           id?: string
           recruiter_id?: string
+          redeemed_by?: string | null
+          redeemed_event_id?: string | null
           source_registration_id?: string
           status?: Database["public"]["Enums"]["bonus_status"]
         }
@@ -1103,6 +1141,48 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_shift_submissions_dashboard"
             referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_event_id_fkey"
+            columns: ["redeemed_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_event_id_fkey"
+            columns: ["redeemed_event_id"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["event_id"]
           },
           {
             foreignKeyName: "recruiter_bonuses_source_registration_id_fkey"
@@ -1866,6 +1946,10 @@ export type Database = {
           total_count: number
           tz: string
         }[]
+      }
+      redeem_recruiter_credits: {
+        Args: { p_count: number; p_event_id: string }
+        Returns: number
       }
       register_for_event_role: {
         Args: { p_event_role_id: string }

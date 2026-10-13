@@ -50,3 +50,10 @@ repo. **The live DB is the source of truth** (decision of 2026-10-12). These fil
   anon has no table privileges, authenticated SELECT only; both views security_invoker=true.
 - `fn_recalc_employee_rating.sql` / `fn_update_employee_average_rating.sql` in this folder remain the pre-h4 definitions = rollback.
 - Not applied: the optional `DROP TRIGGER IF EXISTS trigger_update_rating` (by hand, Q5); `p6_h6_redeem_credits.sql` (PROPOSED).
+
+## Phase 6 follow-up: H7 + H6v2 (2026-10-13)
+- `p6_h7_recruited_by`: adds `profiles.recruited_by`; `approve_shift_hours` = previous live body + one changed credit condition
+  (credit only when `profiles.recruited_by = events.recruiter_id`). Full `pg_get_functiondef` md5 6d6313bc… = file. Rollback:
+  `supabase/approve_shift_hours_v1_live.sql` (live definition captured beforehand, md5 a501d6d4…).
+- `p6_h6v2_redeem_credits`: `recruiter_bonuses.redeemed_by`, `redeemed_event_id`; `redeem_recruiter_credits(event, count)`; body md5 = file.
+- `p6_h6_redeem_credits.sql` (never applied) was removed from the repo.
