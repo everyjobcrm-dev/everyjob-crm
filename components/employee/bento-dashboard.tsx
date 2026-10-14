@@ -149,7 +149,7 @@ export function BentoDashboard({
             <li key={a.id} className="py-3 first:pt-0 last:pb-0">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-semibold text-cream">{a.title}</p>
-                <span className="shrink-0 text-xs text-cream/40">{a.date}</span>
+                <span className="shrink-0 text-xs text-cream/60">{a.date}</span>
               </div>
               <p className="mt-1 text-sm text-cream/50">{a.body}</p>
             </li>

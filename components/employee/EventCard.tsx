@@ -42,7 +42,7 @@ export function EventCard({ event }: { event: EmployeeEvent }) {
       <p className="text-xs font-semibold text-indigo-400">{event.clientName}</p>
       <h2 className="font-display text-lg text-cream">{event.location}</h2>
       <p className="mt-0.5 text-xs text-cream/50">{event.eventDate}</p>
-      {event.notes && <p className="mt-2 text-xs text-cream/45">{event.notes}</p>}
+      {event.notes && <p className="mt-2 text-xs text-cream/60">{event.notes}</p>}
 
       <div className="mt-4 space-y-2">
         {event.roles.map((role) => (
@@ -97,7 +97,7 @@ function RoleRow({ role, onToast }: { role: EmployeeEvent["roles"][number]; onTo
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-cream">{role.roleName}</p>
-          <p className="flex items-center gap-1 text-xs text-cream/45">
+          <p className="flex items-center gap-1 text-xs text-cream/60">
             <Clock3 className="h-3 w-3" aria-hidden="true" />
             {role.startTime}–{role.endTime ?? "טרם נקבע"} · ₪{role.baseRate}/ש&apos;
           </p>

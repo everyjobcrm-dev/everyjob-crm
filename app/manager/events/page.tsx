@@ -88,7 +88,7 @@ export default async function ManagerEventsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="font-display text-2xl text-cream">{isRecruiter ? "האירועים שלי" : "כל האירועים"}</h2>
-          <p className="text-xs text-cream/45">
+          <p className="text-xs text-cream/60">
             {isRecruiter ? "אירועים שבאחריותך בלבד." : "אירועים פתוחים, סגורים להרשמה וממתינים לתעריפים."}
           </p>
         </div>
@@ -130,7 +130,7 @@ export default async function ManagerEventsPage() {
 }
 
 function EventGrid({ items, empty }: { items: EventItem[]; empty: string }) {
-  if (items.length === 0) return empty ? <p className="text-sm text-cream/45">{empty}</p> : null;
+  if (items.length === 0) return empty ? <p className="text-sm text-cream/60">{empty}</p> : null;
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {items.map((event) => {
@@ -169,7 +169,7 @@ function EventGrid({ items, empty }: { items: EventItem[]; empty: string }) {
               <span className={full ? "font-semibold text-[#D4FF00]" : "text-cream/55"}>
                 {event.status === "cancelled" ? "—" : `${event.filled}/${event.headcount} מקומות תפוסים`}
               </span>
-              <Users className="h-4 w-4 text-cream/40" aria-hidden="true" />
+              <Users className="h-4 w-4 text-cream/60" aria-hidden="true" />
             </div>
           </Link>
         );

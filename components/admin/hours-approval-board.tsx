@@ -102,7 +102,7 @@ function HoursRow({ row }: { row: PendingHours }) {
           </button>
         </div>
       </div>
-      {row.isOwnHours && <p className="mt-1 text-xs text-cream/45">את השעות שעבדת בעצמך לא ניתן לאשר או לדחות.</p>}
+      {row.isOwnHours && <p className="mt-1 text-xs text-cream/60">את השעות שעבדת בעצמך לא ניתן לאשר או לדחות.</p>}
       {mode && <ReasonForm row={row} mode={mode} onDone={() => setMode(null)} />}
       {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
     </div>

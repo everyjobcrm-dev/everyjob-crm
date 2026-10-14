@@ -18,7 +18,7 @@ export function ShiftLedgerRow({
   return (
     <div className="flex items-stretch overflow-hidden rounded-2xl border border-brass/15 bg-surface">
       <div className="flex w-20 shrink-0 flex-col items-center justify-center gap-0.5 bg-surface2 py-4">
-        <span className="text-[10px] uppercase tracking-wide text-cream/40">משמרת</span>
+        <span className="text-[10px] uppercase tracking-wide text-cream/60">משמרת</span>
         <span className="font-display text-lg text-cream">{date}</span>
       </div>
       <div className="perforation w-px shrink-0" aria-hidden="true" />

@@ -22,7 +22,7 @@ export function FinancialClosureSummary({ closure }: { closure: ClosureFinancial
 
   return (
     <div className="rounded-xl border border-brass/10 bg-surface2 p-4">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cream/40">סיכום פיננסי</p>
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cream/60">סיכום פיננסי</p>
 
       <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
         <Stat label="שעות בפועל" value={`${closure.totalHoursReported}`} suffix="ש'" />
@@ -84,7 +84,7 @@ function Stat({
 }) {
   return (
     <div>
-      <p className="mb-0.5 flex items-center gap-1 text-[11px] text-cream/40">
+      <p className="mb-0.5 flex items-center gap-1 text-[11px] text-cream/60">
         {icon}
         {label}
       </p>
@@ -94,7 +94,7 @@ function Stat({
         }`}
       >
         {value}
-        {suffix && <span className="ms-0.5 text-xs font-normal text-cream/40">{suffix}</span>}
+        {suffix && <span className="ms-0.5 text-xs font-normal text-cream/60">{suffix}</span>}
       </p>
     </div>
   );

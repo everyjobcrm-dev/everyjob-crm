@@ -101,7 +101,7 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
           />
         ))}
         {events.length === 0 && (
-          <p className="rounded-2xl border border-brass/10 bg-surface px-4 py-10 text-center text-sm text-cream/40">
+          <p className="rounded-2xl border border-brass/10 bg-surface px-4 py-10 text-center text-sm text-cream/60">
             לא נוצרו אירועים עדיין.
           </p>
         )}
@@ -128,7 +128,7 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
                   <tr className={busy ? "opacity-50" : undefined}>
                     <td className="px-4 py-3.5">
                       <p className="font-semibold text-cream">{event.clientName}</p>
-                      <p className="text-xs text-cream/45">{event.location}</p>
+                      <p className="text-xs text-cream/60">{event.location}</p>
                     </td>
                     <td className="px-4 py-3.5 text-cream/70">
                       {event.eventDate} · {formatTimeRange(event.startTime, event.endTime)}
@@ -167,7 +167,7 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
                         disabled={busy}
                         onClick={() => handleDelete(event.id, `${event.clientName} · ${event.eventDate}`)}
                         aria-label="מחיקת אירוע"
-                        className="rounded-lg p-2 text-cream/40 transition-colors hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
+                        className="rounded-lg p-2 text-cream/60 transition-colors hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
                       >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </button>
@@ -190,7 +190,7 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
             })}
             {events.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-sm text-cream/40">
+                <td colSpan={5} className="px-4 py-10 text-center text-sm text-cream/60">
                   לא נוצרו אירועים עדיין.
                 </td>
               </tr>
@@ -219,7 +219,7 @@ function RolesRoster({ event }: { event: AdminEvent }) {
           </span>
         </span>
       ))}
-      {event.roles.length === 0 && <p className="text-sm text-cream/40">אין תפקידים מוגדרים.</p>}
+      {event.roles.length === 0 && <p className="text-sm text-cream/60">אין תפקידים מוגדרים.</p>}
     </div>
   );
 }
@@ -288,7 +288,7 @@ function EventCard({
           disabled={busy}
           onClick={onDelete}
           aria-label="מחיקת אירוע"
-          className="shrink-0 rounded-xl p-2.5 text-cream/40 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
+          className="shrink-0 rounded-xl p-2.5 text-cream/60 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
         >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
         </button>
