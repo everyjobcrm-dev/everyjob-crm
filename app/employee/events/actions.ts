@@ -205,22 +205,30 @@ export async function registerForRole(
 }
 
 /**
- * Raise a cancellation REQUEST on the caller's own registration (never a direct cancel - AGENTS.md 6).
- * Calls request_registration_cancellation (SECURITY DEFINER): own row only, active status, open/closed event,
- * not a past event, one open request at a time; writes history 'cancellation_requested'. Staff then approve or dismiss.
- * Any signed-in role may call it (staff-as-worker included); the caller's identity comes from the session, never input.
+ * Withdraw or request cancellation of the caller's own registration via request_registration_cancellation
+ * (SECURITY DEFINER, M8v2): a not-yet-approved registration (pending/waitlisted) is withdrawn immediately
+ * -> 'cancelled' (history 'self_withdrawn', the next waitlisted row is promoted FIFO); an approved one only gets a
+ * cancellation REQUEST (history 'cancellation_requested') that staff approve or dismiss (AGENTS.md 6).
+ * Own row only, open/closed event, not a past event. The returned status tells the caller which path ran
+ * ('cancelled' = withdrawn, otherwise = requested). Any signed-in role may call it (staff-as-worker included);
+ * the caller's identity comes from the session, never input.
  */
-export async function requestCancellation(registrationId: string, reason?: string): Promise<ActionResult> {
+export async function requestCancellation(
+  registrationId: string,
+  reason?: string,
+): Promise<ActionResult<{ status: RegistrationStatus }>> {
   const auth = await getAuthContext();
   if (!auth.ok) return { success: false, error: auth.error };
 
   const args = cancellationArgsSchema.safeParse({ registrationId, reason });
   if (!args.success) return { success: false, error: args.error.issues[0]?.message ?? "בקשה לא תקינה." };
 
-  const { error } = await auth.supabase.rpc("request_registration_cancellation", {
-    p_registration_id: args.data.registrationId,
-    p_reason: args.data.reason || null,
-  });
+  const { data, error } = await auth.supabase
+    .rpc("request_registration_cancellation", {
+      p_registration_id: args.data.registrationId,
+      p_reason: args.data.reason || null,
+    })
+    .single<{ status: RegistrationStatus }>();
 
   if (error) {
     console.error("[requestCancellation]", error.code, error.message);
@@ -229,7 +237,7 @@ export async function requestCancellation(registrationId: string, reason?: strin
 
   revalidatePath("/employee/events");
   revalidatePath("/employee/shifts");
-  return { success: true };
+  return { success: true, status: data.status };
 }
 
 export type MyShift = {
