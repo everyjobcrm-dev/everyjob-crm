@@ -128,12 +128,12 @@ export function EmployeeDirectoryTable({
                         ))}
                       </select>
                     ) : (
-                      <span className="text-xs text-cream/40">—</span>
+                      <span className="text-xs text-cream/65">—</span>
                     )}
                   </td>
                   <td className="px-4 py-3.5">
                     {emp.form101Status == null ? (
-                      <span className="text-xs text-cream/40">—</span>
+                      <span className="text-xs text-cream/65">—</span>
                     ) : emp.form101Status === "complete" ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-brass/10 px-2 py-1 text-[11px] font-semibold text-brass">
                         <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
@@ -170,7 +170,7 @@ export function EmployeeDirectoryTable({
             })}
             {employees.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-sm text-cream/40">
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-cream/65">
                   לא נמצאו עובדים.
                 </td>
               </tr>

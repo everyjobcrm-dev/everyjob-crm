@@ -439,7 +439,7 @@ export default function Form101Page() {
             </div>
             <div>
               <p className="text-sm text-cream/60">שלום, {loading ? "..." : displayName}</p>
-              <p className="text-sm text-cream/45">
+              <p className="text-sm text-cream/65">
                 כל שדה עם ערך קיים ממולא אוטומטית. רק השדות החסרים נשארים לפתיחה ידנית.
               </p>
             </div>

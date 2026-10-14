@@ -84,7 +84,7 @@ export function MyShiftsList({ shifts, today }: { shifts: MyShift[]; today: stri
       {removed.length > 0 && (
         <section className="opacity-60">
           <h2 className="mb-3 text-sm font-semibold text-cream/50">הוסרו ({removed.length})</h2>
-          <p className="mb-2 text-xs text-cream/40">הוסרת מהמשמרות האלה על ידי הצוות. לשאלות פנה/י למנהל/ת.</p>
+          <p className="mb-2 text-xs text-cream/65">הוסרת מהמשמרות האלה על ידי הצוות. לשאלות פנה/י למנהל/ת.</p>
           <div className="space-y-2">
             {removed.map((shift) => (
               <ShiftRow key={shift.registrationId} shift={shift} tone="border-cream/10" />
@@ -130,7 +130,7 @@ function ShiftRow({
               <MapPin className="h-3 w-3" aria-hidden="true" /> {shift.location}
             </span>
           </p>
-          {note && <p className="mt-1 text-xs text-cream/45">{note}</p>}
+          {note && <p className="mt-1 text-xs text-cream/65">{note}</p>}
           {shift.hoursStatus && (
             <p className="mt-1 text-xs text-cream/60">
               דוח שעות: {HOURS_LABEL[shift.hoursStatus]}
@@ -138,7 +138,7 @@ function ShiftRow({
             </p>
           )}
           {canRequest && shift.eventStatus === "closed" && (
-            <p className="mt-1 text-xs text-cream/40">האירוע סגור להרשמות חדשות.</p>
+            <p className="mt-1 text-xs text-cream/65">האירוע סגור להרשמות חדשות.</p>
           )}
         </div>
 

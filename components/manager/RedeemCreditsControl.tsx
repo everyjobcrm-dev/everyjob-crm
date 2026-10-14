@@ -86,7 +86,7 @@ export function RedeemCreditsControl({
           </button>
         </form>
       ) : (
-        <p className="mt-2 text-xs text-cream/45">אין זיכויים ממתינים למימוש.</p>
+        <p className="mt-2 text-xs text-cream/65">אין זיכויים ממתינים למימוש.</p>
       )}
 
       {confirming != null && (

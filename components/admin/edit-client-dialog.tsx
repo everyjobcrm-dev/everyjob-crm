@@ -266,7 +266,7 @@ export function EditClientDialog({
                     onClick={() => removeContactRow(row.key)}
                     disabled={contacts.length === 1}
                     aria-label="הסרת איש קשר"
-                    className="rounded-lg p-2 text-cream/40 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-30"
+                    className="rounded-lg p-2 text-cream/65 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-30"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -343,7 +343,7 @@ export function EditClientDialog({
                       className={inputClass + " w-full pe-8"}
                       placeholder="0"
                     />
-                    <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-cream/40">
+                    <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-cream/65">
                       ₪/ש
                     </span>
                   </div>
@@ -352,7 +352,7 @@ export function EditClientDialog({
                     onClick={() => removeRoleRow(row.key)}
                     disabled={roles.length === 1}
                     aria-label="הסרת תפקיד"
-                    className="rounded-lg p-2 text-cream/40 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-30"
+                    className="rounded-lg p-2 text-cream/65 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-30"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>

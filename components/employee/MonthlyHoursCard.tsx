@@ -29,7 +29,7 @@ export function MonthlyHoursCard({ months, currentMonth }: { months: MyMonthlyHo
           {current.shiftsWithoutRate} משמרות עדיין ללא תעריף שעתי ולכן אינן נכללות בשכר המשוער.
         </p>
       )}
-      <p className="mt-2 text-[11px] text-cream/40">הערכה בלבד, לפני תוספות, נסיעות וניכויים.</p>
+      <p className="mt-2 text-[11px] text-cream/65">הערכה בלבד, לפני תוספות, נסיעות וניכויים.</p>
       {previous.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-1 border-t border-brass/10 pt-3 text-xs text-cream/55">
           {previous.map((m) => (

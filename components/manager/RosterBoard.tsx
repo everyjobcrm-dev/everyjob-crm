@@ -62,7 +62,7 @@ const BUCKET_TONE: Record<RosterBucket, string> = {
   approved: "text-indigo-300",
   pending: "text-cream/80",
   waitlisted: "text-[#D4FF00]",
-  inactive: "text-cream/40",
+  inactive: "text-cream/65",
 };
 
 const btn =
@@ -92,7 +92,7 @@ export function RosterBoard({ eventId, eventDate, eventStatus, viewerId, canSeeR
             <header className="flex flex-wrap items-end justify-between gap-3 border-b border-brass/10 bg-surface2 px-5 py-3">
               <div>
                 <h3 className="font-display text-lg font-semibold text-cream">{role.roleName}</h3>
-                <p className="text-xs text-cream/45">
+                <p className="text-xs text-cream/65">
                   {role.startTime?.slice(0, 5)}
                   {role.endTime ? `–${role.endTime.slice(0, 5)}` : ""}
                 </p>
@@ -146,7 +146,7 @@ export function RosterBoard({ eventId, eventDate, eventStatus, viewerId, canSeeR
       )}
 
       {rows.length === 0 && roles.length === 0 && (
-        <p className="text-center text-sm text-cream/40">לאירוע אין תפקידים עדיין.</p>
+        <p className="text-center text-sm text-cream/65">לאירוע אין תפקידים עדיין.</p>
       )}
 
       {attendance && <AttendanceModal target={attendance} onClose={() => setAttendance(null)} />}
@@ -172,7 +172,7 @@ function Buckets(props: {
   const waitlisted = grouped.get("waitlisted");
   waitlisted?.sort((a, b) => (a.waitlist_position ?? 0) - (b.waitlist_position ?? 0));
 
-  if (props.rows.length === 0) return <p className="text-xs text-cream/40">אין רישומים לתפקיד זה.</p>;
+  if (props.rows.length === 0) return <p className="text-xs text-cream/65">אין רישומים לתפקיד זה.</p>;
 
   return (
     <>
@@ -290,7 +290,7 @@ function RegRow({
             {bucket === "cancellation" ? ` · ${REGISTRATION_STATUS_LABEL[row.status] ?? row.status}` : ""}
           </p>
           {row.submission_status && (
-            <p className="text-xs text-cream/45">
+            <p className="text-xs text-cream/65">
               דוח שעות: {row.submission_status === "approved" ? "אושר" : row.submission_status === "rejected" ? "נדחה" : "הוגש"}
               {row.reported_hours != null ? ` (${row.reported_hours} שעות)` : ""}
             </p>
@@ -613,7 +613,7 @@ function SchedulePanel({ eventId, role, full }: { eventId: string; role: RosterR
               <li key={emp.employeeId} className="flex items-center justify-between gap-3 px-3 py-2">
                 <div>
                   <p className="text-sm text-cream">{emp.name}</p>
-                  <p className="text-xs text-cream/45">
+                  <p className="text-xs text-cream/65">
                     {emp.phone ?? "ללא טלפון"}
                     {emp.age != null ? ` · גיל ${emp.age}` : ""}
                     {emp.averageRating != null && Number(emp.averageRating) > 0

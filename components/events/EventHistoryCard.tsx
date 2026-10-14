@@ -59,13 +59,13 @@ export function EventHistoryCard({ event, tilt = 0 }: { event: HistoryEvent; til
 
       <dl className="mt-3 space-y-1.5 text-sm text-cream/60">
         <div className="flex items-center gap-2">
-          <Clock className="h-3.5 w-3.5 shrink-0 text-cream/35" aria-hidden="true" />
+          <Clock className="h-3.5 w-3.5 shrink-0 text-cream/60" aria-hidden="true" />
           <span>
             {event.eventDate} · {event.startTime}–{event.endTime ?? "טרם נקבע"}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-cream/35" aria-hidden="true" />
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-cream/60" aria-hidden="true" />
           <span>{event.location}</span>
         </div>
       </dl>

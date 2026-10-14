@@ -86,7 +86,7 @@ export function AttendanceModal({ target, onClose }: { target: AttendanceTarget;
           <div>
             <p className="text-xs font-semibold text-indigo-400">{target.roleName}</p>
             <h3 className="font-display text-xl text-cream">דיווח שעות: {target.name}</h3>
-            <p className="text-xs text-cream/45">
+            <p className="text-xs text-cream/65">
               {target.eventDate}
               {target.submissionStatus ? ` · ${SUBMISSION_LABEL[target.submissionStatus] ?? target.submissionStatus}` : ""}
             </p>
@@ -133,7 +133,7 @@ export function AttendanceModal({ target, onClose }: { target: AttendanceTarget;
                 {errors.endTime?.message && <p className="mt-1 text-xs text-rose-400">{errors.endTime.message}</p>}
               </div>
             </div>
-            <p className="text-[11px] text-cream/40">שעת סיום שקודמת לשעת ההתחלה נחשבת ליום שלמחרת (משמרת לילה).</p>
+            <p className="text-[11px] text-cream/65">שעת סיום שקודמת לשעת ההתחלה נחשבת ליום שלמחרת (משמרת לילה).</p>
 
             <div>
               <label htmlFor="att-hours" className="mb-1 block text-xs font-medium text-cream/70">
@@ -162,7 +162,7 @@ export function AttendanceModal({ target, onClose }: { target: AttendanceTarget;
                     onClick={() => setValue("rating", star, { shouldDirty: true })}
                     className="cursor-pointer p-1 transition-transform hover:scale-110"
                   >
-                    <Star className={`h-6 w-6 ${star <= rating ? "fill-brass text-brass" : "text-cream/20 hover:text-cream/40"}`} />
+                    <Star className={`h-6 w-6 ${star <= rating ? "fill-brass text-brass" : "text-cream/20 hover:text-cream/65"}`} />
                   </button>
                 ))}
                 <span className="ms-2 text-xs font-semibold text-brass">{rating} / 5</span>

@@ -23,7 +23,7 @@ export default async function NewEventPage() {
     return (
       <div className="mx-auto max-w-md py-16 text-center">
         <h1 className="font-display text-xl text-cream">אין לך הרשאה ליצור אירועים</h1>
-        <p className="mt-2 text-sm text-cream/50">
+        <p className="mt-2 text-sm text-cream/70">
           אם את/ה צריך/ה ליצור אירועים כחלק מהתפקיד שלך, בקש/י מהמנהל/ת להעניק לך הרשאה.
         </p>
         <Link href={backHref} className="mt-6 inline-block text-sm font-semibold text-indigo-400">
@@ -39,7 +39,7 @@ export default async function NewEventPage() {
     <div className="pb-10">
       <Link
         href={backHref}
-        className="mb-4 inline-flex items-center gap-1 text-sm text-cream/50 transition-colors hover:text-cream"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-cream/70 transition-colors hover:text-cream"
       >
         <ChevronRight className="h-4 w-4" aria-hidden="true" />
         חזרה לאירועים
