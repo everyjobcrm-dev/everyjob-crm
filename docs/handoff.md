@@ -39,17 +39,17 @@ Demo users (all verified; password chosen by the owner; roles set in `profiles`)
   h2 submit/approve/reject/void RPCs, h3 SELECT-only RLS on the 3 hours tables, h5 `v_my_monthly_hours` +
   `v_recruiter_pending_credits`, H7 `profiles.recruited_by` (credit only when it equals `events.recruiter_id`),
   H6v2 `redeem_recruiter_credits` (FIFO, `redeemed_by` / `redeemed_event_id`).
-- Tests: `supabase/tests/p4_behavior_tests.sql` (41/42; the 1 "FAIL" is an outdated expectation after M6c - the
-  employee direct UPDATE now affects 0 rows instead of raising `forbidden`; update the expectation),
+- Tests: `supabase/tests/p4_behavior_tests.sql` (43/43 on 2026-10-15; the M6c expectation now asserts the employee's
+  direct UPDATE affects 0 rows and leaves the row unchanged),
   `supabase/tests/p6_hours_behavior_tests.sql` (55/55).
 
-## 4. Git state - NEEDS CONSOLIDATION FIRST
-All branches below are based on `claude/dazzling-brahmagupta-f5sq4c` (514f2d1, the Phase 3-6 work). Nothing is in `master` yet.
-| Branch | Contains | Status |
-|---|---|---|
-| `claude/hopeful-gates-rtzhto` (**PR #4**) | the app shell the owner tested and approved (`components/shell/*`, `lib/nav.ts`, /new fix, contrast) + nav without the "אירוע חדש" item | **keep - this is the base** |
-| `claude/m8v2-self-withdraw-gzxahv` | M8v2 SQL file, tests, employee UI for withdraw, docs | merge INTO the base |
-| `claude/app-shell-all-roles-dr5znq` | M8v2 + a second, duplicate app-shell implementation | do NOT merge its shell; only use it to cross-check |
+## 4. Git state (consolidated 2026-10-15)
+- `master` has Phases 1-2 (PR #2) and is what Vercel production serves.
+- PR #4 (`claude/hopeful-gates-rtzhto`) = Phases 3-6 + the approved app shell. M8v2 (`claude/m8v2-self-withdraw-gzxahv`)
+  was merged into it on `claude/hopeful-gates-rtzhto-01c57f`; that branch is the working base from here on.
+- PR #3 (`claude/app-shell-all-roles-dr5znq`) duplicates M8v2 and carries a second shell implementation: superseded,
+  do not merge.
+- The owner's local `master` has an unpushed commit `9c13cb6 "part 1"` (backup branch `backup-part1`), content unknown.
 
 ## 5. Closed decisions (do not reopen)
 - Event status: `open` (signups; full role -> waitlist), `closed` (no new signups, staff still manage, hidden from

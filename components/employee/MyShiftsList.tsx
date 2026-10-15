@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Clock3, MapPin } from "lucide-react";
-import { requestCancellation, type MyShift } from "@/app/employee/events/actions";
+import type { MyShift, RegistrationStatus } from "@/app/employee/events/actions";
+import { useToast } from "@/components/ui/toast";
 import {
-  cancellationRequestSchema,
-  type CancellationRequestFormInput,
-  type CancellationRequestFormOutput,
-} from "@/lib/validations/registration";
+  CancellationRequestForm,
+  WithdrawConfirm,
+  canSelfWithdraw,
+  cancelToastFor,
+} from "@/components/employee/RegistrationCancelControls";
 
-// "My shifts" for any worker (employees and staff-as-workers). There is NO direct cancel anywhere (AGENTS.md 6):
-// the only action is a cancellation REQUEST through request_registration_cancellation; staff approve or dismiss it.
+// "My shifts" for any worker (employees and staff-as-workers). AGENTS.md 6 (M8v2): a not-yet-approved registration
+// (pending/waitlisted) can be withdrawn directly ("ביטול הרשמה"); an approved one only gets a cancellation REQUEST
+// that staff approve or dismiss. Both go through request_registration_cancellation.
 
 const ACTIVE = ["approved", "pending", "waitlisted"] as const;
 
@@ -34,11 +35,19 @@ const HISTORY_LABEL: Record<string, string> = {
   pending: "לא אושר עד מועד האירוע",
   waitlisted: "נשארת ברשימת ההמתנה",
   rejected: "נדחה",
-  cancelled: "בוטל לבקשתך",
+  // self-withdrawn ("ביטלת את ההרשמה") vs staff-approved request ("בוטל לבקשתך") is not distinguishable here:
+  // the employee cannot read registration_status_history (M7v). Both show "בוטל" until that is exposed (backlog).
+  cancelled: "בוטל",
   no_show: "לא הגעת",
 };
 
 export function MyShiftsList({ shifts, today }: { shifts: MyShift[]; today: string }) {
+  const router = useRouter();
+  const { toast, show } = useToast();
+  const onDone = (status: RegistrationStatus) => {
+    show(cancelToastFor(status));
+    router.refresh();
+  };
   const isActive = (s: MyShift) => (ACTIVE as readonly string[]).includes(s.status);
   const upcoming = shifts.filter((s) => s.eventDate >= today && isActive(s));
   const removed = shifts.filter((s) => s.status === "removed");
@@ -62,7 +71,7 @@ export function MyShiftsList({ shifts, today }: { shifts: MyShift[]; today: stri
               </h2>
               <div className="space-y-3">
                 {list.map((shift) => (
-                  <ShiftRow key={shift.registrationId} shift={shift} tone={group.tone} canRequest />
+                  <ShiftRow key={shift.registrationId} shift={shift} tone={group.tone} canRequest onDone={onDone} />
                 ))}
               </div>
             </div>
@@ -92,6 +101,7 @@ export function MyShiftsList({ shifts, today }: { shifts: MyShift[]; today: stri
           </div>
         </section>
       )}
+      {toast}
     </div>
   );
 }
@@ -101,14 +111,22 @@ function ShiftRow({
   tone,
   canRequest = false,
   note,
+  onDone,
 }: {
   shift: MyShift;
   tone: string;
   canRequest?: boolean;
   note?: string;
+  onDone?: (status: RegistrationStatus) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const requested = shift.cancellationRequestedAt != null;
+  const withdrawable = canSelfWithdraw(shift.status);
+  // a pre-M8v2 open request on a pending/waitlisted row no longer blocks: the RPC withdraws it directly
+  const requested = shift.cancellationRequestedAt != null && !withdrawable;
+  const done = (status: RegistrationStatus) => {
+    setOpen(false);
+    onDone?.(status);
+  };
 
   return (
     <article className={`border-s-4 ${tone} bg-surface px-4 py-3`}>
@@ -154,72 +172,19 @@ function ShiftRow({
                 onClick={() => setOpen(true)}
                 className="rounded-md border border-rose-500/30 px-3 py-1.5 text-xs font-medium text-rose-200 transition-colors hover:bg-rose-500/10"
               >
-                בקש ביטול
+                {withdrawable ? "ביטול הרשמה" : "בקש ביטול"}
               </button>
             )
           ))}
       </div>
 
-      {open && !requested && <CancellationRequestForm registrationId={shift.registrationId} onClose={() => setOpen(false)} />}
+      {open &&
+        !requested &&
+        (withdrawable ? (
+          <WithdrawConfirm registrationId={shift.registrationId} onClose={() => setOpen(false)} onDone={done} />
+        ) : (
+          <CancellationRequestForm registrationId={shift.registrationId} onClose={() => setOpen(false)} onDone={done} />
+        ))}
     </article>
-  );
-}
-
-function CancellationRequestForm({ registrationId, onClose }: { registrationId: string; onClose: () => void }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [serverError, setServerError] = useState<string | null>(null);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<CancellationRequestFormInput, unknown, CancellationRequestFormOutput>({
-    resolver: zodResolver(cancellationRequestSchema),
-    defaultValues: { reason: "" },
-  });
-
-  const onSubmit = (values: CancellationRequestFormOutput) => {
-    setServerError(null);
-    startTransition(async () => {
-      const res = await requestCancellation(registrationId, values.reason);
-      if (!res.success) {
-        setServerError(res.error);
-        return;
-      }
-      onClose();
-      router.refresh();
-    });
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-3 space-y-2 border-t border-brass/10 pt-3" noValidate>
-      <p className="text-xs text-cream/70">
-        הבקשה תישלח לצוות לאישור. עד שהבקשה תאושר את/ה עדיין רשום/ה למשמרת. לאחר אישור ניתן יהיה להירשם שוב אם יש מקום.
-      </p>
-      <label htmlFor={`cancel-reason-${registrationId}`} className="block text-xs text-cream/60">
-        סיבה (לא חובה)
-      </label>
-      <textarea
-        id={`cancel-reason-${registrationId}`}
-        rows={2}
-        {...register("reason")}
-        className="w-full rounded-md border border-brass/20 bg-surface2 p-2 text-sm text-cream"
-      />
-      {(errors.reason?.message || serverError) && (
-        <p className="text-xs text-rose-400">{errors.reason?.message ?? serverError}</p>
-      )}
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded-md bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-100 disabled:opacity-50"
-        >
-          {isPending ? "שולח..." : "אישור ושליחת בקשת ביטול"}
-        </button>
-        <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-xs text-cream/60">
-          חזרה
-        </button>
-      </div>
-    </form>
   );
 }

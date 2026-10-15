@@ -38,7 +38,7 @@ Abbreviations: **ADM** admin · **MGR** manager · **REC1** recruiter with `can_
 | 2.1 | MIN | אירועים | "בדיקה A" is **not** offered (min_age 18) |
 | 2.2 | EMP1 | אירועים → "בדיקה A" → בר → הרשמה למשמרת | Status **ממתין/ה לאישור** |
 | 2.3 | EMP2 | same role "בר" (headcount 1, EMP1 pending holds the slot) | Button reads **הצטרפות לרשימת המתנה**; after click: **ברשימת המתנה** |
-| 2.4 | EMP1 | המשמרות שלי | Under **ממתין/ה לאישור**: "בר", with a **בקש ביטול** button |
+| 2.4 | EMP1 | המשמרות שלי | Under **ממתין/ה לאישור**: "בר", with a **ביטול הרשמה** button (not yet approved = direct withdrawal, no request). Do **not** click it here; withdrawal is covered in 4.9 |
 | 2.5 | MGR | אירוע "בדיקה A" → card shows **1 ממתינים לאישור**, **1 בהמתנה** | Counts match |
 
 ## 3. Staff roster actions (MGR on "בדיקה A")
@@ -55,18 +55,23 @@ Abbreviations: **ADM** admin · **MGR** manager · **REC1** recruiter with `can_
 | 3.8 | EMP1: הסרה → empty reason → אישור הסרה | **יש להזין סיבה להסרה** |
 | 3.9 | EMP2 (waitlist): דחייה | EMP2 moves to the collapsed **היסטוריה** list with "נדחה/תה" |
 
-## 4. Cancellation request flow (Phase 4)
+## 4. Cancellation request flow (Phase 4) and self-withdrawal (M8v2)
+
+An **approved** registration needs a request (4.1-4.7); a **pending** or **waitlisted** one is withdrawn directly (4.9-4.11).
 
 | # | Who | Action | Expected |
 |---|---|---|---|
-| 4.1 | EMP1 | המשמרות שלי → "בר" → בקש ביטול → reason "מחלה" → אישור ושליחת בקשת ביטול | Row shows **בקשת ביטול נשלחה - ממתינה לטיפול הצוות**; counter **בקשות ביטול פתוחות = 1** |
+| 4.1 | EMP1 | (approved in 3.1) המשמרות שלי → "בר" → בקש ביטול → reason "מחלה" → אישור ושליחת בקשת ביטול | Toast **בקשת הביטול נשלחה לצוות**; row shows **בקשת ביטול נשלחה - ממתינה לטיפול הצוות**; counter **בקשות ביטול פתוחות = 1**; status stays **משובץ/ת** |
 | 4.2 | EMP1 | refresh, try again | No button (already requested). (Server message if forced: **כבר נשלחה בקשת ביטול למשמרת זו…**) |
 | 4.3 | MGR | events list | "בדיקה A" shows **1 בקשות ביטול** |
 | 4.4 | MGR | roster → role "בר" | EMP1 appears under **בקשות ביטול** (not under משובצים) with **אישור ביטול** / **דחיית הבקשה** only |
 | 4.5 | MGR | **דחיית הבקשה** (dismiss) | Row returns to **משובצים**; EMP1 sees the request gone and **בקש ביטול** available again |
-| 4.6 | EMP1 | request again; MGR → **אישור ביטול** | EMP1 → history "בוטל לבקשתך"; the next waitlisted person (if any) becomes **ממתין/ה לאישור** automatically (FIFO) |
+| 4.6 | EMP1 | request again; MGR → **אישור ביטול** | EMP1 → history "בוטל" (see backlog: "בוטל לבקשתך" vs "ביטלת את ההרשמה" is not distinguished yet); the next waitlisted person (if any) becomes **ממתין/ה לאישור** automatically (FIFO) |
 | 4.7 | EMP1 | אירועים → "בדיקה A" → בר → register again | Allowed (cancelled may re-register), goes to the back of the queue |
 | 4.8 | EMP2 | (rejected in 3.9) try to register again | **בקשתך להשתתף באירוע זה נדחתה בעבר ולכן לא ניתן להירשם שוב.** |
+| 4.9 | EMP1, MIN, REC1 | Event "בדיקה R1", role "דייל/ת" (headcount 1): EMP1 registers (**ממתין/ה לאישור**), MIN joins (**ברשימת המתנה**). EMP1 → המשמרות שלי → **ביטול הרשמה** → confirm **לבטל את ההרשמה? אפשר להירשם שוב בכל עת** → כן, לבטל | Pending withdrawal + FIFO: toast **ההרשמה בוטלה**; no reason field; the row moves to history as "בוטל"; no open request is counted; MIN becomes **ממתין/ה לאישור** automatically; REC1 roster shows MIN under ממתינים לאישור and no cancellation request |
+| 4.10 | EMP1, REC1 | EMP1 registers again for "דייל/ת" (now **ברשימת המתנה**, MIN holds the slot) → אירועים card → **ביטול הרשמה** → confirm | Waitlisted withdrawal: toast **ההרשמה בוטלה**; card shows the register button again; MIN stays **ממתין/ה לאישור**; nobody is promoted; REC1 roster has no cancellation request |
+| 4.11 | EMP1 | register for "דייל/ת" once more | Allowed; goes to the back of the waitlist (**ברשימת המתנה**) |
 
 ## 5. Event status control
 
@@ -95,7 +100,7 @@ Abbreviations: **ADM** admin · **MGR** manager · **REC1** recruiter with `can_
 | 7.1 | REC1 | employee portal → אירועים → register for "בדיקה A" (role with space) | Status **משובץ/ת** immediately (staff auto-approved when capacity allows) |
 | 7.2 | MGR | roster of "בדיקה A" | REC1's row has the **צוות** badge |
 | 7.3 | REC1 | open the roster of an own event where REC1 is also registered | Own row shows **את/ה** and has **no** action buttons |
-| 7.4 | REC1 | המשמרות שלי → בקש ביטול | Works (requests only); approval must come from another staff member |
+| 7.4 | REC1 | המשמרות שלי → בקש ביטול | Works (requests only - staff-as-worker is auto-approved, so it is never a direct withdrawal); approval must come from another staff member |
 
 ## 7b. Hours flow (Phase 6)
 Setup: an event dated **yesterday or earlier**, status **סגור להרשמה**, owned by REC1 (`events.recruiter_id`), EMP1 approved with a rate (3.7),
