@@ -105,7 +105,7 @@ BEGIN
     IF v_date < v_today THEN RAISE EXCEPTION 'event_date_past'; END IF;
   END IF;
   IF v_start IS DISTINCT FROM v_ev.start_time AND v_has_hours THEN RAISE EXCEPTION 'event_has_hours'; END IF;
-  IF v_has_approved AND (v_travel IS DISTINCT FROM v_ev.travel_budget_per_worker OR v_recruiter IS DISTINCT FROM v_ev.recruiter_id) THEN
+  IF v_has_approved AND (v_travel IS DISTINCT FROM COALESCE(v_ev.travel_budget_per_worker, 0) OR v_recruiter IS DISTINCT FROM v_ev.recruiter_id) THEN
     RAISE EXCEPTION 'event_has_approved_hours';
   END IF;
 

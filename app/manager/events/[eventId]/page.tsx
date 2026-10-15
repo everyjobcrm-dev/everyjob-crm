@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Building2, Calendar, MapPin } from "lucide-react";
+import { ArrowRight, Building2, Calendar, MapPin, Pencil, UserRound } from "lucide-react";
 import { getAuthContext } from "@/lib/auth/guards";
 import { canManageEvent, roleAtLeast } from "@/lib/auth/permissions";
 import { mapDbError } from "@/lib/events/errors";
@@ -8,6 +8,7 @@ import type { RosterRole, RosterRow } from "@/lib/events/roster";
 import { RosterBoard } from "@/components/manager/RosterBoard";
 import { EventStatusControl } from "@/components/manager/EventStatusControl";
 import { RedeemCreditsControl } from "@/components/manager/RedeemCreditsControl";
+import { fetchRecruiterOptions } from "@/app/admin/actions";
 
 type Props = {
   params: Promise<{ eventId: string }>;
@@ -64,18 +65,25 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
 
   // Recruitment credits of the EVENT's recruiter - Manager/Admin only (never fetched or shown for recruiters).
   const canRedeem = roleAtLeast(ctx.role, "manager") && event.recruiter_id != null;
-  const [recruiterRes, creditsRes] = canRedeem
-    ? await Promise.all([
-        supabase.from("profiles").select("first_name, last_name").eq("id", event.recruiter_id).maybeSingle(),
-        supabase
+  // Recruiter names come from list_staff_recruiters (profiles RLS hides other users from a manager).
+  const isManagerOrAdmin = roleAtLeast(ctx.role, "manager");
+  const [recruiters, creditsRes] = await Promise.all([
+    isManagerOrAdmin ? fetchRecruiterOptions() : Promise.resolve([]),
+    canRedeem
+      ? supabase
           .from("v_recruiter_pending_credits")
           .select("pending_count, pending_amount")
           .eq("recruiter_id", event.recruiter_id)
-          .maybeSingle(),
-      ])
-    : [{ data: null }, { data: null }];
-  const recruiterName =
-    [recruiterRes.data?.first_name, recruiterRes.data?.last_name].filter(Boolean).join(" ") || "המגייס/ת";
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const recruiterLabel = !isManagerOrAdmin
+    ? "את/ה"
+    : event.recruiter_id
+      ? (recruiters.find((r) => r.id === event.recruiter_id)?.name ?? "מגייס/ת")
+      : "ללא מגייס/ת";
+  const recruiterName = recruiterLabel;
+  const editable = ["pending_rates", "open", "closed"].includes(event.status);
 
   const client = Array.isArray(event.clients) ? event.clients[0] : event.clients;
   const clientName =
@@ -99,9 +107,20 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
             <h1 className="flex items-center gap-2 font-display text-2xl text-cream">
               <MapPin className="h-5 w-5 text-brass" aria-hidden="true" /> {event.location}
             </h1>
-            <p className="mt-1 flex items-center gap-2 text-sm text-cream/50">
+            <p className="mt-1 flex items-center gap-2 text-sm text-cream/65">
               <Calendar className="h-4 w-4" aria-hidden="true" /> {event.event_date}
             </p>
+            <p className="mt-1 flex items-center gap-2 text-sm text-cream/65">
+              <UserRound className="h-4 w-4" aria-hidden="true" /> מגייס/ת אחראי/ת: {recruiterLabel}
+            </p>
+            {editable && (
+              <Link
+                href={`/manager/events/${event.id}/edit`}
+                className="mt-4 inline-flex items-center gap-1.5 border border-cream/20 px-3 py-1.5 text-xs font-semibold text-cream transition-colors hover:border-[#4F46E5] hover:text-white"
+              >
+                <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> עריכת פרטי אירוע
+              </Link>
+            )}
           </div>
           <EventStatusControl
             eventId={event.id}

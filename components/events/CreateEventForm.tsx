@@ -21,7 +21,7 @@ import {
   type CreateEventInput,
   type EventRoleFormValues,
 } from "@/lib/validations/event";
-import { createEvent, type ClientOption } from "@/app/admin/actions";
+import { createEvent, type ClientOption, type RecruiterOption } from "@/app/admin/actions";
 
 const SECTIONS = [
   { id: "client", label: "לקוח ותאריך", eyebrow: "01" },
@@ -32,9 +32,12 @@ const SECTIONS = [
 
 export function CreateEventForm({
   clients,
+  recruiters,
   afterCreateHref = "/admin/events",
 }: {
   clients: ClientOption[];
+  /** Admin/Manager only: "מגייס/ת אחראי/ת" options. Omitted for a recruiter creator (they own the event). */
+  recruiters?: RecruiterOption[];
   afterCreateHref?: string;
 }) {
   const router = useRouter();
@@ -60,6 +63,7 @@ export function CreateEventForm({
       notes: "",
       dress_code: "",
       min_rating: undefined,
+      recruiter_id: "",
       roles: [emptyRole],
     },
   });
@@ -160,6 +164,19 @@ export function CreateEventForm({
               <Field label="תאריך האירוע" error={errors.event_date?.message}>
                 <input type="date" {...register("event_date")} className={inputClass} />
               </Field>
+              {recruiters && (
+                <Field label="מגייס/ת אחראי/ת" error={errors.recruiter_id?.message}>
+                  <select {...register("recruiter_id")} className={inputClass}>
+                    <option value="">ללא מגייס/ת (ניהול על ידי מנהלים)</option>
+                    {recruiters.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1.5 text-xs text-cream/65">המגייס/ת יוכל/תוכל לנהל את האירוע ואת ההרשמות אליו.</p>
+                </Field>
+              )}
             </FieldGrid>
           </Section>
 

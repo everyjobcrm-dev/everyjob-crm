@@ -128,6 +128,8 @@ BEGIN
      format('SELECT (public.update_event_details(%L, %L::jsonb)).notes', EVH, '{"notes":"חניה מאחור"}'), 'ok', 'חניה מאחור');
   v_res := v_res || pg_temp.t('E1 travel change blocked with approved hours', A,
      format('SELECT (public.update_event_details(%L, %L::jsonb)).id::text', EVA, '{"travel_budget_per_worker":30}'), 'event_has_approved_hours');
+  v_res := v_res || pg_temp.t('E1 resubmitting unchanged travel/recruiter with approved hours is ok', M,
+     format('SELECT (public.update_event_details(%L, jsonb_build_object(''travel_budget_per_worker'', 20, ''recruiter_id'', %L::text, ''notes'', ''x''))).notes', EVA, R1), 'ok', 'x');
   v_res := v_res || pg_temp.t('E1 recruiter change blocked with approved hours', M,
      format('SELECT (public.update_event_details(%L, jsonb_build_object(''recruiter_id'', %L::text))).id::text', EVA, R2), 'event_has_approved_hours');
   v_res := v_res || pg_temp.t('E1 invalid min_rating', R1,

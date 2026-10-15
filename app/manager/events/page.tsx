@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Plus, Users } from "lucide-react";
 import { getAuthContext } from "@/lib/auth/guards";
 import { canCreateEvents, roleAtLeast } from "@/lib/auth/permissions";
+import { fetchRecruiterOptions } from "@/app/admin/actions";
 import { EVENT_STATUS_LABEL, EVENT_STATUS_STYLE, isEventStatus } from "@/lib/events/status";
 
 type EventItem = {
@@ -16,6 +17,7 @@ type EventItem = {
   pending: number;
   waitlisted: number;
   requests: number;
+  recruiterName: string | null; // Admin/Manager view only
 };
 
 const ACTIVE_STATUSES = ["open", "closed", "pending_rates"];
@@ -36,7 +38,7 @@ export default async function ManagerEventsPage() {
 
   let query = supabase
     .from("events")
-    .select("id, location, event_date, status, clients(name)")
+    .select("id, location, event_date, status, recruiter_id, clients(name)")
     .order("event_date", { ascending: true });
   if (isRecruiter) query = query.eq("recruiter_id", ctx.userId);
   const { data: events, error } = await query;
@@ -45,6 +47,10 @@ export default async function ManagerEventsPage() {
   const { data: fills } = ids.length
     ? await supabase.from("event_role_fill_counts").select("event_id, headcount, filled_count").in("event_id", ids)
     : { data: [] as { event_id: string; headcount: number; filled_count: number }[] };
+
+  // "מגייס/ת אחראי/ת" labels (list_staff_recruiters returns rows for Admin/Manager only)
+  const recruiters = isRecruiter ? [] : await fetchRecruiterOptions();
+  const recruiterNameById = new Map(recruiters.map((r) => [r.id, r.name]));
 
   // per-event pending / waitlisted / open cancellation requests (get_staff_event_request_counts: scoped, cancelled excluded)
   const { data: requestCounts } = await supabase.rpc("get_staff_event_request_counts");
@@ -75,7 +81,8 @@ export default async function ManagerEventsPage() {
     const clientName = (c && typeof c === "object" && "name" in c ? (c as { name: string }).name : null) || "לקוח";
     const t = totals.get(e.id) ?? { filled: 0, headcount: 0 };
     const counts = countsByEvent.get(e.id) ?? { pending: 0, waitlisted: 0, requests: 0 };
-    return { id: e.id, location: e.location, event_date: e.event_date, status: e.status, clientName, ...t, ...counts };
+    const recruiterName = isRecruiter ? null : e.recruiter_id ? (recruiterNameById.get(e.recruiter_id) ?? "מגייס/ת") : "ללא מגייס/ת";
+    return { id: e.id, location: e.location, event_date: e.event_date, status: e.status, clientName, recruiterName, ...t, ...counts };
   });
 
   const today = jerusalemToday();
@@ -151,7 +158,8 @@ function EventGrid({ items, empty }: { items: EventItem[]; empty: string }) {
               )}
             </div>
             <h3 className="mt-1 font-display text-lg text-cream">{event.location}</h3>
-            <p className="text-xs text-cream/50">{event.event_date}</p>
+            <p className="text-xs text-cream/65">{event.event_date}</p>
+            {event.recruiterName && <p className="mt-1 text-xs text-cream/65">מגייס/ת: {event.recruiterName}</p>}
             {(event.requests > 0 || event.pending > 0 || event.waitlisted > 0) && (
               <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
                 {event.requests > 0 && (

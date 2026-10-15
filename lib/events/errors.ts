@@ -75,6 +75,18 @@ const BY_MESSAGE: ReadonlyArray<readonly [string, string]> = [
   ["insufficient_credits", "אין מספיק זיכויים ממתינים למימוש."],
   ["event_not_historical", "הפעולה זמינה רק לאירועים שהסתיימו."],
   ["already_assigned", "העובד/ת כבר משובץ/ת לתפקיד."],
+  // edit event (update_event_details / upsert_event_role / remove_event_role)
+  ["event_not_editable", "אירוע מבוטל, הושלם או מושהה - לא ניתן לערוך אותו."],
+  ["recruiter_not_found", "המגייס/ת שנבחר/ה לא נמצא/ה."],
+  ["event_has_approved_hours", "קיימים דוחות שעות מאושרים לאירוע - לא ניתן לשנות נסיעות או מגייס/ת אחראי/ת."],
+  ["event_has_hours", "קיימים דוחות שעות לאירוע - לא ניתן לשנות תאריך או שעות."],
+  ["event_date_past", "לא ניתן לקבוע תאריך שכבר עבר."],
+  ["headcount_below_occupied", "לא ניתן להקטין את מספר העובדים מתחת למספר המשובצים והממתינים לאישור."],
+  ["invalid_headcount", "מספר העובדים חייב להיות לפחות 1."],
+  ["role_has_registrations", "לא ניתן להסיר תפקיד שיש בו הרשמות."],
+  ["last_role", "לאירוע חייב להישאר לפחות תפקיד אחד."],
+  ["invalid_patch", "בקשה לא תקינה."],
+  ["invalid_value", "אחד הערכים אינו תקין."],
   // profiles guard
   ["protected profile fields", "רק אדמין יכול לשנות שדות מוגנים בפרופיל."],
   // generic permission text last

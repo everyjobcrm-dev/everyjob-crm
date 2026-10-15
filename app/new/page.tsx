@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth/guards";
-import { canCreateEvents } from "@/lib/auth/permissions";
-import { fetchClients } from "@/app/admin/actions";
+import { canCreateEvents, roleAtLeast } from "@/lib/auth/permissions";
+import { fetchClients, fetchRecruiterOptions } from "@/app/admin/actions";
 import { CreateEventForm } from "@/components/events/CreateEventForm";
 
 export default async function NewEventPage() {
@@ -33,7 +33,11 @@ export default async function NewEventPage() {
     );
   }
 
-  const clients = await fetchClients();
+  const isManagerOrAdmin = roleAtLeast(profile.role, "manager");
+  const [clients, recruiters] = await Promise.all([
+    fetchClients(),
+    isManagerOrAdmin ? fetchRecruiterOptions() : Promise.resolve(undefined),
+  ]);
 
   return (
     <div className="pb-10">
@@ -45,7 +49,7 @@ export default async function NewEventPage() {
         חזרה לאירועים
       </Link>
 
-      <CreateEventForm clients={clients} afterCreateHref={backHref} />
+      <CreateEventForm clients={clients} recruiters={recruiters} afterCreateHref={backHref} />
     </div>
   );
 }

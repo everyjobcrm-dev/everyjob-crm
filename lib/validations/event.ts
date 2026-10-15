@@ -10,6 +10,12 @@ function nullableNumber(schema: z.ZodNumber) {
     .optional();
 }
 
+// "" from a <select> placeholder -> null; otherwise a uuid.
+const optionalUuid = z
+  .union([z.literal(""), z.null(), z.string().uuid("בחירה לא תקינה")])
+  .transform((v) => (v === "" || v == null ? null : v))
+  .optional();
+
 export const eventRoleSchema = z.object({
   role_name: z.string().min(1, "יש להזין שם תפקיד"),
   headcount: z.coerce.number().int().min(1, "כמות חייבת להיות לפחות 1"),
@@ -32,6 +38,8 @@ export const createEventSchema = z.object({
   min_rating: nullableNumber(z.coerce.number().min(0, "מינימום 0").max(5, "מקסימום 5")),
   travel_budget_per_worker: nullableNumber(z.coerce.number().nonnegative("תקציב לא תקין")),
   roles: z.array(eventRoleSchema).min(1, "יש להוסיף לפחות תפקיד אחד"),
+  // "מגייס/ת אחראי/ת" - chosen by Admin/Manager only; ignored for a recruiter creator (the DB forces them as owner).
+  recruiter_id: optionalUuid,
 });
 
 // ── two shapes, one schema ──────────────────────────────────────────────
@@ -62,3 +70,35 @@ export const emptyRole: EventRoleFormValues = {
   start_time: "18:00",
   base_rate: null,
 };
+// ── edit event (update_event_details / upsert_event_role / remove_event_role, supabase/p9_e_event_edit.sql) ──
+// The RPCs enforce every rule; these schemas only shape input. Same 3-generic useForm split as create (AGENTS.md 5.3).
+export const editEventDetailsSchema = z.object({
+  client_id: z.string().uuid("יש לבחור לקוח"),
+  recruiter_id: optionalUuid,
+  event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "יש להזין תאריך"),
+  start_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "יש להזין שעת התחלה"),
+  location: z.string().trim().min(1, "יש להזין מיקום"),
+  notes: z.string().optional(),
+  dress_code: z.string().optional(),
+  min_age: nullableNumber(z.coerce.number().int().positive("גיל לא תקין")),
+  min_rating: nullableNumber(z.coerce.number().min(0, "מינימום 0").max(5, "מקסימום 5")),
+  travel_budget_per_worker: nullableNumber(z.coerce.number().nonnegative("תקציב לא תקין")),
+});
+export type EditEventDetailsFormValues = z.input<typeof editEventDetailsSchema>;
+export type EditEventDetailsInput = z.output<typeof editEventDetailsSchema>;
+
+export const editEventRoleSchema = z.object({
+  role_id: z.string().uuid().nullable(),
+  role_name: z.string().trim().min(1, "יש להזין שם תפקיד"),
+  headcount: z.coerce.number().int().min(1, "כמות חייבת להיות לפחות 1"),
+  start_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "יש להזין שעת התחלה"),
+  end_time: z
+    .string()
+    .optional()
+    .transform((v) => (v ? v : null)),
+  base_rate: nullableNumber(z.coerce.number().positive("תעריף לא תקין")),
+  // Admin only (the RPC refuses anyone else); undefined/null = unchanged.
+  bill_to_client: nullableNumber(z.coerce.number().nonnegative("סכום לא תקין")),
+});
+export type EditEventRoleFormValues = z.input<typeof editEventRoleSchema>;
+export type EditEventRoleInput = z.output<typeof editEventRoleSchema>;

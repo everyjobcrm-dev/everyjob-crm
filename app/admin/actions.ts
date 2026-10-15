@@ -3,8 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireRole, type AuthOk } from "@/lib/auth/guards";
-import { canCreateEvents, canManageEvent } from "@/lib/auth/permissions";
-import { createEventSchema, type CreateEventInput } from "@/lib/validations/event";
+import { canCreateEvents, canManageEvent, roleAtLeast } from "@/lib/auth/permissions";
+import {
+  createEventSchema,
+  editEventDetailsSchema,
+  editEventRoleSchema,
+  type CreateEventInput,
+  type EditEventDetailsInput,
+  type EditEventRoleInput,
+} from "@/lib/validations/event";
 import {
   allowedEventTransitions,
   defaultRestoreStatus,
@@ -180,9 +187,32 @@ export async function fetchEvents(): Promise<AdminEvent[]> {
   );
 }
 
+export type RecruiterOption = { id: string; name: string };
+
+// list_staff_recruiters (p9_e0): names of recruiters for Admin/Manager only; returns [] for anyone else.
+async function listRecruiters(supabase: AuthOk["supabase"]): Promise<RecruiterOption[]> {
+  const { data, error } = await supabase.rpc("list_staff_recruiters");
+  if (error) {
+    console.error("[listRecruiters]", error.message);
+    return [];
+  }
+  return ((data ?? []) as { id: string; first_name: string | null; last_name: string | null }[]).map((r) => ({
+    id: r.id,
+    name: [r.first_name, r.last_name].filter(Boolean).join(" "),
+  }));
+}
+
+/** "מגייס/ת אחראי/ת" options for the create/edit forms and recruiter labels on event cards. Admin/Manager only. */
+export async function fetchRecruiterOptions(): Promise<RecruiterOption[]> {
+  const auth = await requireRole("manager");
+  if (!auth.ok) return [];
+  return listRecruiters(auth.supabase);
+}
+
 /**
  * Create an event. Admin and Manager always; a Recruiter only with profiles.can_create_events.
- * events.recruiter_id is set by the database (forced to the creator for a recruiter, NULL for admin/manager).
+ * events.recruiter_id: forced to the creator by the database for a recruiter; Admin/Manager may pick a
+ * "מגייס/ת אחראי/ת" (any recruiter) or leave it empty (guard_event_recruiter_ownership allows both).
  */
 export async function createEvent(
   input: CreateEventInput,
@@ -197,7 +227,15 @@ export async function createEvent(
   if (!parsed.success) {
     return fail(parsed.error.issues[0]?.message ?? "נתונים לא תקינים");
   }
-  const { roles, ...event } = parsed.data;
+  const { roles, recruiter_id: requestedRecruiter, ...event } = parsed.data;
+
+  // Only Admin/Manager choose the responsible recruiter; for a recruiter creator the DB forces recruiter_id = self.
+  let recruiterId: string | null = null;
+  if (requestedRecruiter && roleAtLeast(auth.role, "manager")) {
+    const recruiters = await listRecruiters(auth.supabase);
+    if (!recruiters.some((r) => r.id === requestedRecruiter)) return fail("המגייס/ת שנבחר/ה לא נמצא/ה.");
+    recruiterId = requestedRecruiter;
+  }
 
   const missingRates = roles.some((r) => r.base_rate == null);
   const status: "pending_rates" | "open" = missingRates ? "pending_rates" : "open";
@@ -215,6 +253,7 @@ export async function createEvent(
       min_rating: event.min_rating ?? null,
       travel_budget_per_worker: event.travel_budget_per_worker ?? 0,
       status,
+      ...(recruiterId ? { recruiter_id: recruiterId } : {}),
     })
     .select("id")
     .single();
@@ -248,6 +287,202 @@ export async function createEvent(
 
   revalidateEventViews();
   return { success: true, eventId: eventRow.id, status };
+}
+
+// ── Edit event (p9_e1-e3 RPCs; SECURITY DEFINER, they enforce every rule - the app only pre-checks for UX) ──
+
+export type EditableEventRole = {
+  id: string;
+  roleName: string;
+  headcount: number;
+  occupied: number; // pending + approved, from event_role_fill_counts
+  hasRegistrations: boolean; // any status, from get_event_roster
+  startTime: string;
+  endTime: string | null;
+  baseRate: number | null;
+  billToClient: number | null; // Admin only; null for everyone else
+};
+
+export type EditableEvent = {
+  id: string;
+  status: EventStatus;
+  clientId: string;
+  recruiterId: string | null;
+  eventDate: string;
+  startTime: string;
+  location: string;
+  notes: string | null;
+  dressCode: string | null;
+  minAge: number | null;
+  minRating: number | null;
+  travelBudgetPerWorker: number | null;
+  roles: EditableEventRole[];
+};
+
+export type EditEventPageData =
+  | { ok: false; reason: "not_found" | "forbidden" }
+  | {
+      ok: true;
+      event: EditableEvent;
+      editable: boolean;
+      viewerRole: "admin" | "manager" | "recruiter";
+      clients: ClientOption[];
+      recruiters: RecruiterOption[]; // Admin/Manager only
+    };
+
+const EDITABLE_STATUSES: ReadonlyArray<EventStatus> = ["pending_rates", "open", "closed"];
+
+export async function fetchEventForEdit(eventId: string): Promise<EditEventPageData> {
+  const auth = await requireRole("recruiter");
+  if (!auth.ok) return { ok: false, reason: "forbidden" };
+  if (!z.string().uuid().safeParse(eventId).success) return { ok: false, reason: "not_found" };
+
+  const { data: ev } = await auth.supabase
+    .from("events")
+    .select(
+      "id, status, client_id, recruiter_id, event_date, start_time, location, notes, dress_code, min_age, min_rating, travel_budget_per_worker",
+    )
+    .eq("id", eventId)
+    .maybeSingle();
+  if (!ev) return { ok: false, reason: "not_found" };
+  if (!canManageEvent(auth.profile, ev)) return { ok: false, reason: "forbidden" };
+
+  const isAdmin = auth.role === "admin";
+  const [{ data: roleRows }, { data: fills }, { data: roster }, clients, recruiters] = await Promise.all([
+    auth.supabase
+      .from("event_roles")
+      .select("id, role_name, headcount, start_time, end_time, base_rate, bill_to_client")
+      .eq("event_id", eventId)
+      .order("start_time", { ascending: true }),
+    auth.supabase.from("event_role_fill_counts").select("event_role_id, filled_count").eq("event_id", eventId),
+    auth.supabase.rpc("get_event_roster", { p_event_id: eventId }),
+    fetchClients(),
+    roleAtLeast(auth.role, "manager") ? listRecruiters(auth.supabase) : Promise.resolve([] as RecruiterOption[]),
+  ]);
+
+  const occupiedByRole = new Map(
+    ((fills ?? []) as { event_role_id: string; filled_count: number }[]).map((f) => [f.event_role_id, Number(f.filled_count ?? 0)]),
+  );
+  const rolesWithRegistrations = new Set(
+    ((roster ?? []) as { event_role_id: string | null }[]).map((r) => r.event_role_id).filter(Boolean),
+  );
+
+  const status = (isEventStatus(ev.status) ? ev.status : "cancelled") as EventStatus;
+  return {
+    ok: true,
+    editable: EDITABLE_STATUSES.includes(status),
+    viewerRole: auth.role as "admin" | "manager" | "recruiter",
+    clients,
+    recruiters,
+    event: {
+      id: ev.id,
+      status,
+      clientId: ev.client_id,
+      recruiterId: ev.recruiter_id,
+      eventDate: ev.event_date,
+      startTime: (ev.start_time ?? "").slice(0, 5),
+      location: ev.location,
+      notes: ev.notes,
+      dressCode: ev.dress_code,
+      minAge: ev.min_age,
+      minRating: ev.min_rating,
+      travelBudgetPerWorker: ev.travel_budget_per_worker,
+      roles: (
+        (roleRows ?? []) as {
+          id: string;
+          role_name: string;
+          headcount: number;
+          start_time: string;
+          end_time: string | null;
+          base_rate: number | null;
+          bill_to_client: number | null;
+        }[]
+      ).map((r) => ({
+        id: r.id,
+        roleName: r.role_name,
+        headcount: r.headcount,
+        occupied: occupiedByRole.get(r.id) ?? 0,
+        hasRegistrations: rolesWithRegistrations.has(r.id),
+        startTime: r.start_time.slice(0, 5),
+        endTime: r.end_time ? r.end_time.slice(0, 5) : null,
+        baseRate: r.base_rate,
+        billToClient: isAdmin ? r.bill_to_client : null,
+      })),
+    },
+  };
+}
+
+function revalidateEventEdit(eventId: string) {
+  revalidateEventViews();
+  revalidatePath(`/manager/events/${eventId}`);
+  revalidatePath(`/manager/events/${eventId}/edit`);
+}
+
+/**
+ * Edit event details through update_event_details (allow-listed keys). Any event manager may edit the plain fields;
+ * client_id is sent only by Admin and recruiter_id only by Admin/Manager - the RPC refuses the rest on its own.
+ */
+export async function updateEventDetails(eventId: string, input: EditEventDetailsInput): Promise<ActionResult> {
+  const auth = await requireRole("recruiter");
+  if (!auth.ok) return fail(auth.error);
+  if (!z.string().uuid().safeParse(eventId).success) return fail("בקשה לא תקינה.");
+  const parsed = editEventDetailsSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "נתונים לא תקינים");
+  const d = parsed.data;
+
+  const patch: Record<string, string | number | null> = {
+    location: d.location,
+    event_date: d.event_date,
+    start_time: d.start_time,
+    notes: d.notes ?? "",
+    dress_code: d.dress_code ?? "",
+    min_age: d.min_age ?? null,
+    min_rating: d.min_rating ?? null,
+    travel_budget_per_worker: d.travel_budget_per_worker ?? 0,
+  };
+  if (auth.role === "admin") patch.client_id = d.client_id;
+  if (roleAtLeast(auth.role, "manager")) patch.recruiter_id = d.recruiter_id ?? null;
+
+  const { error } = await auth.supabase.rpc("update_event_details", { p_event_id: eventId, p_patch: patch });
+  if (error) return fail(mapDbError(error, { fallback: "עדכון פרטי האירוע נכשל." }));
+  revalidateEventEdit(eventId);
+  return { success: true };
+}
+
+/** Add (role_id null) or update an event role through upsert_event_role. bill_to_client is sent only by Admin. */
+export async function saveEventRole(eventId: string, input: EditEventRoleInput): Promise<ActionResult> {
+  const auth = await requireRole("recruiter");
+  if (!auth.ok) return fail(auth.error);
+  if (!z.string().uuid().safeParse(eventId).success) return fail("בקשה לא תקינה.");
+  const parsed = editEventRoleSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "נתונים לא תקינים");
+  const r = parsed.data;
+
+  const { error } = await auth.supabase.rpc("upsert_event_role", {
+    p_event_id: eventId,
+    p_role_id: r.role_id,
+    p_role_name: r.role_name,
+    p_headcount: r.headcount,
+    p_start_time: r.start_time,
+    p_end_time: r.end_time,
+    p_base_rate: r.base_rate ?? null,
+    p_bill_to_client: auth.role === "admin" ? (r.bill_to_client ?? null) : null,
+  });
+  if (error) return fail(mapDbError(error, { fallback: "שמירת התפקיד נכשלה." }));
+  revalidateEventEdit(eventId);
+  return { success: true };
+}
+
+export async function deleteEventRole(eventId: string, roleId: string): Promise<ActionResult> {
+  const auth = await requireRole("recruiter");
+  if (!auth.ok) return fail(auth.error);
+  const ids = z.object({ eventId: z.string().uuid(), roleId: z.string().uuid() }).safeParse({ eventId, roleId });
+  if (!ids.success) return fail("בקשה לא תקינה.");
+
+  const { error } = await auth.supabase.rpc("remove_event_role", { p_role_id: roleId });
+  if (error) return fail(mapDbError(error, { fallback: "הסרת התפקיד נכשלה." }));
+  revalidateEventEdit(eventId);
+  return { success: true };
 }
 
 async function applyEventStatus(auth: AuthOk, eventId: string, status: EventStatus): Promise<ActionResult> {

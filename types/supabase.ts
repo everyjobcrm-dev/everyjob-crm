@@ -2010,6 +2010,28 @@ export type Database = {
         Args: { p_lease_token: string; p_tz_hash: string }
         Returns: boolean
       }
+      list_staff_recruiters: {
+        Args: never
+        Returns: { first_name: string; id: string; last_name: string }[]
+      }
+      remove_event_role: { Args: { p_role_id: string }; Returns: undefined }
+      update_event_details: {
+        Args: { p_event_id: string; p_patch: Json }
+        Returns: Database["public"]["Tables"]["events"]["Row"]
+      }
+      upsert_event_role: {
+        Args: {
+          p_base_rate: number | null
+          p_bill_to_client?: number | null
+          p_end_time: string | null
+          p_event_id: string
+          p_headcount: number
+          p_role_id: string | null
+          p_role_name: string
+          p_start_time: string
+        }
+        Returns: Database["public"]["Tables"]["event_roles"]["Row"]
+      }
       remove_scheduled_employee: {
         Args: { p_reason: string; p_registration_id: string }
         Returns: string
