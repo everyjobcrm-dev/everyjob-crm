@@ -994,6 +994,8 @@ export type Database = {
           last_name: string
           phone_number: string | null
           phone_verified: boolean | null
+          recruited_by: string | null
+          recruiter_bonus_rate: number
           role: Database["public"]["Enums"]["user_role"] | null
           total_ratings: number | null
           tz: string
@@ -1011,6 +1013,8 @@ export type Database = {
           last_name: string
           phone_number?: string | null
           phone_verified?: boolean | null
+          recruited_by?: string | null
+          recruiter_bonus_rate?: number
           role?: Database["public"]["Enums"]["user_role"] | null
           total_ratings?: number | null
           tz: string
@@ -1028,11 +1032,42 @@ export type Database = {
           last_name?: string
           phone_number?: string | null
           phone_verified?: boolean | null
+          recruited_by?: string | null
+          recruiter_bonus_rate?: number
           role?: Database["public"]["Enums"]["user_role"] | null
           total_ratings?: number | null
           tz?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_recruited_by_fkey"
+            columns: ["recruited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_recruited_by_fkey"
+            columns: ["recruited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_recruited_by_fkey"
+            columns: ["recruited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_recruited_by_fkey"
+            columns: ["recruited_by"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
       }
       recruiter_bonuses: {
         Row: {
@@ -1042,6 +1077,8 @@ export type Database = {
           created_at: string
           id: string
           recruiter_id: string
+          redeemed_by: string | null
+          redeemed_event_id: string | null
           source_registration_id: string
           status: Database["public"]["Enums"]["bonus_status"]
         }
@@ -1052,6 +1089,8 @@ export type Database = {
           created_at?: string
           id?: string
           recruiter_id: string
+          redeemed_by?: string | null
+          redeemed_event_id?: string | null
           source_registration_id: string
           status?: Database["public"]["Enums"]["bonus_status"]
         }
@@ -1062,6 +1101,8 @@ export type Database = {
           created_at?: string
           id?: string
           recruiter_id?: string
+          redeemed_by?: string | null
+          redeemed_event_id?: string | null
           source_registration_id?: string
           status?: Database["public"]["Enums"]["bonus_status"]
         }
@@ -1100,6 +1141,48 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_shift_submissions_dashboard"
             referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_by_fkey"
+            columns: ["redeemed_by"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_event_id_fkey"
+            columns: ["redeemed_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_event_id_fkey"
+            columns: ["redeemed_event_id"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["event_id"]
           },
           {
             foreignKeyName: "recruiter_bonuses_source_registration_id_fkey"
@@ -1585,6 +1668,83 @@ export type Database = {
         }
         Relationships: []
       }
+      v_my_monthly_hours: {
+        Row: {
+          approved_hours: number | null
+          employee_id: string | null
+          estimated_pay: number | null
+          month: string | null
+          shifts_without_rate: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
+      v_recruiter_pending_credits: {
+        Row: {
+          oldest_pending_at: string | null
+          pending_amount: number | null
+          pending_count: number | null
+          recruiter_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       v_shift_submissions_dashboard: {
         Row: {
           employee_id: string | null
@@ -1656,9 +1816,42 @@ export type Database = {
         Returns: boolean
       }
       app_lock_event_status: { Args: { p_event_id: string }; Returns: string }
+      app_manager_rate_deadline: {
+        Args: { p_event_date: string }
+        Returns: string
+      }
       app_registration_initial_status: {
         Args: { p_event_role_id: string; p_uid: string }
         Returns: Database["public"]["Enums"]["registration_status"]
+      }
+      approve_shift_hours: {
+        Args: { p_submission_id: string }
+        Returns: {
+          employee_id: string | null
+          event_id: string | null
+          id: string
+          performance_notes: string | null
+          performance_rating: number | null
+          registration_id: string
+          rejection_reason: string | null
+          reported_end: string
+          reported_hours: number
+          reported_start: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submitted_at: string | null
+          submitted_by: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shift_hour_submissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       consume_signup_tz_attempt: {
         Args: {
@@ -1695,6 +1888,39 @@ export type Database = {
           tz: string
         }[]
       }
+      get_event_roster: {
+        Args: { p_event_id: string }
+        Returns: {
+          age: number
+          average_rating: number
+          cancellation_requested_at: string
+          event_role_id: string
+          first_name: string
+          last_name: string
+          phone_number: string
+          rate_set_at: string
+          registered_at: string
+          registration_id: string
+          reported_hours: number
+          role_name: string
+          status: Database["public"]["Enums"]["registration_status"]
+          submission_id: string
+          submission_status: string
+          user_id: string
+          wage_rate: number
+          waitlist_position: number
+          worker_role: string
+        }[]
+      }
+      get_staff_event_request_counts: {
+        Args: never
+        Returns: {
+          cancellation_request_count: number
+          event_id: string
+          pending_count: number
+          waitlisted_count: number
+        }[]
+      }
       is_current_user_admin: { Args: never; Returns: boolean }
       list_employees: {
         Args: {
@@ -1720,6 +1946,10 @@ export type Database = {
           total_count: number
           tz: string
         }[]
+      }
+      redeem_recruiter_credits: {
+        Args: { p_count: number; p_event_id: string }
+        Returns: number
       }
       register_for_event_role: {
         Args: { p_event_role_id: string }
@@ -1747,6 +1977,35 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      reject_shift_hours: {
+        Args: { p_reason: string; p_submission_id: string }
+        Returns: {
+          employee_id: string | null
+          event_id: string | null
+          id: string
+          performance_notes: string | null
+          performance_rating: number | null
+          registration_id: string
+          rejection_reason: string | null
+          reported_end: string
+          reported_hours: number
+          reported_start: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submitted_at: string | null
+          submitted_by: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shift_hour_submissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       release_signup_tz_lease: {
         Args: { p_lease_token: string; p_tz_hash: string }
         Returns: boolean
@@ -1754,6 +2013,32 @@ export type Database = {
       remove_scheduled_employee: {
         Args: { p_reason: string; p_registration_id: string }
         Returns: string
+      }
+      request_registration_cancellation: {
+        Args: { p_reason?: string; p_registration_id: string }
+        Returns: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          cancellation_requested_at: string | null
+          created_at: string
+          created_by: string | null
+          event_id: string
+          event_role_id: string | null
+          hours_reported: number | null
+          id: string
+          rate_set_at: string | null
+          rate_set_by: string | null
+          recruiter_id: string | null
+          status: Database["public"]["Enums"]["registration_status"]
+          user_id: string
+          wage_rate: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "event_registrations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       schedule_employee: {
         Args: { p_employee_id: string; p_event_role_id: string }
@@ -1780,6 +2065,123 @@ export type Database = {
           wage_rate: number
           warnings: string[]
         }[]
+      }
+      set_registration_wage_rate: {
+        Args: { p_registration_id: string; p_wage_rate: number }
+        Returns: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          cancellation_requested_at: string | null
+          created_at: string
+          created_by: string | null
+          event_id: string
+          event_role_id: string | null
+          hours_reported: number | null
+          id: string
+          rate_set_at: string | null
+          rate_set_by: string | null
+          recruiter_id: string | null
+          status: Database["public"]["Enums"]["registration_status"]
+          user_id: string
+          wage_rate: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "event_registrations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      staff_transition_registration: {
+        Args: { p_action: string; p_reason?: string; p_registration_id: string }
+        Returns: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          cancellation_requested_at: string | null
+          created_at: string
+          created_by: string | null
+          event_id: string
+          event_role_id: string | null
+          hours_reported: number | null
+          id: string
+          rate_set_at: string | null
+          rate_set_by: string | null
+          recruiter_id: string | null
+          status: Database["public"]["Enums"]["registration_status"]
+          user_id: string
+          wage_rate: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "event_registrations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_shift_hours: {
+        Args: {
+          p_notes?: string
+          p_rating?: number
+          p_registration_id: string
+          p_reported_end: string
+          p_reported_hours: number
+          p_reported_start: string
+        }
+        Returns: {
+          employee_id: string | null
+          event_id: string | null
+          id: string
+          performance_notes: string | null
+          performance_rating: number | null
+          registration_id: string
+          rejection_reason: string | null
+          reported_end: string
+          reported_hours: number
+          reported_start: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submitted_at: string | null
+          submitted_by: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shift_hour_submissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      void_shift_hours: {
+        Args: { p_reason: string; p_submission_id: string }
+        Returns: {
+          employee_id: string | null
+          event_id: string | null
+          id: string
+          performance_notes: string | null
+          performance_rating: number | null
+          registration_id: string
+          rejection_reason: string | null
+          reported_end: string
+          reported_hours: number
+          reported_start: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submitted_at: string | null
+          submitted_by: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shift_hour_submissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {

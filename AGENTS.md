@@ -45,6 +45,7 @@ The spec and product conversations happen in Hebrew; the codebase is in English.
 | טופס 101 | Form 101 (tax withholding form) | `employee_documents` (Admin-only, 2FA-gated) |
 | זיכוי גיוס | Recruitment credit ledger record | `recruiter_bonuses`; one record per approved recruited employee/event, redeemed FIFO by Manager or Admin |
 | תעריף זיכוי גיוס | Per-recruiter recruitment-credit rate | `profiles.recruiter_bonus_rate`; NIS per approved hour, Admin-set only, separate from the employee's `wage_rate` |
+| גויס ע״י | Recruitment attribution | `profiles.recruited_by` (→ recruiter); Admin-set only; a credit is created only when it equals `events.recruiter_id` |
 | דוח שעות | Hour report | `shift_hour_submissions` |
 | רשימת המתנה | Waitlist | waitlist entity on event/role signup (Phase 3, in progress) |
 | דירוג | Rating (post-shift, star-based) | rolls into employee's average rating |
@@ -127,15 +128,29 @@ Flat `role` column on `profiles`: `admin | manager | recruiter | employee`.
 | Set employee hourly rate at assignment | Yes (no time restriction) | Yes (through the 10th of the following month) | No | No |
 | Enter shift attendance/hours, rate employees, submit hour report for approval | Yes | Yes | No | No |
 | Sign up for a shift | Yes — as a worker, placed directly as approved (`משובץ`) when the role has capacity, else waitlisted | Yes — same | Yes — same | Yes (pending approval; waitlisted when full) |
-| Cancel own shift signup | No — can only request cancellation | No — same | No — same | No — can only request cancellation |
+| Cancel own shift signup | Approved: no — can only request cancellation; pending/waitlisted: withdraw directly | Same | Same | Same |
 | Fill Form 101 / bank details (own) | — | — | — | Yes |
 | View own hours / estimated pay | — | — | — | Yes |
 
 Notes:
-- **Cancellation and removal.** Nobody cancels their own confirmed signup directly; they *request* it, and a staff member with authority over the event performs the change. A cancellation request approved by staff sets the registration to `cancelled` (the person **may** re-register; the same row is revived and goes to the back of the waitlist). Staff removal on their own initiative sets `removed` (the person may **not** self re-register; staff may re-schedule them). `rejected` also cannot re-apply to the same event. Any feature that lets an employee directly cancel a shift is a spec violation.
+- **Cancellation and removal.** Nobody cancels their own confirmed (= `approved`) signup directly; they *request* it, and a staff member with authority over the event performs the change. A registration that is not yet approved (`pending` or `waitlisted`) may be **withdrawn by the person directly**: `request_registration_cancellation` sets it to `cancelled` at once (history `self_withdrawn`, the next waitlisted row is promoted FIFO, re-registering is allowed); only `approved` registrations need a request (M8v2, owner decision 2026-10-14). A cancellation request approved by staff sets the registration to `cancelled` (the person **may** re-register; the same row is revived and goes to the back of the waitlist). Staff removal on their own initiative sets `removed` (the person may **not** self re-register; staff may re-schedule them). `rejected` also cannot re-apply to the same event. Any feature that lets an employee directly cancel an `approved` shift is a spec violation.
 - **Staff as workers.** Admin, Manager and Recruiter may register as workers. They are exempt from `min_rating`, **not** from `min_age`. A staff member never approves, rejects or removes their own registration, and never approves hours they worked (a Recruiter never earns a recruitment credit for their own hours).
 - **Capacity.** `pending` and `approved` registrations occupy capacity; `waitlisted`, `rejected`, `cancelled` and `removed` do not. Staffing status is derived from `event_role_fill_counts`, never stored, and an event is never auto-closed when it fills.
-- **Deferred.** The hours flow (attendance entry guards, RLS on `shift_hour_submissions`/`employee_ratings`/`recruiter_bonuses`, approval self-review constraint) is being reworked in a separate session; do not extend it as part of event-lifecycle work.
+- **Hours flow (Phase 6, applied).** `shift_hour_submissions`, `employee_ratings` and `recruiter_bonuses` are SELECT-only for clients (RLS L13); writes go through `submit_shift_hours` (Admin/Manager, never own hours), `approve_shift_hours` / `reject_shift_hours` (Admin only, never own worked hours; no two-person rule), `void_shift_hours` (Manager: pending/rejected; Admin: any). Approval credits the **event's** recruiter (`events.recruiter_id`) at hours × `profiles.recruiter_bonus_rate` only when the worker's `profiles.recruited_by` is that recruiter, never for their own hours. History actions: `hours_submitted`, `hours_resubmitted`, `hours_approved`, `hours_rejected`, `hours_voided`. Totals: `v_my_monthly_hours`, `v_recruiter_pending_credits`. Redemption: `redeem_recruiter_credits(event, n)` (Manager/Admin, FIFO, records `redeemed_by` / `redeemed_event_id`). Design: `docs/design-hours-flow.md`.
+
+### 6.0 Registration write paths (DB)
+`event_registrations` is never written directly by the app (`trg_guard_event_registration_write` blocks client DML). Every write is a SECURITY DEFINER RPC that re-checks role, scope (`app_can_manage_event`), not-own-registration and the lock order `events (SHARE) -> event_roles (UPDATE) -> event_registrations`:
+
+| RPC | Who | Effect / history `action` |
+|---|---|---|
+| `register_for_event_role(role)` | any worker, own | `pending` / `approved` (staff) / `waitlisted`; `self_registered`, `self_reregistered` |
+| `request_registration_cancellation(reg, reason?)` | the worker, own row only | sets `cancellation_requested_at`; `cancellation_requested` |
+| `schedule_employee(role, employee)` | staff (scope) | `approved`, enforces `min_age`, warns `below_min_rating`/`overlap`; `organizer_scheduled`, `organizer_readded` |
+| `remove_scheduled_employee(reg, reason)` | staff (scope) | `removed` (reason required); `organizer_removed` |
+| `staff_transition_registration(reg, action, reason?)` | staff (scope) | `approve`, `reject`, `promote` (capacity), `approve_cancellation` (-> `cancelled`), `dismiss_cancellation`; `organizer_approved`, `organizer_rejected`, `organizer_promoted`, `organizer_approved_cancellation`, `organizer_dismissed_cancellation` |
+| `set_registration_wage_rate(reg, rate)` | Admin any time; Manager until the 10th of the following month (`app_manager_rate_deadline`) | `rate_set` |
+
+Reads: `get_event_roster(event)` (staff scope; no tz/email/documents; rates for Admin/Manager only), `get_staff_event_request_counts()`, `search_employees(query, event)` (scoped). Migrations: `supabase/p3_*`, `supabase/p4_*`; tests: `supabase/tests/`.
 
 ### 6.1 Event status model (`events.status`)
 

@@ -26,3 +26,34 @@ repo. **The live DB is the source of truth** (decision of 2026-10-12). These fil
 - `p1_m6a_drop_duplicate_waitlist_trigger` was also applied **manually in the SQL Editor** (as `DROP TRIGGER IF EXISTS ...`, because the hung tool call may have applied it); absent from the migration history. Verified read-only: only `trg_auto_promote_from_waitlist` remains on `event_registrations`.
 - RULE: the migration tool hangs on any statement containing `DROP`; such migrations (M6c and later) are run by hand in the SQL Editor.
 - All other `p1_*` migrations were applied through `apply_migration` and appear in the migration history.
+
+## Phase 3 migrations (2026-10-13)
+- Applied through `apply_migration`, one at a time, in this order: `p3_m7p_schedule_employee_v2`, `p3_m7q_remove_scheduled_employee_v2`,
+  `p3_m7r_staff_transition_registration`, `p3_m7s_get_event_roster`, `p3_m7t_set_registration_wage_rate`, `p3_m0d_revoke_fill_views_anon`
+  (the files' top-level `--` comment lines were stripped from the payload because the rollback notes contain `DROP`; function bodies were sent verbatim).
+- Verified read-only right after each one: `md5(prosrc)` equals the body between the `$function$` markers in the file (all six functions);
+  `md5(pg_get_functiondef)` equals the whole file statement for M7p (f8461097…) and M7q (0b060076…). For M7r/M7s/M7t Postgres re-renders the
+  header (`DEFAULT NULL::text`, `RETURNS event_registrations`, `RETURNS TABLE(...)` on one line), so only the body md5 is comparable.
+- `fn_schedule_employee.sql` / `fn_remove_scheduled_employee.sql` in this folder remain the pre-Phase-3 definitions = rollbacks R7p / R7q.
+
+## Phase 4 migrations (2026-10-13)
+- Applied through `apply_migration`, one at a time: `p4_m7u_search_employees_scope` (snapshot body + one scope line; body and full
+  `pg_get_functiondef` md5 match the file), `p4_m7v_history_policy_scope` (qual = `app_can_manage_event(event_id)`),
+  `p4_m8_request_registration_cancellation`, `p4_m8b_staff_event_request_counts` (body md5 match).
+- `fn_search_employees.sql` in this folder remains the pre-Phase-4 definition = rollback R7u.
+- NOT applied: `p4_m6c_drop_legacy_registration_policy.sql` (contains DROP - run by hand in the SQL Editor, then verify read-only).
+
+## Phase 6 migrations - hours flow (2026-10-13)
+- Applied through `apply_migration`, one at a time: `p6_h0_recruiter_bonus_rate`, `p6_h1_self_review_constraint` (E1: no two-person rule),
+  `p6_h4_rating_triggers_definer`, `p6_h2_hours_rpcs` (E2: credit to events.recruiter_id), `p6_h3_hours_rls`, `p6_h5_hours_views`.
+- Verified read-only: body md5 = file for all 6 functions; DEFINER + search_path; anon no EXECUTE; pg_policies (5 SELECT policies);
+  anon has no table privileges, authenticated SELECT only; both views security_invoker=true.
+- `fn_recalc_employee_rating.sql` / `fn_update_employee_average_rating.sql` in this folder remain the pre-h4 definitions = rollback.
+- Not applied: the optional `DROP TRIGGER IF EXISTS trigger_update_rating` (by hand, Q5); `p6_h6_redeem_credits.sql` (PROPOSED).
+
+## Phase 6 follow-up: H7 + H6v2 (2026-10-13)
+- `p6_h7_recruited_by`: adds `profiles.recruited_by`; `approve_shift_hours` = previous live body + one changed credit condition
+  (credit only when `profiles.recruited_by = events.recruiter_id`). Full `pg_get_functiondef` md5 6d6313bc… = file. Rollback:
+  `supabase/approve_shift_hours_v1_live.sql` (live definition captured beforehand, md5 a501d6d4…).
+- `p6_h6v2_redeem_credits`: `recruiter_bonuses.redeemed_by`, `redeemed_event_id`; `redeem_recruiter_credits(event, count)`; body md5 = file.
+- `p6_h6_redeem_credits.sql` (never applied) was removed from the repo.

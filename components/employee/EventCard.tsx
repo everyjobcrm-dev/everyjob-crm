@@ -3,7 +3,14 @@
 
 import { useState, useTransition } from "react";
 import { Users, Check, Clock3, AlertCircle } from "lucide-react";
-import { registerForRole, requestCancellation, type EmployeeEvent, type RegistrationStatus } from "@/app/employee/events/actions";
+import { registerForRole, type EmployeeEvent, type RegistrationStatus } from "@/app/employee/events/actions";
+import { useToast } from "@/components/ui/toast";
+import {
+  CancellationRequestForm,
+  WithdrawConfirm,
+  canSelfWithdraw,
+  cancelToastFor,
+} from "@/components/employee/RegistrationCancelControls";
 
 const STATUS_LABEL: Record<RegistrationStatus, string> = {
   pending: "ממתין לאישור",
@@ -29,28 +36,30 @@ const STATUS_STYLE: Record<RegistrationStatus, string> = {
 const getStatusStyle = (s: RegistrationStatus) => STATUS_STYLE[s] || "bg-cream/10 text-cream/70";
 
 export function EventCard({ event }: { event: EmployeeEvent }) {
+  const { toast, show } = useToast();
   return (
     <div className="rounded-2xl border border-brass/10 bg-surface p-5">
       <p className="text-xs font-semibold text-indigo-400">{event.clientName}</p>
       <h2 className="font-display text-lg text-cream">{event.location}</h2>
       <p className="mt-0.5 text-xs text-cream/50">{event.eventDate}</p>
-      {event.notes && <p className="mt-2 text-xs text-cream/45">{event.notes}</p>}
+      {event.notes && <p className="mt-2 text-xs text-cream/60">{event.notes}</p>}
 
       <div className="mt-4 space-y-2">
         {event.roles.map((role) => (
-          <RoleRow key={role.id} role={role} />
+          <RoleRow key={role.id} role={role} onToast={show} />
         ))}
       </div>
+      {toast}
     </div>
   );
 }
 
-function RoleRow({ role }: { role: EmployeeEvent["roles"][number] }) {
+function RoleRow({ role, onToast }: { role: EmployeeEvent["roles"][number]; onToast: (message: string) => void }) {
   const [status, setStatus] = useState<RegistrationStatus | null>(role.myStatus);
   const [cancellationRequested, setCancellationRequested] = useState<boolean>(!!role.cancellationRequestedAt);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [isCancelling, startCancelTransition] = useTransition();
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const spotsLeft = role.headcount - role.filledCount;
   const isFull = spotsLeft <= 0;
@@ -64,30 +73,31 @@ function RoleRow({ role }: { role: EmployeeEvent["roles"][number] }) {
         return;
       }
       setStatus(result.status);
+      setCancellationRequested(false); // a revived row starts with no open request
     });
   }
 
-  function handleCancel() {
-    if (!role.registrationId) return;
-    setError(null);
-    startCancelTransition(async () => {
-      const result = await requestCancellation(role.registrationId!);
-      if (!result.success) {
-        setError(result.error);
-        return;
-      }
-      setCancellationRequested(true);
-    });
+  // M8v2: pending/waitlisted -> withdrawn immediately; approved -> cancellation request (AGENTS.md 6)
+  function handleCancelDone(next: RegistrationStatus) {
+    setCancelOpen(false);
+    setStatus(next);
+    if (next !== "cancelled") setCancellationRequested(true);
+    onToast(cancelToastFor(next));
   }
 
-  const canRequestCancel = status === "approved" || status === "pending";
+  const withdrawable = canSelfWithdraw(status);
+  const canCancel = withdrawable || status === "approved";
+  // a pre-M8v2 open request on a pending/waitlisted row no longer blocks: the RPC withdraws it directly
+  const showRequested = cancellationRequested && !withdrawable;
+  // a withdrawn (or staff-approved cancelled) registration may register again - the same row is revived
+  const canRegister = status === null || status === "cancelled";
 
   return (
     <div className="rounded-xl border border-brass/10 bg-surface2 p-3">
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-cream">{role.roleName}</p>
-          <p className="flex items-center gap-1 text-xs text-cream/45">
+          <p className="flex items-center gap-1 text-xs text-cream/60">
             <Clock3 className="h-3 w-3" aria-hidden="true" />
             {role.startTime}–{role.endTime ?? "טרם נקבע"} · ₪{role.baseRate}/ש&apos;
           </p>
@@ -105,27 +115,28 @@ function RoleRow({ role }: { role: EmployeeEvent["roles"][number] }) {
       {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
 
       <div className="mt-2.5 flex items-center justify-between gap-2">
-        {status ? (
+        {status && !canRegister ? (
           <>
             <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusStyle(status)}`}>
               <Check className="h-3 w-3" aria-hidden="true" />
               {getStatusLabel(status)}
             </span>
-            {canRequestCancel && (
-              cancellationRequested ? (
+            {canCancel && (
+              showRequested ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-cream/5 px-2 py-1 text-[11px] text-cream/50">
                   <AlertCircle className="h-3 w-3" aria-hidden="true" />
                   בקשת ביטול ממתינה
                 </span>
               ) : (
-                <button
-                  type="button"
-                  disabled={isCancelling}
-                  onClick={handleCancel}
-                  className="rounded-full bg-rose-500/10 px-3 py-1 text-[11px] font-semibold text-rose-400 transition-colors hover:bg-rose-500/20 disabled:opacity-50"
-                >
-                  {isCancelling ? "שולח..." : "בקש ביטול"}
-                </button>
+                !cancelOpen && (
+                  <button
+                    type="button"
+                    onClick={() => setCancelOpen(true)}
+                    className="rounded-full bg-rose-500/10 px-3 py-1 text-[11px] font-semibold text-rose-400 transition-colors hover:bg-rose-500/20"
+                  >
+                    {withdrawable ? "ביטול הרשמה" : "בקש ביטול"}
+                  </button>
+                )
               )
             )}
           </>
@@ -140,6 +151,17 @@ function RoleRow({ role }: { role: EmployeeEvent["roles"][number] }) {
           </button>
         )}
       </div>
+
+      {cancelOpen && role.registrationId && canCancel && !showRequested &&
+        (withdrawable ? (
+          <WithdrawConfirm registrationId={role.registrationId} onClose={() => setCancelOpen(false)} onDone={handleCancelDone} />
+        ) : (
+          <CancellationRequestForm
+            registrationId={role.registrationId}
+            onClose={() => setCancelOpen(false)}
+            onDone={handleCancelDone}
+          />
+        ))}
     </div>
   );
 }

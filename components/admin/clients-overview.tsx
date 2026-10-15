@@ -108,7 +108,7 @@ export function ClientsOverview({
         <div>
           <p className="text-sm text-cream/50">ממשק מנהל</p>
           <h1 className="font-display text-3xl text-cream">ניהול לקוחות</h1>
-          <p className="mt-1 text-sm text-cream/45">מרכז לקוחות ותפעול · {currentMonthLabel()}</p>
+          <p className="mt-1 text-sm text-cream/60">מרכז לקוחות ותפעול · {currentMonthLabel()}</p>
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -157,7 +157,7 @@ export function ClientsOverview({
           <p className="relative mt-2 font-display text-5xl text-[#D4FF00] tabular-nums">
             {globals.totalEvents.toLocaleString("he-IL")}
           </p>
-          <p className="mt-3 text-xs text-cream/40">נספר על פני כל הלקוחות, פעילים ומושהים כאחד.</p>
+          <p className="mt-3 text-xs text-cream/60">נספר על פני כל הלקוחות, פעילים ומושהים כאחד.</p>
         </motion.div>
 
         <motion.div
@@ -201,7 +201,7 @@ export function ClientsOverview({
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search
-            className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cream/35"
+            className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cream/60"
             aria-hidden="true"
           />
           <input
@@ -259,7 +259,7 @@ export function ClientsOverview({
               <div className="min-w-0">
                 <p className="truncate font-semibold text-cream">{client.name}</p>
                 {client.contactName && (
-                  <p className="truncate text-xs text-cream/45">{client.contactName}</p>
+                  <p className="truncate text-xs text-cream/60">{client.contactName}</p>
                 )}
               </div>
             </div>
@@ -291,7 +291,7 @@ export function ClientsOverview({
             <div className="mt-4 grid grid-cols-2 gap-2 border-t border-cream/10 pt-4 text-xs">
               {client.contactPhone && (
                 <div className="flex items-center gap-1.5 text-cream/60">
-                  <Phone className="h-3.5 w-3.5 shrink-0 text-cream/35" aria-hidden="true" />
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-cream/60" aria-hidden="true" />
                   <span dir="ltr" className="truncate">
                     {client.contactPhone}
                   </span>
@@ -299,11 +299,11 @@ export function ClientsOverview({
               )}
             </div>
 
-            <div className="mt-4 flex items-center justify-between text-xs text-cream/40">
+            <div className="mt-4 flex items-center justify-between text-xs text-cream/60">
               <span className="inline-flex items-center gap-1">
                 <CalendarRange className="h-3.5 w-3.5" aria-hidden="true" />
                 {client.eventsCount} אירועים
-                {client.notes && <StickyNote className="ms-1.5 h-3.5 w-3.5 text-cream/30" aria-hidden="true" />}
+                {client.notes && <StickyNote className="ms-1.5 h-3.5 w-3.5 text-cream/60" aria-hidden="true" />}
               </span>
               <span className="inline-flex items-center gap-1 font-semibold text-[#4F46E5] opacity-0 transition-opacity group-hover:opacity-100">
                 פרטי לקוח
@@ -314,7 +314,7 @@ export function ClientsOverview({
         ))}
 
         {filtered.length === 0 && !loadError && (
-          <div className="col-span-full rounded-2xl border border-dashed border-cream/15 px-4 py-14 text-center text-sm text-cream/45">
+          <div className="col-span-full rounded-2xl border border-dashed border-cream/15 px-4 py-14 text-center text-sm text-cream/60">
             {clients.length === 0 ? "עדיין לא נוספו לקוחות. לחצ/י על \"לקוח חדש\" כדי להתחיל." : "לא נמצאו לקוחות התואמים את החיפוש."}
           </div>
         )}

@@ -46,7 +46,7 @@ export default async function AdminRecruitersPage() {
             ))}
             {recruiters.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-5 py-10 text-center text-cream/40">אין מגייסים להצגה.</td>
+                <td colSpan={4} className="px-5 py-10 text-center text-cream/60">אין מגייסים להצגה.</td>
               </tr>
             )}
           </tbody>
