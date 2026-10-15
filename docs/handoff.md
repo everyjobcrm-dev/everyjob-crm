@@ -104,3 +104,13 @@ sets `recruiter_id` -> §8 approval required.
 - The owner tests on localhost; remind them to `git fetch` + `git checkout <branch>` + `npm install` + delete `.next`
   + restart `npm run dev` after every change, and to log out/in after role changes.
 - Commit locally after each step, push at the end of each milestone.
+
+## 9. Backlog (non-blocking, found 2026-10-15)
+- `event_roles` is `SELECT true` for all authenticated users, so `bill_to_client` (client pricing) is readable by employees.
+  Fix proposed with the payroll batch (column-level revoke + Admin RPC reads) - docs/payroll-billing-design.md §3.
+- Direct UPDATE on `events` / `event_roles` is still open to whoever manages the event (RLS `*_update_scoped`); the p9
+  RPCs enforce the edit rules, the direct path does not. Narrow to RPC-only once status changes also go through an RPC.
+- Vercel Preview has no `SUPABASE_SERVICE_ROLE_KEY` (Production has it), so /api/auth/register and ensure-profile fail on
+  previews. `DEV_SKIP_EMAIL_VERIFICATION` is not set anywhere (good).
+- /admin/events "אירוע חדש" button is pill-shaped (`rounded-full`), against the design rules.
+- Screenshots at 390/1440 for the edit page need a logged-in session; pending the browser-verification milestone.
