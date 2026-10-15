@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireRole, type AuthOk } from "@/lib/auth/guards";
 import { canCreateEvents, canManageEvent } from "@/lib/auth/permissions";
 import { createEventSchema, type CreateEventInput } from "@/lib/validations/event";
@@ -12,6 +13,7 @@ import {
   type EventStatus,
 } from "@/lib/events/status";
 import { mapDbError } from "@/lib/events/errors";
+import { submissionArgsSchema, submissionReasonArgsSchema } from "@/lib/validations/hours";
 
 // All Admin-role (and event-management) server actions live in this file (AGENTS.md 5.5).
 // Every action re-verifies the caller's role from the database via requireRole() (AGENTS.md 5.2);
@@ -348,6 +350,42 @@ export async function updateUserRole(
   return { success: true };
 }
 
+const setRecruitedBySchema = z.object({
+  employeeId: z.string().uuid(),
+  recruiterId: z.string().uuid().nullable(),
+});
+
+/**
+ * Admin only: who recruited this employee (profiles.recruited_by). Drives recruitment credits (p6_h7): a credit is created
+ * on hours approval only when the event's recruiter is the employee's recruited_by. The profile guard lets only admins
+ * change this column; the target must be an employee and the recruiter a recruiter.
+ */
+export async function setRecruitedBy(employeeId: string, recruiterId: string | null): Promise<ActionResult> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  const args = setRecruitedBySchema.safeParse({ employeeId, recruiterId });
+  if (!args.success) return fail("בקשה לא תקינה.");
+
+  const ids = [args.data.employeeId, ...(args.data.recruiterId ? [args.data.recruiterId] : [])];
+  const { data: people, error: lookupError } = await auth.supabase.from("profiles").select("id, role").in("id", ids);
+  if (lookupError) return fail("בדיקת המשתמשים נכשלה.");
+  const roleOf = new Map((people ?? []).map((p) => [p.id as string, p.role as string]));
+  if (roleOf.get(args.data.employeeId) !== "employee") return fail("ניתן לשייך מגייס/ת לעובדים בלבד.");
+  if (args.data.recruiterId && roleOf.get(args.data.recruiterId) !== "recruiter") return fail("המשתמש שנבחר אינו מגייס/ת.");
+
+  const { data, error } = await auth.supabase
+    .from("profiles")
+    .update({ recruited_by: args.data.recruiterId })
+    .eq("id", args.data.employeeId)
+    .eq("role", "employee")
+    .select("id");
+  if (error) return fail(mapDbError(error, { fallback: "עדכון המגייס/ת נכשל." }));
+  if (!data?.length) return fail("העדכון לא בוצע - העובד/ת לא נמצא/ה.");
+
+  revalidatePath("/admin/employees");
+  return { success: true };
+}
+
 export async function approveForm101(userId: string): Promise<ActionResult> {
   const auth = await requireRole("admin");
   if (!auth.ok) return fail(auth.error);
@@ -429,13 +467,31 @@ export async function getRecruiterPendingCredits() {
   const auth = await requireRole("admin");
   if (!auth.ok) return { success: false as const, error: auth.error };
 
-  const { data, error } = await auth.supabase
-    .from("v_recruiter_pending_credits")
-    .select("recruiter_id, first_name, last_name, recruiter_bonus_rate, pending_recruitment_count, pending_recruitment_amount")
-    .order("last_name", { ascending: true });
+  const [{ data: recruiters, error }, { data: pending }] = await Promise.all([
+    auth.supabase
+      .from("profiles")
+      .select("id, first_name, last_name, recruiter_bonus_rate")
+      .eq("role", "recruiter")
+      .order("last_name", { ascending: true }),
+    // derived on read by the view (p6_h5); nothing is stored
+    auth.supabase.from("v_recruiter_pending_credits").select("recruiter_id, pending_count, pending_amount"),
+  ]);
 
   if (error) return { success: false as const, error: "טעינת נתוני המגייסים נכשלה." };
-  return { success: true as const, data: (data ?? []) as RecruiterPendingCredits[] };
+  const byRecruiter = new Map(
+    ((pending ?? []) as { recruiter_id: string; pending_count: number; pending_amount: number }[]).map((p) => [p.recruiter_id, p]),
+  );
+  const data: RecruiterPendingCredits[] = (
+    (recruiters ?? []) as { id: string; first_name: string; last_name: string; recruiter_bonus_rate: number | null }[]
+  ).map((r) => ({
+    recruiter_id: r.id,
+    first_name: r.first_name,
+    last_name: r.last_name,
+    recruiter_bonus_rate: r.recruiter_bonus_rate,
+    pending_recruitment_count: Number(byRecruiter.get(r.id)?.pending_count ?? 0),
+    pending_recruitment_amount: Number(byRecruiter.get(r.id)?.pending_amount ?? 0),
+  }));
+  return { success: true as const, data };
 }
 
 export async function setRecruiterBonusRate(
@@ -445,8 +501,9 @@ export async function setRecruiterBonusRate(
   const auth = await requireRole("admin");
   if (!auth.ok) return fail("רק אדמין יכול לעדכן תעריף זיכוי גיוס.");
 
-  if (!Number.isFinite(recruiterBonusRate) || recruiterBonusRate < 0) {
-    return fail("יש להזין תעריף זיכוי שאינו שלילי.");
+  // profiles_recruiter_bonus_rate_check (p6_h0): strictly positive
+  if (!Number.isFinite(recruiterBonusRate) || recruiterBonusRate <= 0) {
+    return fail("יש להזין תעריף זיכוי חיובי.");
   }
 
   const { error } = await auth.supabase
@@ -460,58 +517,151 @@ export async function setRecruiterBonusRate(
   return { success: true };
 }
 
-// State machine for Admin to approve/reject (Pending -> Approved / Rejected)
+// ── Hours approval (p6_h2 RPCs; the tables are SELECT-only for clients after p6_h3) ─────────────────
+
+export type PendingHours = {
+  submissionId: string;
+  status: string;
+  reportedHours: number;
+  reportedStart: string;
+  reportedEnd: string;
+  performanceRating: number | null;
+  submittedAt: string | null;
+  employeeId: string;
+  employeeName: string;
+  submittedByName: string;
+  eventId: string;
+  eventDate: string;
+  location: string;
+  isOwnHours: boolean; // the admin worked these hours - approve is hidden and refused (self_review)
+};
+
+/** Pending, non-voided hour reports of non-cancelled events, oldest event first. No tz / documents. */
+export async function fetchPendingHours(): Promise<{ success: true; data: PendingHours[] } | { success: false; error: string }> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+
+  type Row = {
+    id: string;
+    status: string;
+    reported_hours: number;
+    reported_start: string;
+    reported_end: string;
+    performance_rating: number | null;
+    submitted_at: string | null;
+    employee_id: string;
+    event_id: string;
+    events: { event_date: string; location: string; status: string } | null;
+    employee: { first_name: string | null; last_name: string | null } | null;
+    submitter: { first_name: string | null; last_name: string | null } | null;
+  };
+  const { data, error } = await auth.supabase
+    .from("shift_hour_submissions")
+    .select(
+      `id, status, reported_hours, reported_start, reported_end, performance_rating, submitted_at, employee_id, event_id,
+       events ( event_date, location, status ),
+       employee:profiles!shift_hour_submissions_employee_id_fkey ( first_name, last_name ),
+       submitter:profiles!shift_hour_submissions_submitted_by_fkey ( first_name, last_name )`,
+    )
+    .eq("status", "pending")
+    .is("voided_at", null)
+    .returns<Row[]>();
+
+  if (error) {
+    console.error("[fetchPendingHours]", error.message);
+    return fail("טעינת דוחות השעות נכשלה.");
+  }
+  const name = (p: { first_name: string | null; last_name: string | null } | null) =>
+    [p?.first_name, p?.last_name].filter(Boolean).join(" ") || "ללא שם";
+  const rows = (data ?? [])
+    .filter((r) => r.events && r.events.status !== "cancelled")
+    .map((r) => ({
+      submissionId: r.id,
+      status: r.status,
+      reportedHours: Number(r.reported_hours),
+      reportedStart: r.reported_start,
+      reportedEnd: r.reported_end,
+      performanceRating: r.performance_rating,
+      submittedAt: r.submitted_at,
+      employeeId: r.employee_id,
+      employeeName: name(r.employee),
+      submittedByName: name(r.submitter),
+      eventId: r.event_id,
+      eventDate: r.events!.event_date,
+      location: r.events!.location,
+      isOwnHours: r.employee_id === auth.userId,
+    }))
+    .sort((a, b) => a.eventDate.localeCompare(b.eventDate) || a.employeeName.localeCompare(b.employeeName, "he"));
+  return { success: true, data: rows };
+}
+
+function revalidateHoursViews() {
+  revalidatePath("/admin/hours");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/recruiters");
+  revalidatePath("/manager/events", "layout");
+  revalidatePath("/employee/shifts");
+}
+
+/** Admin only; never own worked hours (self_review). Creates the event recruiter's credit (hours x rate). */
+export async function approveShiftHours(submissionId: string): Promise<ActionResult> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  const args = submissionArgsSchema.safeParse({ submissionId });
+  if (!args.success) return fail("בקשה לא תקינה.");
+
+  const { error } = await auth.supabase.rpc("approve_shift_hours", { p_submission_id: args.data.submissionId });
+  if (error) {
+    console.error("[approve_shift_hours]", error.code, error.message);
+    return fail(mapDbError(error, { fallback: "אישור דוח השעות נכשל." }));
+  }
+  revalidateHoursViews();
+  return { success: true };
+}
+
+/** Admin only; a reason is required. */
+export async function rejectShiftHours(submissionId: string, reason: string): Promise<ActionResult> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  const args = submissionReasonArgsSchema.safeParse({ submissionId, reason });
+  if (!args.success) return fail(args.error.issues[0]?.message ?? "בקשה לא תקינה.");
+
+  const { error } = await auth.supabase.rpc("reject_shift_hours", {
+    p_submission_id: args.data.submissionId,
+    p_reason: args.data.reason,
+  });
+  if (error) {
+    console.error("[reject_shift_hours]", error.code, error.message);
+    return fail(mapDbError(error, { fallback: "דחיית דוח השעות נכשלה." }));
+  }
+  revalidateHoursViews();
+  return { success: true };
+}
+
+/** Admin: void any status (an approved report's pending credit is voided too). A reason is required. */
+export async function voidShiftHours(submissionId: string, reason: string): Promise<ActionResult> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  const args = submissionReasonArgsSchema.safeParse({ submissionId, reason });
+  if (!args.success) return fail(args.error.issues[0]?.message ?? "בקשה לא תקינה.");
+
+  const { error } = await auth.supabase.rpc("void_shift_hours", {
+    p_submission_id: args.data.submissionId,
+    p_reason: args.data.reason,
+  });
+  if (error) {
+    console.error("[void_shift_hours]", error.code, error.message);
+    return fail(mapDbError(error, { fallback: "ביטול דוח השעות נכשל." }));
+  }
+  revalidateHoursViews();
+  return { success: true };
+}
+
+/** Legacy entry point used by the dashboard table; delegates to the RPC-backed actions above. */
 export async function reviewShiftSubmission(
   submissionId: string,
   status: "approved" | "rejected",
   rejectionReason?: string,
-) {
-  const auth = await requireRole("admin");
-  if (!auth.ok) return { success: false as const, error: auth.error };
-
-  if (status === "rejected" && (!rejectionReason || rejectionReason.trim() === "")) {
-    return { success: false as const, error: "יש להזין סיבת דחייה." };
-  }
-
-  const { data: current } = await auth.supabase
-    .from("shift_hour_submissions")
-    .select("id, status, employee_id")
-    .eq("id", submissionId)
-    .maybeSingle();
-
-  if (!current) return { success: false as const, error: "דוח השעות לא נמצא." };
-  if (current.status !== "pending") {
-    return { success: false as const, error: "ניתן לסקור רק דוחות שממתינים לאישור." };
-  }
-  // App-level guard: nobody approves hours they worked themselves (a DB constraint is part of the deferred hours flow).
-  if (current.employee_id === auth.userId) {
-    return { success: false as const, error: "לא ניתן לאשר או לדחות דוח שעות של עצמך." };
-  }
-
-  const updatePayload: {
-    status: "approved" | "rejected";
-    reviewed_by: string;
-    reviewed_at: string;
-    rejection_reason?: string;
-  } = {
-    status,
-    reviewed_by: auth.userId,
-    reviewed_at: new Date().toISOString(),
-  };
-  if (status === "rejected") updatePayload.rejection_reason = rejectionReason!.trim();
-
-  const { data, error } = await auth.supabase
-    .from("shift_hour_submissions")
-    .update(updatePayload)
-    .eq("id", submissionId)
-    .select("id");
-
-  if (error) return { success: false as const, error: mapDbError(error, { fallback: "עדכון הסטטוס נכשל." }) };
-  // An RLS-filtered update returns no error and no rows; report it instead of a false success.
-  if (!data?.length) {
-    return { success: false as const, error: "העדכון לא בוצע (אין הרשאת עדכון בבסיס הנתונים לדוחות שעות)." };
-  }
-
-  revalidatePath("/admin");
-  return { success: true as const };
+): Promise<ActionResult> {
+  return status === "approved" ? approveShiftHours(submissionId) : rejectShiftHours(submissionId, rejectionReason ?? "");
 }

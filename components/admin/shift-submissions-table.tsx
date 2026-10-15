@@ -96,7 +96,7 @@ export default function ShiftSubmissionsTable({
                         {sub.performance_rating} / 5
                       </span>
                     ) : (
-                      <span className="text-cream/40">—</span>
+                      <span className="text-cream/65">—</span>
                     )}
                   </td>
                   <td className="px-5 py-4 text-xs text-cream/70">

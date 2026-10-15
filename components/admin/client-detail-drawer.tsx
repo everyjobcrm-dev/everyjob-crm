@@ -48,7 +48,7 @@ export function ClientDetailDrawer({
               <h2 id="client-drawer-title" className="font-display text-xl text-cream">
                 {client.name}
               </h2>
-              <p className="text-sm text-cream/45">
+              <p className="text-sm text-cream/65">
                 {client.status === "active" ? "לקוח פעיל" : "לקוח מושהה"}
               </p>
             </div>
@@ -77,24 +77,24 @@ export function ClientDetailDrawer({
           {/* Contact + address */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm">
-              <User className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
+              <User className="h-4 w-4 shrink-0 text-cream/65" aria-hidden="true" />
               <span className="truncate text-cream/80">{client.contactName || "—"}</span>
             </div>
             <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm">
-              <Phone className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
+              <Phone className="h-4 w-4 shrink-0 text-cream/65" aria-hidden="true" />
               <span dir="ltr" className="truncate text-cream/80">
                 {client.contactPhone || "—"}
               </span>
             </div>
             <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm sm:col-span-2">
-              <MapPin className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
+              <MapPin className="h-4 w-4 shrink-0 text-cream/65" aria-hidden="true" />
               <span className="truncate text-cream/80">{client.address || "—"}</span>
             </div>
           </div>
 
           {/* Events metric */}
           <div className="mt-5 rounded-xl border border-[#D4FF00]/20 bg-surface2 p-4">
-            <p className="flex items-center gap-1.5 text-[11px] text-cream/40">
+            <p className="flex items-center gap-1.5 text-[11px] text-cream/65">
               <CalendarRange className="h-3 w-3" aria-hidden="true" />
               סה&quot;כ אירועים עם הלקוח
             </p>
@@ -111,7 +111,7 @@ export function ClientDetailDrawer({
                     key={idx}
                     className="rounded-lg border border-cream/10 bg-surface px-3 py-1.5 text-sm text-cream/80"
                   >
-                    {r.role} <span className="text-cream/40">·</span> ₪{r.rate}/שעה
+                    {r.role} <span className="text-cream/65">·</span> ₪{r.rate}/שעה
                   </span>
                 ))}
               </div>

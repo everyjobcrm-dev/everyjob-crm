@@ -30,7 +30,13 @@ const SECTIONS = [
   { id: "roster", label: "מצבת כוח אדם", eyebrow: "04" },
 ] as const;
 
-export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
+export function CreateEventForm({
+  clients,
+  afterCreateHref = "/admin/events",
+}: {
+  clients: ClientOption[];
+  afterCreateHref?: string;
+}) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -87,21 +93,21 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
       setServerError(result.error);
       return;
     }
-    router.push("/admin/events");
+    router.push(afterCreateHref);
     router.refresh();
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="pb-28 lg:pb-10">
+    <form onSubmit={handleSubmit(onSubmit)} className="pb-6">
       <header className="mb-8">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-400">אירוע חדש</p>
         <h1 className="font-display text-3xl text-cream">פתיחת דוקט אירוע</h1>
-        <p className="mt-1 text-sm text-cream/50">
+        <p className="mt-1 text-sm text-cream/70">
           כל שדה כאן הופך לשורה בדוקט שהמנהל/ת בשטח יראה/תראה. תעריפים ריקים יסומנו אוטומטית לטיפול.
         </p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[180px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)]">
         {/* margin rail — reads like handwritten section tabs on a clipped docket */}
         <nav className="hidden lg:block">
           <ol className="sticky top-6 space-y-1 border-e border-brass/10 pe-4">
@@ -109,9 +115,9 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
               <li key={s.id}>
                 <a
                   href={`#${s.id}`}
-                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-cream/50 transition-colors hover:text-cream"
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-cream/70 transition-colors hover:text-cream"
                 >
-                  <span className="font-mono text-[11px] text-cream/30">{s.eyebrow}</span>
+                  <span className="font-mono text-[11px] text-cream/55">{s.eyebrow}</span>
                   {s.label}
                 </a>
               </li>
@@ -146,7 +152,7 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
                   ))}
                 </select>
                 {clients.length === 0 && (
-                  <p className="mt-1.5 text-xs text-cream/40">
+                  <p className="mt-1.5 text-xs text-cream/65">
                     לא נמצאו לקוחות. יש להוסיף לקוח בטבלת הלקוחות לפני יצירת אירוע.
                   </p>
                 )}
@@ -218,11 +224,11 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
           {/* 04 — dynamic roster */}
           <Section id="roster" eyebrow="04" title="מצבת כוח אדם">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-xs text-cream/45">
+              <p className="text-xs text-cream/65">
                 כל שורה = תפקיד. אפשר להשאיר תעריף ריק ולמלא אחר כך — האירוע פשוט ייפתח כ״ממתין לתעריפים״.
               </p>
               {missingRateCount > 0 && (
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#D4FF00]/15 px-2.5 py-1 text-[11px] font-semibold text-[#D4FF00]">
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-sm bg-[#D4FF00]/15 px-2.5 py-1 text-[11px] font-semibold text-[#D4FF00]">
                   <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                   {missingRateCount} תפקידים ללא תעריף
                 </span>
@@ -268,9 +274,9 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
       </div>
 
       {/* sticky, thumb-reachable action bar */}
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-brass/10 bg-obsidian/95 px-4 py-3 backdrop-blur lg:sticky lg:mt-6 lg:rounded-2xl lg:border lg:bg-surface">
+      <div className="sticky bottom-20 z-10 mt-6 rounded-xl border border-brass/15 bg-surface/95 px-4 py-3 backdrop-blur lg:bottom-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-          <p className="hidden text-xs text-cream/40 sm:block">
+          <p className="hidden text-xs text-cream/65 sm:block">
             {missingRateCount > 0
               ? `יישמר כ"ממתין לתעריפים" — ${missingRateCount} שורות עדיין ללא תעריף`
               : "כל התעריפים מולאו — האירוע ייפתח מיד לעובדים"}
@@ -292,7 +298,7 @@ export function CreateEventForm({ clients }: { clients: ClientOption[] }) {
 // ---- presentational helpers -------------------------------------------------
 
 const inputClass =
-  "w-full rounded-xl border border-brass/15 bg-surface2 px-3 py-2.5 text-sm text-cream outline-none transition-colors placeholder:text-cream/25 focus:border-indigo-400";
+  "w-full rounded-xl border border-brass/15 bg-surface2 px-3 py-2.5 text-sm text-cream outline-none transition-colors placeholder:text-cream/70 focus:border-indigo-400";
 
 function Section({
   id,
@@ -369,7 +375,7 @@ function RoleRow({
             type="button"
             onClick={onRemove}
             aria-label="הסרת תפקיד"
-            className="mt-1 rounded-lg p-2 text-cream/30 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+            className="mt-1 rounded-lg p-2 text-cream/55 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
           >
             <Trash2 className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -378,7 +384,7 @@ function RoleRow({
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="col-span-2 sm:col-span-1">
-          <span className="mb-1 block text-[11px] font-semibold text-cream/45">כמות</span>
+          <span className="mb-1 block text-[11px] font-semibold text-cream/65">כמות</span>
           <Controller
             control={control}
             name={`roles.${index}.headcount` as const}
@@ -409,12 +415,12 @@ function RoleRow({
         </div>
 
         <div>
-          <span className="mb-1 block text-[11px] font-semibold text-cream/45">התחלה</span>
+          <span className="mb-1 block text-[11px] font-semibold text-cream/65">התחלה</span>
           <input type="time" {...register(`roles.${index}.start_time` as const)} className={inputClass} />
           {error?.start_time && <p className="mt-1 text-xs text-rose-400">{error.start_time.message}</p>}
         </div>
         <div>
-          <span className="mb-1 block text-[11px] font-semibold text-cream/45">תעריף לשעה (₪)</span>
+          <span className="mb-1 block text-[11px] font-semibold text-cream/65">תעריף לשעה (₪)</span>
           <Controller
             control={control}
             name={`roles.${index}.base_rate` as const}
