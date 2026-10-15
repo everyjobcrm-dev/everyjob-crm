@@ -6,7 +6,6 @@ import type { ReactNode } from "react";
 import {
   Building2,
   CalendarDays,
-  CalendarPlus,
   CalendarRange,
   ClockCheck,
   History,
@@ -28,7 +27,6 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   profile: UserRound,
   dashboard: LayoutGrid,
   staffEvents: CalendarRange,
-  newEvent: CalendarPlus,
   hours: ClockCheck,
   employees: Users,
   recruiters: UserRoundCheck,

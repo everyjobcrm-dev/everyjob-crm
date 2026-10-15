@@ -3,7 +3,7 @@
  * so the role logic lives in one place. This decides what the shell SHOWS; every page and server action still
  * re-verifies the role server-side (AGENTS.md 5.2).
  */
-import { canCreateEvents, isStaffRole, type AppRole, type PermissionProfile } from "@/lib/auth/permissions";
+import { isStaffRole, type AppRole, type PermissionProfile } from "@/lib/auth/permissions";
 
 export type NavIcon =
   | "home"
@@ -12,7 +12,6 @@ export type NavIcon =
   | "profile"
   | "dashboard"
   | "staffEvents"
-  | "newEvent"
   | "hours"
   | "employees"
   | "recruiters"
@@ -60,18 +59,16 @@ const ADMIN_ITEMS: NavItem[] = [
   { href: "/admin/clients", label: "לקוחות", icon: "clients" },
 ];
 
-const NEW_EVENT: NavItem = { href: "/new", label: "אירוע חדש", icon: "newEvent" };
-
 export function buildNav(profile: PermissionProfile | null): NavModel {
   const role: AppRole = profile?.role ?? "employee";
   let manage: NavItem[] = [];
 
   if (role === "admin") {
-    manage = [...ADMIN_ITEMS, NEW_EVENT];
+    manage = ADMIN_ITEMS;
   } else if (isStaffRole(role)) {
+    // "אירוע חדש" is a button on the events list itself (shown only when canCreateEvents), not a nav item.
     manage = [
       { href: "/manager/events", label: role === "recruiter" ? "האירועים שלי" : "כל האירועים", icon: "staffEvents" },
-      ...(canCreateEvents(profile) ? [NEW_EVENT] : []),
     ];
   }
 
