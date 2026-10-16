@@ -199,5 +199,6 @@ If a task's instructions conflict with this section, this section wins; flag the
 Loaded on demand, not part of the always-on context:
 - `docs/spec-full.md` — full role and screen specification, source of truth for UI/UX behavior not yet summarized above.
 - `docs/roadmap.md` — phased build status and architecture decisions log. Check before starting new feature work to confirm it isn't already in progress or blocked by an earlier, incomplete phase.
+- `docs/lead-profile.md` — owner preferences, environments and approval conventions for the lead role (`.agents/skills/agent-lead`). It never overrides this file.
 
 Keep this file under roughly 300–400 lines. If it grows past that, split by topic into `.agents/rules/<topic>.md` (e.g. `rbac.md`, `schema.md`) rather than continuing to expand this file — a bloated always-loaded context measurably degrades agent output quality.

@@ -1,0 +1,33 @@
+{
+  "skill_name": "agent-lead",
+  "evals": [
+    {
+      "id": 1,
+      "name": "declined-migration-resume",
+      "prompt": "The agent stopped: E0-E2 applied, E3 remove_event_role apply_migration returned {\"status\":\"declined\"}; function not present. It asks: re-approve, or should I run it in the SQL Editor?",
+      "expected_output": "Verifies E0-E2 live read-only; no rollback; recommends owner runs the exact E3 block in the SQL Editor (pasted in full); one RESUME prompt in one block forbidding a retry of apply_migration, verifying E3 grants/definer/body vs git, then continuing; next step concrete.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "report-with-wrong-count",
+      "prompt": "Agent report: P9 done, p9 51/51 PASS (you said 48), p6 fixture constant changed, pushed 6c98e00. Review it.",
+      "expected_output": "Recounts with pin.sh and confirms 51 (owns the miscount), checks the p6 diff is fixture-only, verifies pushed SHA and DB grants, says 'Approved', backlog lines only, and gives the next milestone prompt or a triage of polish items.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "is-this-critical-triage",
+      "prompt": "האם השלב הזה קריטי? אנחנו רוצים להתקדם עם הפרויקט",
+      "expected_output": "Triage table against the blocker test; recommends skipping polish and moving to the milestone gate (browser verification); no agent prompt for polish; concrete next step with PowerShell commands.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "new-milestone-plan",
+      "prompt": "Plan payroll & billing: internal reports + Excel, admin only. Give me the first prompt.",
+      "expected_output": "Plan mode: DoD, ordered steps (views before UI), deny-list stops (no external accounting API, admin-only, no Form 101), max 3 questions with bold recommendations, first prompt in one block with ponytail discipline and FAILURE RULES.",
+      "files": []
+    }
+  ]
+}
