@@ -1,4 +1,4 @@
--- PROPOSED (P9-E0..E3) 2026-10-15 - NOT APPLIED. Responsible recruiter + edit-event RPCs (docs/handoff.md §6, §7.2-7.3).
+-- APPLIED 2026-10-16 (P9-E0..E3; E0-E2 via MCP apply_migration, E3 by the owner in the SQL Editor). Proposed 2026-10-15. Responsible recruiter + edit-event RPCs (docs/handoff.md §6, §7.2-7.3).
 -- All four are NEW functions (no live definition to replace). Apply one at a time; the rollback lines at the bottom
 -- contain DROP and are run by the owner in the SQL Editor only.
 --

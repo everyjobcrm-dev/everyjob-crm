@@ -1,4 +1,4 @@
-# Session handoff - everyJob CRM (updated 2026-10-15)
+# Session handoff - everyJob CRM (updated 2026-10-16)
 
 Read this file and AGENTS.md before doing anything. AGENTS.md (§8 especially) wins over this file.
 
@@ -39,9 +39,14 @@ Demo users (all verified; password chosen by the owner; roles set in `profiles`)
   h2 submit/approve/reject/void RPCs, h3 SELECT-only RLS on the 3 hours tables, h5 `v_my_monthly_hours` +
   `v_recruiter_pending_credits`, H7 `profiles.recruited_by` (credit only when it equals `events.recruiter_id`),
   H6v2 `redeem_recruiter_credits` (FIFO, `redeemed_by` / `redeemed_event_id`).
-- Tests: `supabase/tests/p4_behavior_tests.sql` (43/43 on 2026-10-15; the M6c expectation now asserts the employee's
-  direct UPDATE affects 0 rows and leaves the row unchanged),
-  `supabase/tests/p6_hours_behavior_tests.sql` (55/55).
+- P9 edit event (2026-10-16, `supabase/p9_e_event_edit.sql`): E0 `list_staff_recruiters`, E1 `update_event_details`,
+  E2 `upsert_event_role` applied via MCP `apply_migration`; E3 `remove_event_role` applied by the owner in the SQL Editor
+  (the MCP call was declined by the tool permission layer). All four: SECURITY DEFINER, `search_path=pg_catalog, public`,
+  no anon/PUBLIC EXECUTE; E3 body md5 (whitespace-normalized) = commit 94e6910.
+- Tests (2026-10-16): `supabase/tests/p9_event_edit_tests.sql` 51/51,
+  `supabase/tests/p4_behavior_tests.sql` 43/43 (the M6c expectation asserts the employee's direct UPDATE affects 0 rows
+  and leaves the row unchanged), `supabase/tests/p6_hours_behavior_tests.sql` 55/55 (fixture tz base moved to 31415900
+  after a live profile collided with fixture n=5). Nothing persisted after any run.
 
 ## 4. Git state (consolidated 2026-10-15)
 - `master` has Phases 1-2 (PR #2) and is what Vercel production serves.
@@ -69,19 +74,18 @@ Demo users (all verified; password chosen by the owner; roles set in `profiles`)
 - **UI:** one app shell for every role (employee items for all + a "ניהול" section for staff). "אירוע חדש" is a
   button on the events list, not a nav item. Hebrew, RTL logical classes only, Indigo #4F46E5 / Lime #D4FF00, no pills.
 
-## 6. Open product gap (decided default - implement unless the owner objects)
-**Recruiters without `can_create_events` can never own an event.** Today the DB forces `events.recruiter_id` to the
-creator for recruiters and to NULL for admin/manager (see `app/admin/actions.ts` around "events.recruiter_id is set
-by the database"). Default decision: **Admin and Manager choose a "מגייס/ת אחראי/ת" (any recruiter) when creating
-or editing an event**; a recruiter creating an event still owns it. This needs a DB change to the trigger/guard that
-sets `recruiter_id` -> §8 approval required.
+## 6. Responsible recruiter - RESOLVED (2026-10-16)
+Admin and Manager choose a "מגייס/ת אחראי/ת" (any recruiter, or none) when creating or editing an event; a recruiter
+creating an event still owns it. **No trigger change was needed:** the live `guard_event_recruiter_ownership` already
+lets admin/manager set `recruiter_id` on INSERT (a recruiter is forced to self) and only admin/manager may change it on
+UPDATE. The edit path goes through `update_event_details` (P9 E1), which also checks the target has role `recruiter`.
 
 ## 7. Roadmap from here (in order)
 1. **Consolidate** (no DB): merge `m8v2-self-withdraw-gzxahv` into `hopeful-gates-rtzhto`, resolve conflicts keeping
    the approved shell, fix the outdated p4 test expectation, tsc/lint/build, push. PR #4 then carries everything.
-2. **Responsible recruiter** (§6 above): read the live trigger, propose exact SQL + rollback + tests, get approval,
+2. **Done 2026-10-16.** **Responsible recruiter** (§6 above): read the live trigger, propose exact SQL + rollback + tests, get approval,
    apply, add the select to the create form (admin/manager) and show it on event cards.
-3. **Edit event** feature: RPCs `update_event_details(event, patch jsonb)` (allow-list), `upsert_event_role`,
+3. **Done 2026-10-16 (P9, browser verification pending).** **Edit event** feature: RPCs `update_event_details(event, patch jsonb)` (allow-list), `upsert_event_role`,
    `remove_event_role`; rules: headcount >= occupied, no removing roles with registrations, no past dates, no
    date/time change once hours exist, cancelled/completed read-only, admin-only client/recruiter/bill_to_client.
    "עריכת פרטי אירוע" button on the staff event page + `/manager/events/[id]/edit`.
@@ -104,6 +108,8 @@ sets `recruiter_id` -> §8 approval required.
 - The owner tests on localhost; remind them to `git fetch` + `git checkout <branch>` + `npm install` + delete `.next`
   + restart `npm run dev` after every change, and to log out/in after role changes.
 - Commit locally after each step, push at the end of each milestone.
+- Supabase MCP apply_migration may be declined by the tool permission layer for function bodies containing DELETE; the
+  owner runs such blocks in the SQL Editor and the agent verifies read-only.
 
 ## 9. Backlog (non-blocking, found 2026-10-15)
 - `event_roles` is `SELECT true` for all authenticated users, so `bill_to_client` (client pricing) is readable by employees.
@@ -112,5 +118,10 @@ sets `recruiter_id` -> §8 approval required.
   RPCs enforce the edit rules, the direct path does not. Narrow to RPC-only once status changes also go through an RPC.
 - Vercel Preview has no `SUPABASE_SERVICE_ROLE_KEY` (Production has it), so /api/auth/register and ensure-profile fail on
   previews. `DEV_SKIP_EMAIL_VERIFICATION` is not set anywhere (good).
-- /admin/events "אירוע חדש" button is pill-shaped (`rounded-full`), against the design rules.
+- No notification to registrants when an event's date/time or `min_age` changes (the edit form only warns staff).
+- Raising `min_age` does not re-check the age of existing registrants.
+- Cast errors 22007 (bad date/time) / 22P02 (bad uuid/number) from `update_event_details` are not mapped to Hebrew in
+  `lib/events/errors.ts`.
+- A direct `events.recruiter_id` write (outside `update_event_details`) does not validate that the target has role `recruiter`.
+- Add `.gitattributes` (`eol=lf` for `*.sql`, `*.ts`, `*.md`): the owner's `core.autocrlf=true` produces CRLF working copies.
 - Screenshots at 390/1440 for the edit page need a logged-in session; pending the browser-verification milestone.

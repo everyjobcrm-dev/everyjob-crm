@@ -57,3 +57,12 @@ repo. **The live DB is the source of truth** (decision of 2026-10-12). These fil
   `supabase/approve_shift_hours_v1_live.sql` (live definition captured beforehand, md5 a501d6d4…).
 - `p6_h6v2_redeem_credits`: `recruiter_bonuses.redeemed_by`, `redeemed_event_id`; `redeem_recruiter_credits(event, count)`; body md5 = file.
 - `p6_h6_redeem_credits.sql` (never applied) was removed from the repo.
+
+## P9 edit event (2026-10-16)
+- `p9_e0_list_staff_recruiters`, `p9_e1_update_event_details`, `p9_e2_upsert_event_role` applied through `apply_migration`, one at a time,
+  bodies from `supabase/p9_e_event_edit.sql` @ 94e6910 (no hand-run SQL for these three).
+- `remove_event_role` (E3) was **hand-applied by the owner in the SQL Editor** (the MCP call was declined by the tool permission layer,
+  body contains DELETE); it is therefore absent from `supabase_migrations.schema_migrations`. Verified read-only: whitespace-normalized
+  `md5(prosrc)` 653936aa... = the committed body (live body has CRLF line endings).
+- All four: SECURITY DEFINER, `search_path=pg_catalog, public`, EXECUTE for authenticated/service_role only. New functions - no rollback snapshot;
+  rollback = the commented DROP lines at the end of the file (owner, SQL Editor).
