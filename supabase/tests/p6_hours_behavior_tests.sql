@@ -3,6 +3,7 @@
 -- Fixtures inside ONE DO block; every assertion impersonated (SET LOCAL ROLE authenticated + request.jwt.claims);
 -- the block always ends with RAISE EXCEPTION, so nothing persists.
 -- Afterwards verify: SELECT count(*) FROM auth.users WHERE email LIKE 'p6test%'; -> 0
+-- Fixture tz base moved 14142100 -> 31415900 on 2026-10-16: a live profile collided with fixture n=5 (profiles_tz_key).
 DO $do$
 DECLARE
   v_res jsonb := '[]'::jsonb; rec record; n int := 0; b boolean;
@@ -54,7 +55,7 @@ BEGIN
     n := n + 1;
     INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data, email_confirmed_at, created_at, updated_at)
     VALUES (rec.id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'p6test' || n || '_' || rec.id || '@example.invalid',
-      jsonb_build_object('first_name', 'בדיקה' || n, 'last_name', 'P6', 'tz', pg_temp.tz(14142100 + n * 7), 'gender', 'other',
+      jsonb_build_object('first_name', 'בדיקה' || n, 'last_name', 'P6', 'tz', pg_temp.tz(31415900 + n * 7), 'gender', 'other',
                          'phone_number', '05' || lpad((43000000 + n)::text, 8, '0'), 'birth_date', '1990-01-01'), now(), now(), now());
     UPDATE public.profiles SET role = rec.role::public.user_role WHERE id = rec.id;
   END LOOP;
