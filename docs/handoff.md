@@ -81,7 +81,7 @@ lets admin/manager set `recruiter_id` on INSERT (a recruiter is forced to self) 
 UPDATE. The edit path goes through `update_event_details` (P9 E1), which also checks the target has role `recruiter`.
 
 ## 7. Roadmap from here (in order)
-1. **Consolidate** (no DB): merge `m8v2-self-withdraw-gzxahv` into `hopeful-gates-rtzhto`, resolve conflicts keeping
+1. **Done 2026-10-15 (82d7f6d).** **Consolidate** (no DB): merge `m8v2-self-withdraw-gzxahv` into `hopeful-gates-rtzhto`, resolve conflicts keeping
    the approved shell, fix the outdated p4 test expectation, tsc/lint/build, push. PR #4 then carries everything.
 2. **Done 2026-10-16.** **Responsible recruiter** (§6 above): read the live trigger, propose exact SQL + rollback + tests, get approval,
    apply, add the select to the create form (admin/manager) and show it on event cards.

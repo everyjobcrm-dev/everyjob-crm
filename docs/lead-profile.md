@@ -46,6 +46,15 @@ conventions; do not copy AGENTS.md rules here.
   verifies read-only and records them in `supabase/live_snapshot/README.md`.
 - Test files: assertion count = `v_res := v_res ||` rows (pin.sh default).
 
+## Status probes (read by `scripts/status.sh` and the status card)
+- Base branch: `claude/hopeful-gates-rtzhto-01c57f`
+- State file: `docs/handoff.md`
+- DB expected live (read-only check of existence, SECURITY DEFINER, no anon EXECUTE): `list_staff_recruiters`,
+  `update_event_details`, `upsert_event_role`, `remove_event_role`, `submit_shift_hours`, `approve_shift_hours`,
+  `redeem_recruiter_credits`, `request_registration_cancellation`.
+- Deploy: Vercel project `everyjob-crm` - latest Production and Preview deployment state; env var names only.
+- Open PRs on the repo (GitHub MCP), PR #4 base `claude/hopeful-gates-rtzhto`.
+
 ## Stack modules
 - `stack-supabase`, `stack-nextjs-vercel`.
 

@@ -32,6 +32,13 @@ AGENTS.md stays the source of hard rules; do not copy its rules here, point to t
 - Migration ids: <p9_e0 style>. Approval line: `approve <ids>`; pasting the prompt is the approval.
 - Who runs DROP / blocked statements: the owner, in <SQL Editor>.
 
+## Status probes (read by scripts/status.sh and the status card)
+- Base branch: `<branch>`
+- State file: `<docs/handoff.md>`
+- DB expected live: `<fn1>`, `<fn2>` (checked read-only: exists, SECURITY DEFINER, no anon EXECUTE)
+- Deploy: <platform / project> - Production + Preview state; env var names: <NAMES>
+- PRs: <which PRs matter>
+
 ## Stack modules to load
 - stack-supabase, stack-nextjs-vercel
 

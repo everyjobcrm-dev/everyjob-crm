@@ -25,6 +25,14 @@ SELECT p.proname, pg_get_function_identity_arguments(p.oid) args, p.prosecdef, p
        md5(replace(pg_get_functiondef(p.oid), E'\r', '')) AS def_md5
   FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace AND p.proname IN (<names>) ORDER BY 1;
 ```
+Status probe for the profile's "DB expected live" list (one row per name, missing ones show exists=false):
+```sql
+SELECT n.name, p.oid IS NOT NULL AS exists, COALESCE(p.prosecdef, false) AS definer,
+       p.proconfig IS NOT NULL AS has_search_path,
+       COALESCE(has_function_privilege('anon', p.oid, 'EXECUTE'), false) AS anon_exec
+  FROM unnest(ARRAY[<'fn1','fn2'>]) n(name)
+  LEFT JOIN pg_proc p ON p.proname = n.name AND p.pronamespace = 'public'::regnamespace ORDER BY 1;
+```
 Triggers on tables (order matters: BEFORE triggers fire alphabetically):
 ```sql
 SELECT c.relname, t.tgname, pg_get_triggerdef(t.oid), p.proname, p.prosecdef
