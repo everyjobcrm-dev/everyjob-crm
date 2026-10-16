@@ -1947,6 +1947,14 @@ export type Database = {
           tz: string
         }[]
       }
+      list_staff_recruiters: {
+        Args: never
+        Returns: {
+          first_name: string
+          id: string
+          last_name: string
+        }[]
+      }
       redeem_recruiter_credits: {
         Args: { p_count: number; p_event_id: string }
         Returns: number
@@ -2010,28 +2018,7 @@ export type Database = {
         Args: { p_lease_token: string; p_tz_hash: string }
         Returns: boolean
       }
-      list_staff_recruiters: {
-        Args: never
-        Returns: { first_name: string; id: string; last_name: string }[]
-      }
       remove_event_role: { Args: { p_role_id: string }; Returns: undefined }
-      update_event_details: {
-        Args: { p_event_id: string; p_patch: Json }
-        Returns: Database["public"]["Tables"]["events"]["Row"]
-      }
-      upsert_event_role: {
-        Args: {
-          p_base_rate: number | null
-          p_bill_to_client?: number | null
-          p_end_time: string | null
-          p_event_id: string
-          p_headcount: number
-          p_role_id: string | null
-          p_role_name: string
-          p_start_time: string
-        }
-        Returns: Database["public"]["Tables"]["event_roles"]["Row"]
-      }
       remove_scheduled_employee: {
         Args: { p_reason: string; p_registration_id: string }
         Returns: string
@@ -2172,6 +2159,63 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "shift_hour_submissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_event_details: {
+        Args: { p_event_id: string; p_patch: Json }
+        Returns: {
+          cancelled_from_status: string | null
+          client_id: string
+          created_at: string | null
+          dress_code: string | null
+          event_date: string
+          id: string
+          lifecycle_status: string
+          location: string
+          min_age: number | null
+          min_rating: number | null
+          notes: string | null
+          recruiter_id: string | null
+          start_time: string | null
+          status: string
+          travel_budget_per_worker: number | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      upsert_event_role: {
+        Args: {
+          p_base_rate: number
+          p_bill_to_client?: number
+          p_end_time: string
+          p_event_id: string
+          p_headcount: number
+          p_role_id: string
+          p_role_name: string
+          p_start_time: string
+        }
+        Returns: {
+          base_rate: number | null
+          bill_to_client: number | null
+          created_at: string
+          end_time: string | null
+          event_id: string
+          headcount: number
+          id: string
+          role_name: string
+          start_time: string
+          wage_to_worker: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "event_roles"
           isOneToOne: true
           isSetofReturn: false
         }

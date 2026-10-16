@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle, Check, Plus, Trash2 } from "lucide-react";
 import {
@@ -78,6 +78,7 @@ function DetailsForm({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting, isDirty },
     reset,
   } = useForm<EditEventDetailsFormValues, unknown, EditEventDetailsInput>({
@@ -112,6 +113,10 @@ function DetailsForm({
   const isAdmin = viewerRole === "admin";
   const canAssignRecruiter = viewerRole === "admin" || viewerRole === "manager";
   const currentClient = clients.find((c) => c.id === event.clientId);
+  // occupied = pending + approved per role (event_role_fill_counts)
+  const registrants = event.roles.reduce((sum, r) => sum + r.occupied, 0);
+  const [date, start] = useWatch({ control, name: ["event_date", "start_time"] });
+  const timeChanged = date !== event.eventDate || start !== event.startTime;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="border-s-4 border-[#4F46E5] bg-surface p-5">
@@ -171,6 +176,7 @@ function DetailsForm({
       <p className="mt-3 text-xs text-cream/65">
         אחרי שהוזנו שעות לאירוע אי אפשר לשנות תאריך ושעה. אחרי אישור שעות אי אפשר לשנות גם נסיעות ומגייס/ת.
       </p>
+      {timeChanged && <TimeChangeWarning count={registrants} />}
       <div className="mt-4 flex items-center gap-3">
         <button
           type="submit"
@@ -288,6 +294,8 @@ function RoleForm({
   }
 
   const removable = canRemove && !role.hasRegistrations;
+  const [start, end] = useWatch({ control: form.control, name: ["start_time", "end_time"] });
+  const timeChanged = start !== role.startTime || (end || null) !== role.endTime;
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="border border-cream/10 bg-surface2/40 p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -307,6 +315,7 @@ function RoleForm({
       </div>
       {serverError && <ErrorLine text={serverError} />}
       <RoleFields form={form} viewerRole={viewerRole} minHeadcount={Math.max(1, role.occupied)} />
+      {timeChanged && <TimeChangeWarning count={role.occupied} />}
       {isDirty && (
         <button
           type="submit"
@@ -395,6 +404,17 @@ function Field({
       {hint && <span className="mt-1 block text-[11px] text-cream/55">{hint}</span>}
       {error && <span className="mt-1 block text-xs text-rose-400">{error}</span>}
     </label>
+  );
+}
+
+// No notification is sent on a date/time change (backlog), so staff must tell registrants themselves.
+function TimeChangeWarning({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <p role="status" className="mt-3 flex items-center gap-2 border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+      <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+      שינוי מועד ישפיע על {count} רשומים (משובצים וממתינים לאישור). הם לא יקבלו הודעה אוטומטית - יש לעדכן אותם ישירות.
+    </p>
   );
 }
 
