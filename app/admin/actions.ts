@@ -516,7 +516,7 @@ async function applyEventStatus(auth: AuthOk, eventId: string, status: EventStat
 
 /**
  * Change an event's registration status. Admin/Manager: any event; Recruiter: own events only.
- * completed and paused are frozen (no transition in or out through the app). Rules mirror the DB trigger.
+ * paused is frozen; completed (final closure, level 2) is Admin/Manager only: closed -> completed and back. Rules mirror the DB trigger.
  */
 export async function updateEventStatus(eventId: string, status: EventStatus): Promise<ActionResult> {
   const auth = await requireRole("recruiter");

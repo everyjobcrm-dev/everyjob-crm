@@ -15,6 +15,7 @@ const BY_MESSAGE: ReadonlyArray<readonly [string, string]> = [
   ["missing_rates", "לא ניתן לפתוח את האירוע: חסר תעריף בסיס באחד התפקידים."],
   ["Every event role must have a base rate", "לא ניתן לפתוח את האירוע: חסר תעריף בסיס באחד התפקידים."],
   ["cannot_cancel_with_approved_hours", "לא ניתן לבטל אירוע שקיים עבורו דוח שעות מאושר."],
+  ["pending_hours_exist", "לא ניתן לסגור סופית: קיימים דוחות שעות שממתינים לאישור. יש לאשר, לדחות או לבטל אותם תחילה."],
   // registration guard (trigger guard_event_registration_write)
   ["event_cancelled", "האירוע בוטל - לא ניתן לבצע בו פעולות."],
   ["event_completed", "האירוע הושלם - רק אדמין יכול לשנות בו שיבוצים."],

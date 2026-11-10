@@ -27,7 +27,7 @@ const STATUS_LABEL: Record<HistoryEvent["status"], string> = {
   pending_rates: "ממתין לתעריפים",
   open: "פתוח להרשמה",
   closed: "סגור להרשמה",
-  completed: "נסגר פיננסית",
+  completed: "נסגר סופית",
   cancelled: "בוטל",
 };
 

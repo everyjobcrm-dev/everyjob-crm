@@ -8,10 +8,13 @@ import { roleAtLeast, type AppRole } from "@/lib/auth/permissions";
  *
  *   pending_rates  rates missing; hidden from employees; cannot take registrations
  *   open           employees (and staff-as-workers) may register; a full role routes to the waitlist
- *   closed         no NEW registrations (incl. waitlist joins); staff may still approve/assign/remove
+ *   closed         closure level 1: no NEW registrations (incl. waitlist joins); staff may still approve/assign/remove;
+ *                  Admin/Manager (any event) and Recruiter (own events) lock and unlock
  *   cancelled      marked only; registrations are not touched; excluded from every derived calculation
- *   completed      FROZEN - no transition in or out through the app (service_role / direct DB only)
- *   paused         FROZEN - same
+ *   completed      closure level 2 (final, "סגירה סופית"): read-only for edits and scheduling; Admin/Manager only, from
+ *                  'closed'; reopen for editing = completed -> closed (Admin/Manager). Refused while a pending hour
+ *                  report exists (p10a). Admin may still submit/approve hours on it.
+ *   paused         FROZEN - no transition in or out through the app (service_role / direct DB only)
  *
  * The allowed transitions below MIRROR the database trigger enforce_event_status_transition (the DB is authoritative;
  * this table only drives the UI and server-action pre-checks).
@@ -20,14 +23,14 @@ import { roleAtLeast, type AppRole } from "@/lib/auth/permissions";
 export const EVENT_STATUSES = ["pending_rates", "open", "closed", "cancelled", "completed", "paused"] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 
-export const FROZEN_STATUSES: readonly EventStatus[] = ["completed", "paused"];
+export const FROZEN_STATUSES: readonly EventStatus[] = ["paused"];
 
 export const EVENT_STATUS_LABEL: Record<EventStatus, string> = {
   pending_rates: "ממתין לתעריפים",
   open: "פתוח להרשמה",
   closed: "סגור להרשמה",
   cancelled: "בוטל",
-  completed: "נסגר פיננסית",
+  completed: "נסגר סופית",
   paused: "מושהה",
 };
 
@@ -56,9 +59,10 @@ const RECRUITER_TRANSITIONS: Partial<Record<EventStatus, EventStatus[]>> = {
 
 const MANAGER_TRANSITIONS: Partial<Record<EventStatus, EventStatus[]>> = {
   open: ["closed", "cancelled"],
-  closed: ["open", "cancelled"],
+  closed: ["open", "cancelled", "completed"],
   pending_rates: ["open", "cancelled"],
   cancelled: ["open", "closed", "pending_rates"],
+  completed: ["closed"],
 };
 
 /**

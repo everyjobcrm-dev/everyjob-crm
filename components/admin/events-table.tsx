@@ -298,7 +298,7 @@ function EventCard({
 }
 /**
  * Status control: only the transitions the caller is allowed to make (mirrors the DB trigger).
- * completed / paused are frozen (read-only); a cancelled event offers a one-click restore to the status it was
+ * paused is frozen (read-only); completed (final closure) can only go back to closed; a cancelled event offers a one-click restore to the status it was
  * cancelled from (or "closed"). This screen is Admin-only, so the role is "admin"; the server action re-verifies.
  */
 function StatusControl({
