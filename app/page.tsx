@@ -82,15 +82,6 @@ function Logo({ className = "h-10" }: { className?: string }) {
   );
 }
 
-/** A sleeve cuff from the logo: a rounded bar with its button. */
-function Cuff({ className }: { className: string }) {
-  return (
-    <span className={`flex items-center justify-start rounded-2xl ps-3 ${className}`} aria-hidden="true">
-      <span className="h-2 w-2 rounded-full bg-ink/70" />
-    </span>
-  );
-}
-
 function useDrift(value: MotionValue<number>, amount: number) {
   return useTransform(value, (n) => n * amount);
 }
@@ -101,15 +92,13 @@ export default function Home() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const photoY = useTransform(scrollYProgress, [0, 1], [0, 80]);
 
-  // the disc and the cuffs drift a little against the pointer, so the collage has depth
+  // the disc and ring drift a little against the pointer, so the photo has depth
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
   const sx = useSpring(mx, { stiffness: 60, damping: 16 });
   const sy = useSpring(my, { stiffness: 60, damping: 16 });
   const backX = useDrift(sx, -22);
   const backY = useDrift(sy, -22);
-  const frontX = useDrift(sx, 26);
-  const frontY = useDrift(sy, 26);
 
   function onHeroMove(e: React.MouseEvent<HTMLElement>) {
     if (reduce) return;
@@ -120,7 +109,7 @@ export default function Home() {
 
   return (
     <main className="overflow-x-clip bg-canvas text-ink">
-      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
+      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-8 sm:py-4 lg:px-12">
         <Link href="/" aria-label="everyJob - דף הבית">
           <Logo className="h-12 sm:h-14" />
         </Link>
@@ -130,15 +119,15 @@ export default function Home() {
           <Link href="#about" className="hover:underline hover:underline-offset-8">מי אנחנו</Link>
         </nav>
         <div className="flex items-center gap-2">
-          <Link href="/login" className="btn px-3 hover:bg-surface2">כניסה</Link>
-          <Link href="/register" className="btn btn-primary">הרשמה</Link>
+          <Link href="/login" className="btn min-h-11 px-3 hover:bg-surface2">כניסה</Link>
+          <Link href="/register" className="btn btn-primary min-h-11">הרשמה</Link>
         </div>
       </header>
 
       {/* ================= HERO ================= */}
       <section ref={heroRef} onMouseMove={onHeroMove}>
-        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-6 px-5 pb-16 pt-8 sm:px-8 md:grid-cols-12 md:pb-24 md:pt-12 lg:px-12">
-          <div className="text-center md:col-span-7 md:text-start">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-6 px-5 pb-12 pt-6 sm:px-8 md:grid-cols-12 md:pb-24 md:pt-12 lg:px-12">
+          <div className="md:col-span-7">
             <h1 className="font-display text-[12.5vw] font-black leading-[1.02] tracking-tight sm:text-7xl lg:text-[6.75rem]">
               <motion.span
                 className="block"
@@ -149,7 +138,7 @@ export default function Home() {
                 אנשים טובים,
               </motion.span>
               <motion.span
-                className="mt-2 flex justify-center md:justify-start"
+                className="mt-2 flex"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.12, ease }}
@@ -168,12 +157,12 @@ export default function Home() {
               </motion.span>
             </h1>
 
-            <p className="mx-auto mt-9 max-w-xl text-lg leading-8 text-muted md:mx-0">
+            <p className="mt-8 max-w-xl text-lg leading-8 text-muted">
               everyJob מאחדת ניהול עובדים, שיבוצים, נוכחות ושכר: כל מה שצריך כדי להפעיל צוות אירועים מנצח, מהראיון ועד
               למשמרת הראשונה.
             </p>
 
-            <div className="mt-9 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center md:justify-start">
+            <div className="mt-9 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
               <Link href="/register" className="btn btn-primary btn-lg group">
                 מצטרפים לצוות
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
@@ -184,30 +173,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* the logo, life-size: its dotted ring, two cuffs, and one of the people it stands for */}
-          <div className="relative mx-auto mt-4 h-[420px] w-full max-w-[400px] md:col-span-5 md:mt-0 md:h-[580px] md:max-w-none">
+          {/* the logo's dotted ring and a sun disc behind one of the people it stands for */}
+          <div className="relative mx-auto mt-6 h-[360px] w-full max-w-[340px] sm:h-[440px] sm:max-w-[420px] md:col-span-5 md:mt-0 md:h-[580px] md:max-w-none">
             <motion.div style={{ x: backX, y: backY }} className="absolute inset-0" aria-hidden="true">
               <div className="absolute -inset-x-[4%] top-[3%] aspect-square animate-spin-slow rounded-full border-[3px] border-dotted border-ink/25" />
               <div className="absolute inset-x-[8%] top-[10%] aspect-square rounded-full bg-sun" />
-            </motion.div>
-
-            <motion.div style={{ x: frontX, y: frontY }} className="absolute inset-0" aria-hidden="true">
-              <motion.div
-                initial={{ x: 80, opacity: 0, rotate: -40 }}
-                animate={{ x: 0, opacity: 1, rotate: -16 }}
-                transition={{ duration: 0.9, delay: 0.3, ease }}
-                className="absolute -start-2 top-[12%]"
-              >
-                <Cuff className="h-14 w-36 bg-sky" />
-              </motion.div>
-              <motion.div
-                initial={{ x: -80, opacity: 0, rotate: 40 }}
-                animate={{ x: 0, opacity: 1, rotate: 14 }}
-                transition={{ duration: 0.9, delay: 0.4, ease }}
-                className="absolute -end-1 bottom-[20%]"
-              >
-                <Cuff className="h-14 w-40 bg-pink" />
-              </motion.div>
             </motion.div>
 
             <motion.div
@@ -228,14 +198,14 @@ export default function Home() {
       </section>
 
       {/* what we staff, as a plain line of type */}
-      <p className="border-y border-ink px-5 py-6 text-center font-display text-2xl font-bold leading-[1.9] sm:text-3xl">
-        {roles.map((role, i) => (
-          <span key={role}>
-            {i > 0 && <span className="px-4 text-muted" aria-hidden="true">/</span>}
+      {/* no separators: a slash left at the end of a wrapped line reads as a typo, so wide gaps do the separating */}
+      <ul className="flex flex-wrap justify-center gap-x-7 gap-y-1 border-y border-ink px-5 py-6 font-display text-xl font-bold leading-10 sm:gap-x-10 sm:text-3xl sm:leading-[3rem]">
+        {roles.map((role) => (
+          <li key={role} className="whitespace-nowrap">
             {role}
-          </span>
+          </li>
         ))}
-      </p>
+      </ul>
 
       {/* ================= THREE HANDS ================= */}
       <section id="who" className="scroll-mt-8 px-5 pt-24 sm:px-8 lg:px-12 lg:pt-32">

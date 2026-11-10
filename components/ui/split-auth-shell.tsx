@@ -15,28 +15,12 @@ type SplitAuthShellProps = {
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-/** Auth layout: the brand panel (sun disc, cuffs, a real team member pointing at the form) beside the form. */
+/** Auth layout: the brand panel (the logo's dotted ring, a real team member pointing at the form) beside the form. */
 export function SplitAuthShell({ title, subtitle, children, error, success }: SplitAuthShellProps) {
   return (
     <div className="grid min-h-screen bg-canvas text-ink md:grid-cols-2">
       <aside className="sticky top-3 m-3 hidden h-[calc(100vh-1.5rem)] overflow-hidden rounded-[2rem] bg-sun md:block" aria-hidden="true">
         <div className="absolute -start-[18%] top-[16%] aspect-square w-[136%] animate-spin-slow rounded-full border-[3px] border-dotted border-ink/25" />
-        <motion.span
-          initial={{ x: 60, opacity: 0, rotate: -40 }}
-          animate={{ x: 0, opacity: 1, rotate: -14 }}
-          transition={{ duration: 0.9, delay: 0.3, ease }}
-          className="absolute end-[8%] top-[38%] flex h-14 w-40 items-center rounded-2xl bg-sky ps-3"
-        >
-          <span className="h-2 w-2 rounded-full bg-ink/70" />
-        </motion.span>
-        <motion.span
-          initial={{ x: -60, opacity: 0, rotate: 40 }}
-          animate={{ x: 0, opacity: 1, rotate: 12 }}
-          transition={{ duration: 0.9, delay: 0.4, ease }}
-          className="absolute bottom-[16%] start-[6%] flex h-14 w-36 items-center rounded-2xl bg-pink ps-3"
-        >
-          <span className="h-2 w-2 rounded-full bg-ink/70" />
-        </motion.span>
 
         <div className="relative z-10 p-10 xl:p-14">
           <h1 className="max-w-md font-display text-5xl font-black leading-[1.05] xl:text-6xl">
@@ -73,7 +57,7 @@ export function SplitAuthShell({ title, subtitle, children, error, success }: Sp
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease }}
-          className="m-auto w-full max-w-md py-10"
+          className="mx-auto w-full max-w-md pb-10 pt-8 md:my-auto md:py-10"
         >
           <h2 className="font-display text-4xl font-black sm:text-5xl">{title}</h2>
           <p className="mt-3 leading-7 text-muted">{subtitle}</p>
