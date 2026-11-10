@@ -47,7 +47,22 @@ export type ClientOption = {
   id: string;
   name: string;
   address: string | null;
+  /** Role names from the client's price list (names only - the client's rates never leave the server). */
+  preferredRoles: string[];
 };
+
+type PreferredRoleRow = { role?: unknown; rate?: unknown };
+
+/** clients.preferred_roles (jsonb [{role, rate}]) -> clean [{role, rate}] rows. */
+function parsePreferredRoles(raw: unknown): { role: string; rate: number | null }[] {
+  if (!Array.isArray(raw)) return [];
+  return (raw as PreferredRoleRow[])
+    .map((r) => ({
+      role: typeof r?.role === "string" ? r.role.trim() : "",
+      rate: typeof r?.rate === "number" && r.rate > 0 ? r.rate : null,
+    }))
+    .filter((r) => r.role.length > 0);
+}
 
 export type EventRoleView = {
   id: string;
@@ -85,13 +100,18 @@ export async function fetchClients(): Promise<ClientOption[]> {
   const auth = await requireRole("recruiter");
   if (!auth.ok) return [];
 
-  const { data, error } = await auth.supabase.from("clients").select("id, name, address").order("name");
+  const { data, error } = await auth.supabase.from("clients").select("id, name, address, preferred_roles").order("name");
 
   if (error) {
     console.error("[fetchClients]", error.message);
     return [];
   }
-  return data ?? [];
+  return (data ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    address: c.address,
+    preferredRoles: parsePreferredRoles(c.preferred_roles).map((r) => r.role),
+  }));
 }
 
 type RawEventRole = {
@@ -263,14 +283,31 @@ export async function createEvent(
     return fail(mapDbError(eventError, { fallback: "יצירת האירוע נכשלה. נסה/י שוב." }));
   }
 
-  const rolesPayload = roles.map((r) => ({
-    event_id: eventRow.id,
-    role_name: r.role_name,
-    headcount: r.headcount,
-    start_time: r.start_time,
-    end_time: r.end_time ?? null,
-    base_rate: r.base_rate ?? null,
-  }));
+  // DECISION: the client's price list (clients.preferred_roles[].rate) is the price the client pays per role, so it
+  // prefills event_roles.bill_to_client for roles with a matching name - for every creator, server-side only (the
+  // creator never receives the rate; bill_to_client stays Admin-only to read/edit). base_rate (worker wage) is never
+  // prefilled from it. Admin can still change the price on the edit page (upsert_event_role).
+  const { data: clientRow } = await auth.supabase
+    .from("clients")
+    .select("preferred_roles")
+    .eq("id", event.client_id)
+    .maybeSingle();
+  const priceByRole = new Map(
+    parsePreferredRoles(clientRow?.preferred_roles).map((r) => [r.role.toLowerCase(), r.rate] as const),
+  );
+
+  const rolesPayload = roles.map((r) => {
+    const price = priceByRole.get(r.role_name.trim().toLowerCase()) ?? null;
+    return {
+      event_id: eventRow.id,
+      role_name: r.role_name,
+      headcount: r.headcount,
+      start_time: r.start_time,
+      end_time: r.end_time ?? null,
+      base_rate: r.base_rate ?? null,
+      ...(price != null ? { bill_to_client: price } : {}),
+    };
+  });
 
   const { error: rolesError } = await auth.supabase.from("event_roles").insert(rolesPayload);
 
