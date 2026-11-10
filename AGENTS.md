@@ -201,3 +201,9 @@ Loaded on demand, not part of the always-on context:
 - `docs/roadmap.md` — phased build status and architecture decisions log. Check before starting new feature work to confirm it isn't already in progress or blocked by an earlier, incomplete phase.
 
 Keep this file under roughly 300–400 lines. If it grows past that, split by topic into `.agents/rules/<topic>.md` (e.g. `rbac.md`, `schema.md`) rather than continuing to expand this file — a bloated always-loaded context measurably degrades agent output quality.
+## 11. Claude Code notes (owner, 2026-10-13)
+- AGENTS.md is the source of truth. If docs/events-module-decisions.md conflicts with it, stop and ask me.
+- Never run DDL/DML against any database (AGENTS §8.1). Write SQL to supabase/pending/ and show it to me; I run it in the Supabase SQL Editor. After I confirm it was applied: save it as a timestamped file in supabase/migrations/, give me the `supabase migration repair --status applied <version> --linked` command, then regenerate types (AGENTS §5.6). This keeps dev, staging and prod migration history aligned.
+- 2FA is deferred until the end of the project (pre-launch, mandatory). Do NOT implement or touch 2FA now. Form 101 and bank details stay blocked for EVERYONE, including Admin, until 2FA exists: keep every existing aal2 gate failing closed, never weaken or bypass it, never add a dev workaround.
+- Earlier work (status control, event edit, cancel/restore, roster, employees directory) exists, uncommitted, in git branch backup/before-restore-2026-10-12. Port it slice by slice (git show / git checkout <branch> -- <path>) instead of rewriting it. That branch also contains unrelated old WIP; do not port that blindly.
+- Save tokens: open only the files you need, no repo-wide audits or full builds unless I ask, final replies under 200 words.
