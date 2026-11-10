@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="email">
+          <label className="mb-1.5 block text-sm font-semibold text-ink" htmlFor="email">
             אימייל
           </label>
           <input
@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            className="field"
             placeholder="name@example.com"
           />
         </div>
@@ -73,16 +73,16 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn btn-primary btn-lg group w-full"
         >
           {loading ? "שולח..." : "שלח קישור לאיפוס"}
           <ArrowRight className="h-4 w-4" />
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-muted">
         חזרו ל{' '}
-        <Link className="font-semibold text-sky-600 hover:text-sky-700" href="/login">
+        <Link className="font-semibold text-primary-soft hover:underline" href="/login">
           התחברות
         </Link>
       </p>

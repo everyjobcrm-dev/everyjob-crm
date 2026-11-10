@@ -3,23 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MapPin, FileCheck2, Landmark, Wallet, LogOut, ArrowLeft } from "lucide-react";
+import { FileCheck2, Landmark, LogOut, ArrowLeft } from "lucide-react";
+import { ROLE_LABEL } from "@/lib/nav";
+import { isAppRole } from "@/lib/auth/permissions";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-
-const PREFERRED_AREAS = ["תל אביב והמרכז", "השרון", "ירושלים"];
-
-type DocStatus = "missing" | "pending" | "complete";
-
-function StatusPill({ status }: { status: DocStatus }) {
-  if (status === "complete") {
-    return <span className="rounded-md bg-brass/10 px-2 py-1 text-[11px] font-semibold text-brass">הושלם</span>;
-  }
-  if (status === "pending") {
-    return <span className="rounded-md bg-cream/10 px-2 py-1 text-[11px] font-semibold text-cream/70">בבדיקה</span>;
-  }
-  return <span className="rounded-md bg-rose-500/10 px-2 py-1 text-[11px] font-semibold text-rose-400">חסר</span>;
-}
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth();
@@ -39,9 +27,6 @@ export default function ProfilePage() {
     return emailName || "משתמש/ת";
   })();
 
-  const form101Status: DocStatus = "missing";
-  const bankDetailsStatus: DocStatus = "complete";
-  const totalEarned = 12480;
 
   const [loggingOut, setLoggingOut] = useState(false);
   const [pendingCredits, setPendingCredits] = useState({ count: 0, amount: 0 });
@@ -85,99 +70,56 @@ export default function ProfilePage() {
     <div className="pb-10">
       <header className="mb-8 flex items-center gap-4">
         <div
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-brass font-display text-xl text-obsidian"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-sun font-display text-xl text-ink"
           aria-hidden="true"
         >
           {loading ? "..." : displayName[0]}
         </div>
         <div>
-          <h1 className="font-display text-2xl text-cream">{loading ? "..." : displayName}</h1>
-          <p className="text-sm text-cream/50">{profile?.role || "אין תיאור"}</p>
+          <h1 className="font-display text-2xl text-ink">{loading ? "..." : displayName}</h1>
+          <p className="text-sm text-muted">{isAppRole(profile?.role) ? ROLE_LABEL[profile.role] : ""}</p>
         </div>
       </header>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <section className="rounded-2xl border border-brass/15 bg-surface p-5 sm:col-span-2">
-          <div className="mb-3 flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-brass" strokeWidth={1.6} aria-hidden="true" />
-            <h2 className="font-semibold text-cream">אזורים מועדפים</h2>
-          </div>
-          <ul className="flex flex-wrap gap-2">
-            {PREFERRED_AREAS.map((area) => (
-              <li key={area} className="rounded-md bg-cream/5 px-2.5 py-1 text-xs font-semibold text-cream/80">
-                {area}
-              </li>
-            ))}
-          </ul>
-          <button
-            type="button"
-            className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-brass hover:bg-brass/10"
-          >
-            עריכת אזורים
-          </button>
-        </section>
-
-        <section className="flex items-center justify-between rounded-2xl border border-brass/15 bg-surface p-5">
+        <section className="flex items-center justify-between card p-5">
           <div className="flex items-center gap-3">
-            <FileCheck2 className="h-5 w-5 text-cream/50" strokeWidth={1.6} aria-hidden="true" />
+            <FileCheck2 className="h-5 w-5 text-muted" strokeWidth={1.6} aria-hidden="true" />
             <div>
-              <h2 className="font-semibold text-cream">טופס 101</h2>
-              <p className="text-sm text-cream/50">נדרש לעדכון שכר</p>
+              <h2 className="font-semibold text-ink">טופס 101</h2>
+              <p className="text-sm text-muted">נדרש לעדכון שכר</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <StatusPill status={form101Status} />
-            {form101Status === "missing" ? (
-              <Link
-                href="/employee/101form"
-                className="inline-flex items-center gap-1 rounded-full border border-brass/20 px-3 py-1.5 text-sm font-semibold text-brass transition hover:bg-brass/10"
-              >
-                להגיש טופס
-                <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.8} />
-              </Link>
-            ) : null}
-          </div>
+          <Link href="/employee/101form" className="btn btn-secondary btn-sm">
+            לטופס
+            <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden="true" />
+          </Link>
         </section>
 
-        <section className="flex items-center justify-between rounded-2xl border border-brass/15 bg-surface p-5">
+        <section className="flex items-center justify-between card p-5">
           <div className="flex items-center gap-3">
-            <Landmark className="h-5 w-5 text-cream/50" strokeWidth={1.6} aria-hidden="true" />
+            <Landmark className="h-5 w-5 text-muted" strokeWidth={1.6} aria-hidden="true" />
             <div>
-              <h2 className="font-semibold text-cream">פרטי בנק</h2>
-              <p className="text-sm text-cream/50">לצורך העברת שכר</p>
+              <h2 className="font-semibold text-ink">פרטי בנק</h2>
+              <p className="text-sm text-muted">לצורך העברת שכר</p>
             </div>
           </div>
-          <StatusPill status={bankDetailsStatus} />
-        </section>
-
-        <section className="relative overflow-hidden rounded-2xl border border-brass/25 bg-surface2 p-6 sm:col-span-2">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-32 opacity-60"
-            style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(201,161,91,0.14), transparent 70%)" }}
-            aria-hidden="true"
-          />
-          <div className="relative flex items-center gap-2 text-cream/50">
-            <Wallet className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
-            <span className="text-sm">סך הכל הרווחת</span>
-          </div>
-          <p className="relative mt-2 font-display text-4xl text-cream tabular-nums">
-            ₪{totalEarned.toLocaleString("he-IL")}
-          </p>
+          <span className="rounded-sm bg-ink/10 px-2 py-1 text-[11px] font-semibold text-muted">זמין בקרוב</span>
         </section>
 
         {profile?.role === "recruiter" && (
-          <section className="rounded-2xl border border-indigo-400/20 bg-surface p-5 sm:col-span-2">
+          <section className="rounded-lg border border-primary/20 bg-surface p-5 sm:col-span-2">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="font-semibold text-cream">זיכויי גיוס ממתינים</h2>
-                <p className="mt-1 text-sm text-cream/50">הנתונים מחושבים בזמן אמת. המימוש מתבצע על ידי מנהל/ת באירוע.</p>
+                <h2 className="font-semibold text-ink">זיכויי גיוס ממתינים</h2>
+                <p className="mt-1 text-sm text-muted">הנתונים מחושבים בזמן אמת. המימוש מתבצע על ידי מנהל/ת באירוע.</p>
               </div>
               <div className="text-end">
-                <p className="font-display text-2xl text-cream tabular-nums">{pendingCredits.count}</p>
-                <p className="text-xs text-cream/50">זיכויים</p>
+                <p className="font-display text-2xl text-ink tabular-nums">{pendingCredits.count}</p>
+                <p className="text-xs text-muted">זיכויים</p>
               </div>
             </div>
-            <p className="mt-4 text-lg font-semibold text-brass tabular-nums">
+            <p className="mt-4 text-lg font-semibold text-primary-soft tabular-nums">
               ₪{pendingCredits.amount.toLocaleString("he-IL", { maximumFractionDigits: 2 })}
             </p>
           </section>
@@ -188,7 +130,7 @@ export default function ProfilePage() {
         type="button"
         onClick={handleLogout}
         disabled={loggingOut}
-        className="mt-8 inline-flex items-center gap-2 rounded-full border border-rose-400/30 px-5 py-2.5 text-sm font-semibold text-rose-400 transition-colors hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+        className="btn btn-danger mt-8"
       >
         <LogOut className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
         {loggingOut ? "מתנתק..." : "התנתקות"}

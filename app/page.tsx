@@ -1,205 +1,163 @@
-//app/page.tsx
 "use client";
 
 import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+  type MotionValue,
+} from "framer-motion";
 import { LayoutGroup } from "motion/react";
-import { ArrowLeft, Check, Sparkles, WalletCards } from "lucide-react";
-import { ClosingCTA } from "@/components/ClosingCTA";
+import { ArrowLeft } from "lucide-react";
 import { TextRotate } from "@/components/ui/text-rotate";
 import { Typewriter } from "@/components/ui/typewriter-text";
 
-const manifest = [
-  {
-    title: "שקיפות",
-    description: "יושר מלא בכל שלב — מהראיון ועד לשכר בפועל.",
-    icon: Check,
-  },
-  {
-    title: "אמינות",
-    description: "מילה שלנו היא התחייבות — מקפידים על כל הבטחה.",
-    icon: Sparkles,
-  },
-  {
-    title: "מקצועיות",
-    description: "ניסיון של שנים והיכרות מעמיקה עם עולם ההשמה.",
-    icon: WalletCards,
-  },
-];
+const ease = [0.16, 1, 0.3, 1] as const;
 
-// The rotator cycles through what everyJob actually delivers — same claims
-// as the "who we are" pillars below, so the motion earns its place instead
-// of just decorating the headline.
 const rotatingPromises = ["משמרות טובות.", "שכר הוגן.", "צוות מנצח.", "גיוס אמיתי."];
+const staffedRoles = ["מלצרים ומלצריות.", "ברמנים.", "צוותי הפקה.", "אנשי אבטחה.", "כוח אדם לאירועים."];
+const roles = ["מלצרות", "בר", "הפקה", "אבטחה", "אירוח", "כנסים", "חתונות", "אירועי חברה"];
 
-// The roles the "מי אנחנו" section types out one by one — concrete proof
-// of who everyJob actually staffs, instead of another abstract claim.
-const staffedRoles = [
-  "מלצרים ומלצריות.",
-  "ברמנים.",
-  "צוותי הפקה.",
-  "אנשי אבטחה.",
-  "כוח אדם לאירועים.",
+// The logo is three hands meeting in the middle. These are the three hands.
+const hands = [
+  {
+    who: "עובדים",
+    title: "רואים משמרת, נרשמים, עובדים",
+    points: [
+      "כל האירועים הפתוחים, עם התפקיד והשכר לשעה",
+      "אישורים ורשימת המתנה, בלי לרדוף אחרי אף אחד",
+      "שעות מאושרות ושכר משוער, חודש בחודשו",
+    ],
+    bg: "bg-sky",
+  },
+  {
+    who: "מנהלי שטח ומגייסים",
+    title: "מאיישים אירוע בלי אקסלים",
+    points: [
+      "אישור הרשמות, שיבוץ וקידום מרשימת ההמתנה",
+      "נוכחות ודירוג בסוף כל משמרת",
+      "זיכוי גיוס למגייסים על כל שעה מאושרת",
+    ],
+    bg: "bg-pink",
+  },
+  {
+    who: "עסקים ולקוחות",
+    title: "צוות מלא, בזמן",
+    points: [
+      "מלצרים, ברמנים, הפקה ואבטחה, לפי האירוע",
+      "איוש מנוהל ומבוקר לכל תפקיד",
+      "דיווח שעות מאושר ושקוף בסוף כל אירוע",
+    ],
+    bg: "bg-sun",
+  },
+] as const;
+
+const steps = [
+  { title: "נרשמים", body: "פותחים חשבון עם תעודת זהות ואימייל.", rule: "border-pink" },
+  { title: "בוחרים משמרת", body: "רואים תפקיד, שעות ושכר, ונרשמים למה שמתאים.", rule: "border-sun" },
+  { title: "עובדים ומקבלים שכר", body: "השעות מדווחות ומאושרות, והשכר המשוער גלוי לכם.", rule: "border-sky" },
 ];
 
-const easeOutExpo = [0.16, 1, 0.3, 1] as const;
+const values = [
+  { title: "שקיפות", body: "יושר מלא בכל שלב, מהראיון ועד לשכר בפועל." },
+  { title: "אמינות", body: "מילה שלנו היא התחייבות. מקפידים על כל הבטחה." },
+  { title: "מקצועיות", body: "ניסיון של שנים והיכרות מעמיקה עם עולם ההשמה." },
+];
 
-const headlineLine = {
-  hidden: { opacity: 0, y: 26, filter: "blur(10px)" },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.85, delay: 0.15 + i * 0.14, ease: easeOutExpo },
-  }),
-};
-
-/** A button whose label nudges toward the cursor and whose fill blooms a
- *  soft gold-edge glow on hover — a "physical" response, not a color swap. */
-function MagneticCTA({
-  children,
-  href,
-  variant = "solid",
-}: {
-  children: React.ReactNode;
-  href: string;
-  variant?: "solid" | "outline";
-}) {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const sx = useSpring(x, { stiffness: 200, damping: 18, mass: 0.4 });
-  const sy = useSpring(y, { stiffness: 200, damping: 18, mass: 0.4 });
-
-  const handleMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    x.set((e.clientX - rect.left - rect.width / 2) * 0.28);
-    y.set((e.clientY - rect.top - rect.height / 2) * 0.28);
-  };
-  const handleLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  const base =
-    variant === "solid"
-      ? "bg-obsidian text-cream shadow-[0_0_0_0_rgba(201,161,91,0)]"
-      : "border border-obsidian/20 text-obsidian/75 hover:border-obsidian/40 hover:text-obsidian";
-
+function Logo({ className = "h-10" }: { className?: string }) {
   return (
-    <motion.a
-      href={href}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      whileHover={
-        variant === "solid"
-          ? { boxShadow: "0 0 0 6px rgba(201,161,91,0.22)" }
-          : undefined
-      }
-      transition={{ duration: 0.4 }}
-      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-8 py-3 text-sm font-bold transition-colors ${base}`}
-    >
-      <motion.span style={{ x: sx, y: sy }} className="inline-flex items-center gap-2">
-        {children}
-      </motion.span>
-    </motion.a>
+    <Image
+      src="/images/everyJob-logo.png"
+      alt="everyJob"
+      width={738}
+      height={411}
+      priority
+      className={`w-auto mix-blend-multiply ${className}`}
+    />
   );
 }
 
-/** A pillar icon whose ring draws itself once, on scroll into view —
- *  a restrained substitute for a stroke-animated icon that still reads
- *  as "counting itself in." */
-function DrawnIcon({ icon: Icon, delay }: { icon: typeof Check; delay: number }) {
+/** A sleeve cuff from the logo: a rounded bar with its button. */
+function Cuff({ className }: { className: string }) {
   return (
-    <span className="relative inline-flex h-11 w-11 items-center justify-center">
-      <svg viewBox="0 0 44 44" className="absolute inset-0 h-11 w-11 -rotate-90">
-        <motion.circle
-          cx="22"
-          cy="22"
-          r="19"
-          fill="none"
-          stroke="var(--color-brass)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          whileInView={{ pathLength: 1, opacity: 0.55 }}
-          viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: 0.9, delay, ease: easeOutExpo }}
-        />
-      </svg>
-      <Icon className="h-4 w-4 text-brass-deep" />
+    <span className={`flex items-center justify-start rounded-2xl ps-3 ${className}`} aria-hidden="true">
+      <span className="h-2 w-2 rounded-full bg-ink/70" />
     </span>
   );
 }
 
+function useDrift(value: MotionValue<number>, amount: number) {
+  return useTransform(value, (n) => n * amount);
+}
+
 export default function Home() {
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-  // Photo drifts slower than the surrounding text — a ~15% speed
-  // differential is enough to read as parallax without feeling gimmicky.
-  const photoY = useTransform(scrollYProgress, [0, 1], [0, 70]);
-  const textY = useTransform(scrollYProgress, [0, 1], [0, 20]);
+  const reduce = useReducedMotion();
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const photoY = useTransform(scrollYProgress, [0, 1], [0, 80]);
+
+  // the disc and the cuffs drift a little against the pointer, so the collage has depth
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const sx = useSpring(mx, { stiffness: 60, damping: 16 });
+  const sy = useSpring(my, { stiffness: 60, damping: 16 });
+  const backX = useDrift(sx, -22);
+  const backY = useDrift(sy, -22);
+  const frontX = useDrift(sx, 26);
+  const frontY = useDrift(sy, 26);
+
+  function onHeroMove(e: React.MouseEvent<HTMLElement>) {
+    if (reduce) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top) / r.height - 0.5);
+  }
 
   return (
-    <main dir="rtl" className="overflow-x-hidden grain-cream text-obsidian">
+    <main className="overflow-x-clip bg-canvas text-ink">
+      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
+        <Link href="/" aria-label="everyJob - דף הבית">
+          <Logo className="h-12 sm:h-14" />
+        </Link>
+        <nav className="hidden items-center gap-9 text-sm font-medium md:flex" aria-label="ניווט ראשי">
+          <Link href="#who" className="hover:underline hover:underline-offset-8">למי זה מתאים</Link>
+          <Link href="#how" className="hover:underline hover:underline-offset-8">איך זה עובד</Link>
+          <Link href="#about" className="hover:underline hover:underline-offset-8">מי אנחנו</Link>
+        </nav>
+        <div className="flex items-center gap-2">
+          <Link href="/login" className="btn px-3 hover:bg-surface2">כניסה</Link>
+          <Link href="/register" className="btn btn-primary">הרשמה</Link>
+        </div>
+      </header>
+
       {/* ================= HERO ================= */}
-      <section ref={heroRef} className="relative isolate overflow-hidden">
-        {/* single, quiet spotlight — no blobs, no gradients competing for attention */}
-        <div
-          className="pointer-events-none absolute inset-0 -z-10"
-          style={{
-            background:
-              "radial-gradient(900px circle at 78% 8%, rgba(201,161,91,0.22), transparent 60%)",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute inset-0 -z-10 opacity-[0.05]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(20,19,26,1) 1px, transparent 1px), linear-gradient(90deg, rgba(20,19,26,1) 1px, transparent 1px)",
-            backgroundSize: "64px 64px",
-          }}
-        />
-
-        <header className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-6 sm:px-8 lg:px-12">
-          <Link href="#top" className="flex items-center gap-3" aria-label="everyJob - דף הבית">
-            <div className="rounded-xl border border-obsidian/10 bg-white p-1.5 shadow-sm">
-              <Image src="/images/everyJob-logo.png" alt="everyJob" width={34} height={34} className="h-8 w-8 object-contain" priority />
-            </div>
-            <span className="font-display text-lg font-semibold tracking-tight text-obsidian">everyJob</span>
-          </Link>
-          <nav className="flex items-center gap-8 text-sm font-medium text-obsidian/55" aria-label="ניווט ראשי">
-            <Link href="#about" className="transition hover:text-obsidian">מי אנחנו</Link>
-            <Link href="/login" className="transition hover:text-obsidian">כניסה</Link>
-          </nav>
-        </header>
-
-        <div id="top" className="relative mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 px-5 pb-28 pt-12 sm:px-8 md:grid-cols-12 md:gap-4 md:pb-48 md:pt-20 lg:px-14">
-          <motion.div style={{ y: textY }} className="flex flex-col items-center text-center md:col-span-7 md:items-start md:pt-8 md:text-right">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: easeOutExpo }}
-              className="glass-panel-light inline-flex rounded-full px-4 py-1.5"
-            >
-              <p className="text-[11px] font-semibold uppercase text-brass-deep tracking-luxe">
-                everyJob · אנשים טובים 770
-              </p>
-            </motion.div>
-
-            <h1 className="mt-8 flex flex-col items-center gap-1 font-display text-[15vw] font-black leading-[1.04] text-obsidian sm:text-7xl md:items-start md:text-8xl lg:text-[6.4rem]">
-              <motion.span custom={0} variants={headlineLine} initial="hidden" animate="visible">
+      <section ref={heroRef} onMouseMove={onHeroMove}>
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-6 px-5 pb-16 pt-8 sm:px-8 md:grid-cols-12 md:pb-24 md:pt-12 lg:px-12">
+          <div className="text-center md:col-span-7 md:text-start">
+            <h1 className="font-display text-[12.5vw] font-black leading-[1.02] tracking-tight sm:text-7xl lg:text-[6.75rem]">
+              <motion.span
+                className="block"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease }}
+              >
                 אנשים טובים,
               </motion.span>
-              <motion.span custom={1} variants={headlineLine} initial="hidden" animate="visible">
+              <motion.span
+                className="mt-2 flex justify-center md:justify-start"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.12, ease }}
+              >
                 <LayoutGroup>
                   <TextRotate
                     texts={rotatingPromises}
-                    mainClassName="gold-metal-text"
+                    mainClassName="-rotate-1 bg-sun px-[0.16em] pb-[0.06em]"
                     staggerFrom="last"
                     staggerDuration={0.02}
                     splitLevelClassName="overflow-hidden pb-1"
@@ -210,145 +168,218 @@ export default function Home() {
               </motion.span>
             </h1>
 
-            <div className="mt-6 h-px w-24 hairline-gold" aria-hidden />
+            <p className="mx-auto mt-9 max-w-xl text-lg leading-8 text-muted md:mx-0">
+              everyJob מאחדת ניהול עובדים, שיבוצים, נוכחות ושכר: כל מה שצריך כדי להפעיל צוות אירועים מנצח, מהראיון ועד
+              למשמרת הראשונה.
+            </p>
 
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.55, ease: easeOutExpo }}
-              className="mt-6 max-w-lg text-base leading-8 text-obsidian/60 sm:text-lg"
-            >
-              EveryJob מאחדת ניהול עובדים, שיבוצים, נוכחות, שכר וטופס 101 — כל
-              מה שצריך כדי להפעיל צוות אירועים מנצח, מהראיון ועד למשמרת
-              הראשונה.
-            </motion.p>
+            <div className="mt-9 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center md:justify-start">
+              <Link href="/register" className="btn btn-primary btn-lg group">
+                מצטרפים לצוות
+                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
+              </Link>
+              <Link href="/login" className="btn btn-lg underline-offset-8 hover:underline">
+                כבר רשומים? כניסה
+              </Link>
+            </div>
+          </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.7, ease: easeOutExpo }}
-              className="mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row"
-            >
-              <MagneticCTA href="/login" variant="solid">
-                התחבר <ArrowLeft className="h-4 w-4" />
-              </MagneticCTA>
-              <MagneticCTA href="/register" variant="outline">
-                הירשם
-              </MagneticCTA>
+          {/* the logo, life-size: its dotted ring, two cuffs, and one of the people it stands for */}
+          <div className="relative mx-auto mt-4 h-[420px] w-full max-w-[400px] md:col-span-5 md:mt-0 md:h-[580px] md:max-w-none">
+            <motion.div style={{ x: backX, y: backY }} className="absolute inset-0" aria-hidden="true">
+              <div className="absolute -inset-x-[4%] top-[3%] aspect-square animate-spin-slow rounded-full border-[3px] border-dotted border-ink/25" />
+              <div className="absolute inset-x-[8%] top-[10%] aspect-square rounded-full bg-sun" />
             </motion.div>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 1 }}
-              className="mt-8 text-xs tracking-luxe text-obsidian/40"
-            >
-              מאות משמרות מאוישות מדי חודש ברחבי הארץ
-            </motion.p>
-          </motion.div>
+            <motion.div style={{ x: frontX, y: frontY }} className="absolute inset-0" aria-hidden="true">
+              <motion.div
+                initial={{ x: 80, opacity: 0, rotate: -40 }}
+                animate={{ x: 0, opacity: 1, rotate: -16 }}
+                transition={{ duration: 0.9, delay: 0.3, ease }}
+                className="absolute -start-2 top-[12%]"
+              >
+                <Cuff className="h-14 w-36 bg-sky" />
+              </motion.div>
+              <motion.div
+                initial={{ x: -80, opacity: 0, rotate: 40 }}
+                animate={{ x: 0, opacity: 1, rotate: 14 }}
+                transition={{ duration: 0.9, delay: 0.4, ease }}
+                className="absolute -end-1 bottom-[20%]"
+              >
+                <Cuff className="h-14 w-40 bg-pink" />
+              </motion.div>
+            </motion.div>
 
-          {/* hero visual: cinematic crop, warmer grade, parallax drift */}
-          <div className="relative mt-4 flex items-center justify-center md:col-span-5 md:mt-0 md:justify-end">
             <motion.div
               style={{ y: photoY }}
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.9, delay: 0.2, ease: easeOutExpo }}
-              className="relative h-[480px] w-[320px] sm:h-[560px] sm:w-[380px] md:-mr-6 lg:-mr-10"
+              className="absolute inset-0 [mask-image:linear-gradient(to_bottom,black_82%,transparent)]"
             >
-              {/* large, soft, offset shadow so the portrait feels lifted off the page */}
-              <div
-                className="absolute -inset-x-6 bottom-4 -z-10 h-24 rounded-[50%] opacity-40 blur-3xl"
-                style={{ background: "radial-gradient(50% 50% at 50% 50%, rgba(20,19,26,0.55), transparent 70%)" }}
-              />
               <Image
                 src="/images/tamarImage.png"
-                alt=""
+                alt="חברת צוות של everyJob"
                 fill
                 priority
-                sizes="(max-width: 640px) 320px, 380px"
-                loading="eager"
-                className="object-cover object-top"
-                style={{ filter: "grayscale(0.35) sepia(0.16) contrast(1.08) brightness(1.03) saturate(1.05)" }}
-              />
-              {/* warm vignette to integrate the portrait into the cream field
-                  instead of reading as a cut-and-pasted stock photo */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(245,240,230,0) 40%, rgba(245,240,230,0.98) 96%), radial-gradient(120% 90% at 85% 10%, rgba(201,161,91,0.22), transparent 55%)",
-                }}
-              />
-              <div
-                className="absolute inset-0 mix-blend-multiply opacity-30"
-                style={{ background: "radial-gradient(120% 120% at 50% 0%, transparent 55%, rgba(20,19,26,0.5))" }}
+                sizes="(max-width: 768px) 400px, 520px"
+                className="object-contain object-bottom"
               />
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ================= ABOUT ================= */}
-      <section id="about" className="relative scroll-mt-8 border-t border-obsidian/10 px-5 py-24 sm:px-8 lg:px-14 lg:py-36">
-        <div className="mx-auto max-w-5xl">
-          <p className="text-[11px] font-semibold uppercase text-brass-deep tracking-luxe">Every Job</p>
-          <div className="mt-3 h-px w-16 hairline-gold" aria-hidden />
-          <h2 className="mt-5 font-display text-5xl font-bold text-obsidian sm:text-6xl">מי אנחנו?</h2>
+      {/* what we staff, as a plain line of type */}
+      <p className="border-y border-ink px-5 py-6 text-center font-display text-2xl font-bold leading-[1.9] sm:text-3xl">
+        {roles.map((role, i) => (
+          <span key={role}>
+            {i > 0 && <span className="px-4 text-muted" aria-hidden="true">/</span>}
+            {role}
+          </span>
+        ))}
+      </p>
 
-          <div className="mt-4 flex items-center gap-2 font-display text-xl text-brass-deep sm:text-2xl" dir="rtl">
-            <span className="text-obsidian/45">מאיישים:</span>
-            <Typewriter
-              text={staffedRoles}
-              speed={70}
-              deleteSpeed={35}
-              delay={1400}
-              loop
-              cursor="|"
-              className="font-semibold"
-            />
-          </div>
-
-          <p className="mt-8 max-w-2xl text-xl font-medium leading-9 text-obsidian/80">
-            חברת כוח אדם והשמה שנולדה מתוך הרצון לתת מענה אמיתי למציאת עבודה
-            בתנאים נוחים, עם שכר מתגמל ויחס אישי וחם.
-          </p>
-          <p className="mt-6 max-w-2xl text-base leading-8 text-obsidian/55">
-            בכל יום אנו מחברים בין אנשים שמחפשים להתקדם ולהתפתח, לבין עסקים
-            הזקוקים לכוח אדם איכותי, מקצועי, אמין ומותאם במדויק לצרכים שלהם —
-            תוך התמקדות ברווחת העובד ובהגשמת שאיפותיו. הצוות שלנו חי ונושם את
-            תחום הגיוס וההשמה, עם ניסיון של שנים והיכרות מעמיקה עם האתגרים,
-            הרצונות והצרכים של שני הצדדים. אנחנו לא מסתפקים בלמצוא עבודה —
-            אלא יוצרים שותפויות ארוכות טווח, מלווים ומכוונים כדי שכל השמה
-            תהפוך לסיפור הצלחה אמיתי.
+      {/* ================= THREE HANDS ================= */}
+      <section id="who" className="scroll-mt-8 px-5 pt-24 sm:px-8 lg:px-12 lg:pt-32">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="font-display text-5xl font-black leading-[1.05] sm:text-7xl">
+            שלוש ידיים.
+            <br />
+            צוות אחד.
+          </h2>
+          <p className="mt-5 max-w-xl text-lg leading-8 text-muted">
+            כמו בלוגו שלנו: עובדים, מנהלי שטח ולקוחות נפגשים באמצע.
           </p>
 
-          {/* manifest, not a card grid — a quiet list a reader scans top to bottom */}
-          <div className="mt-16 divide-y divide-obsidian/10 border-y border-obsidian/10 sm:divide-y-0 sm:border-none sm:grid sm:grid-cols-3">
-            {manifest.map(({ title, description, icon: Icon }, i) => (
-              <motion.div
-                key={title}
-                initial={{ opacity: 0, y: 18, scale: 0.98 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, amount: 0.4 }}
-                transition={{ duration: 0.6, delay: i * 0.12, ease: easeOutExpo }}
-                className={`py-8 sm:py-0 sm:pl-8 ${i > 0 ? "sm:border-r sm:border-obsidian/10" : ""}`}
+          {/* the cards pile onto each other as you scroll, the way the hands pile up in the logo */}
+          <div className="mt-14">
+            {hands.map((hand, i) => (
+              <article
+                key={hand.who}
+                className={`sticky mb-6 grid gap-8 rounded-3xl p-7 sm:p-10 lg:grid-cols-2 lg:gap-16 lg:p-14 ${hand.bg}`}
+                style={{ top: `${1.5 + i * 1.5}rem` }}
               >
-                <DrawnIcon icon={Icon} delay={i * 0.12 + 0.15} />
-                <h3 className="mt-4 font-display text-xl text-obsidian">{title}</h3>
-                <p className="mt-2 text-sm leading-7 text-obsidian/55">{description}</p>
-              </motion.div>
+                <div>
+                  <p className="text-sm font-bold">
+                    <span className="font-display text-base tabular-nums">0{i + 1}</span>
+                    <span className="px-2" aria-hidden="true">/</span>
+                    {hand.who}
+                  </p>
+                  <h3 className="mt-5 font-display text-4xl font-black leading-[1.1] sm:text-5xl">{hand.title}</h3>
+                </div>
+                <ul className="self-end border-t border-ink/30">
+                  {hand.points.map((point) => (
+                    <li key={point} className="border-b border-ink/30 py-4 text-lg leading-7">
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* dark closing act — one deliberate contrast beat before the page ends */}
-      <ClosingCTA />
+      {/* ================= HOW ================= */}
+      <section id="how" className="scroll-mt-8 px-5 py-24 sm:px-8 lg:px-12 lg:py-32">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="font-display text-5xl font-black sm:text-6xl">איך זה עובד</h2>
+          <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+            {steps.map((step, i) => (
+              <li key={step.title} className={`border-t-[6px] pt-5 ${step.rule}`}>
+                <span className="font-display text-7xl font-black leading-none tabular-nums" aria-hidden="true">
+                  {i + 1}
+                </span>
+                <h3 className="mt-4 text-2xl font-bold">{step.title}</h3>
+                <p className="mt-2 max-w-xs leading-7 text-muted">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
 
-      <footer className="border-t border-obsidian/10 px-5 py-8 text-center text-xs text-obsidian/40 sm:px-8 lg:px-10">
-        © {new Date().getFullYear()} everyJob · אנשים טובים 770
-      </footer>
+      {/* ================= ABOUT ================= */}
+      <section id="about" className="scroll-mt-8 border-t border-ink px-5 py-24 sm:px-8 lg:px-12 lg:py-32">
+        <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-12">
+          <div className="lg:col-span-7">
+            <h2 className="font-display text-5xl font-black sm:text-6xl">מי אנחנו?</h2>
+            <p className="mt-5 flex flex-wrap items-center gap-2 font-display text-xl sm:text-2xl">
+              <span className="text-muted">מאיישים:</span>
+              <Typewriter text={staffedRoles} speed={70} deleteSpeed={35} delay={1400} loop cursor="|" className="font-bold" />
+            </p>
+            <p className="mt-8 text-xl font-medium leading-9">
+              חברת כוח אדם והשמה שנולדה מתוך הרצון לתת מענה אמיתי למציאת עבודה בתנאים נוחים, עם שכר מתגמל ויחס אישי
+              וחם.
+            </p>
+            <p className="mt-6 leading-8 text-muted">
+              בכל יום אנו מחברים בין אנשים שמחפשים להתקדם ולהתפתח, לבין עסקים הזקוקים לכוח אדם איכותי, מקצועי, אמין
+              ומותאם במדויק לצרכים שלהם, תוך התמקדות ברווחת העובד ובהגשמת שאיפותיו. הצוות שלנו חי ונושם את תחום הגיוס
+              וההשמה, עם ניסיון של שנים והיכרות מעמיקה עם האתגרים, הרצונות והצרכים של שני הצדדים. אנחנו לא מסתפקים
+              בלמצוא עבודה, אלא יוצרים שותפויות ארוכות טווח, מלווים ומכוונים כדי שכל השמה תהפוך לסיפור הצלחה אמיתי.
+            </p>
+          </div>
+          <dl className="self-end border-t border-line-strong lg:col-span-5">
+            {values.map((value) => (
+              <div key={value.title} className="border-b border-line-strong py-6">
+                <dt className="font-display text-2xl font-bold">{value.title}</dt>
+                <dd className="mt-1 leading-7 text-muted">{value.body}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* ================= CLOSING ================= */}
+      <section className="bg-ink px-6 py-24 text-center text-surface sm:py-32">
+        <div className="mx-auto flex max-w-3xl flex-col items-center">
+          <Huddle />
+          <h2 className="mt-12 font-display text-5xl font-black leading-[1.05] sm:text-7xl">המשמרת הבאה שלכם מחכה.</h2>
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <Link href="/register" className="btn btn-lg group bg-sun text-ink hover:bg-surface">
+              מצטרפים לצוות
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
+            </Link>
+            <Link href="/login" className="btn btn-lg underline-offset-8 hover:underline">
+              כניסה למערכת
+            </Link>
+          </div>
+          <p className="mt-20 text-sm text-surface/60">© {new Date().getFullYear()} everyJob · אנשים טובים 770</p>
+        </div>
+      </section>
     </main>
+  );
+}
+
+/** The logo, rebuilt in motion: three hands travel in from three sides and meet inside the dotted ring. */
+function Huddle() {
+  const cuffs = [
+    { angle: 0, color: "bg-sky" },
+    { angle: 120, color: "bg-sun" },
+    { angle: 240, color: "bg-pink" },
+  ];
+  return (
+    <motion.div
+      initial="apart"
+      whileInView="together"
+      viewport={{ once: true, amount: 0.6 }}
+      transition={{ staggerChildren: 0.15, delayChildren: 0.15 }}
+      className="relative h-44 w-44"
+      aria-hidden="true"
+    >
+      <div className="absolute inset-0 animate-spin-slow rounded-full border-[3px] border-dotted border-surface/30" />
+      {cuffs.map((cuff) => (
+        <div key={cuff.angle} className="absolute inset-0" style={{ transform: `rotate(${cuff.angle}deg)` }}>
+          <motion.div
+            variants={{
+              apart: { y: -150, opacity: 0 },
+              together: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 90, damping: 12 } },
+            }}
+            className="absolute start-1/2 top-3 -ms-6 flex h-[4.5rem] w-12 flex-col items-center rounded-2xl bg-peach"
+          >
+            <span className={`flex h-6 w-14 items-center justify-center rounded-lg ${cuff.color}`}>
+              <span className="h-1.5 w-1.5 rounded-full bg-ink/70" />
+            </span>
+          </motion.div>
+        </div>
+      ))}
+    </motion.div>
   );
 }

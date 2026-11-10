@@ -169,7 +169,7 @@ Allowed transitions, enforced by the DB trigger `enforce_event_status_transition
 ## 7. RTL, Design System, and UI Conventions
 
 - Tailwind: logical properties only — `ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`. Never `ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`. This applies even in code that looks purely presentational (icons, dividers, absolute-positioned badges).
-- Design tokens: Electric Indigo `#4F46E5` (primary), Hyper Lime `#D4FF00` (accent).
+- Design tokens (owner decision 2026-11-10, replaces Indigo/Lime): light theme built from the logo. Warm white canvas, ink `#131217` (text and solid buttons), and the three cuff colours pink `#FF84A7`, sun `#FDD559`, sky `#83D9FF`. All tokens and the shared `btn` / `card` / `field` utilities live in `app/globals.css`; never hardcode hex values in components.
 - Design direction is explicitly "anti-template": no default SaaS gradients, no pill-shaped buttons, intentional asymmetry over centered/symmetric layouts. When a component's design isn't specified, deviate from the most generic Tailwind-UI-esque default rather than defaulting to it.
 - All user-facing copy — labels, buttons, error messages, empty states — is in Hebrew. Code identifiers, comments, and commit messages are in English.
 

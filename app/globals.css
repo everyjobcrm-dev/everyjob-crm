@@ -1,77 +1,153 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Design tokens, taken from the everyJob logo: black wordmark, three coloured cuffs (pink, sun, sky) and the
+   peach of the hands, on a warm white. Do not hardcode hex values in components. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* surfaces, lowest to highest */
+  --color-canvas: #fbf8f4;
+  --color-surface: #ffffff;
+  --color-surface2: #f4efe8;
 
-  
-  --color-obsidian: #14131a;
-  --color-surface: #1c1b23;
-  --color-surface2: #24222c;
-  --color-brass: #c9a15b;
-  --color-brass-deep: #93691f;
-  --color-cream: #f5f0e6;
+  /* text */
+  --color-ink: #131217;
+  --color-muted: #6a6670; /* 5.5:1 on canvas */
+
+  /* hairlines */
+  --color-line: rgb(19 18 23 / 0.09);
+  --color-line-strong: rgb(19 18 23 / 0.18);
+
+  /* The three cuffs. The bright value is for fills, bars and tints; `-deep` is the same hue as readable text. */
+  --color-pink: #ff84a7;
+  --color-pink-deep: #c2255c;
+  --color-sun: #fdd559;
+  --color-sun-deep: #7a5600;
+  --color-sky: #83d9ff;
+  --color-sky-deep: #0b6a94;
+  --color-peach: #fecbaa;
+
+  /* `primary` = brand accent (pink) for focus, active and selected states. Solid buttons are ink, like the wordmark. */
+  --color-primary: var(--color-pink);
+  --color-primary-soft: var(--color-pink-deep);
 
   --font-sans: var(--font-body-raw);
   --font-display: var(--font-display-raw);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-:root {
-  --color-obsidian: 10 10 15;
-  --color-cream: 245 245 247;
-  --color-surface: 18 18 24;
-  --color-surface2: 26 26 34;
-  --color-brass: 79 70 229;   /* Electric Indigo #4F46E5 */
-  --color-lime: 212 255 0;    /* Hyper Lime #D4FF00 — new */
-}
-  }
+  --shadow-card: 0 1px 2px rgb(19 18 23 / 0.04), 0 8px 24px -12px rgb(19 18 23 / 0.12);
+  --shadow-pop: 0 2px 4px rgb(19 18 23 / 0.06), 0 24px 60px -20px rgb(19 18 23 / 0.28);
+
+  --animate-spin-slow: spin 40s linear infinite;
+
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-canvas);
+  color: var(--color-ink);
   font-family: var(--font-body-raw), Arial, Helvetica, sans-serif;
 }
 
-/* --- Ticket-pass signature element --------------------------------- */
-/* Perforated seam that separates a ticket's main panel from its stub. */
-.perforation {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    rgba(245, 240, 230, 0.28) 0px,
-    rgba(245, 240, 230, 0.28) 4px,
-    transparent 4px,
-    transparent 10px
-  );
+::selection {
+  background: var(--color-sun);
+  color: var(--color-ink);
 }
 
-/* Die-cut circular notches at the top and bottom of the seam. Set
-   --notch-bg to whatever sits behind the ticket so the "cut" reads
-   as a true cutout rather than a drawn circle. */
-.ticket-notch {
-  position: relative;
+/* --- Shared components (single-property utilities such as px-2 still override these) --- */
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-radius: var(--radius-lg);
+  padding: 0.5625rem 1rem;
+  font-size: var(--text-sm);
+  line-height: 1.25rem;
+  font-weight: 600;
+  transition: background-color 150ms, border-color 150ms, color 150ms, box-shadow 150ms, transform 150ms;
+  cursor: pointer;
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 }
-.ticket-notch::before,
-.ticket-notch::after {
-  content: "";
-  position: absolute;
-  left: -8px;
-  width: 16px;
-  height: 16px;
-  border-radius: 9999px;
-  background: var(--notch-bg, #14131a);
+@utility btn-sm {
+  padding: 0.3125rem 0.625rem;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
 }
-.ticket-notch::before {
-  top: -8px;
+@utility btn-lg {
+  padding: 0.875rem 1.5rem;
+  border-radius: var(--radius-xl);
+  font-size: var(--text-base);
 }
-.ticket-notch::after {
-  bottom: -8px;
+@utility btn-primary {
+  background-color: var(--color-ink);
+  color: #fff;
+  &:hover:not(:disabled) {
+    background-color: #2c2a33;
+  }
+}
+@utility btn-secondary {
+  border: 1px solid var(--color-line-strong);
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  &:hover:not(:disabled) {
+    border-color: var(--color-ink);
+  }
+}
+@utility btn-danger {
+  border: 1px solid rgb(225 29 72 / 0.3);
+  background-color: var(--color-surface);
+  color: #be123c;
+  &:hover:not(:disabled) {
+    background-color: rgb(225 29 72 / 0.07);
+  }
+}
+@utility card {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-xl);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+@utility field {
+  width: 100%;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  padding: 0.6875rem 0.875rem;
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  outline: none;
+  transition: border-color 150ms, box-shadow 150ms;
+  &::placeholder {
+    color: rgb(19 18 23 / 0.38);
+  }
+  &:focus {
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 4px rgb(255 132 167 / 0.28);
+  }
+}
+@utility empty-state {
+  border: 1px dashed var(--color-line-strong);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem 1rem;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

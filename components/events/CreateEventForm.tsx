@@ -104,9 +104,9 @@ export function CreateEventForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="pb-6">
       <header className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-400">אירוע חדש</p>
-        <h1 className="font-display text-3xl text-cream">פתיחת דוקט אירוע</h1>
-        <p className="mt-1 text-sm text-cream/70">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-soft">אירוע חדש</p>
+        <h1 className="font-display text-3xl text-ink">פתיחת דוקט אירוע</h1>
+        <p className="mt-1 text-sm text-ink/80">
           כל שדה כאן הופך לשורה בדוקט שהמנהל/ת בשטח יראה/תראה. תעריפים ריקים יסומנו אוטומטית לטיפול.
         </p>
       </header>
@@ -114,14 +114,14 @@ export function CreateEventForm({
       <div className="grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)]">
         {/* margin rail — reads like handwritten section tabs on a clipped docket */}
         <nav className="hidden lg:block">
-          <ol className="sticky top-6 space-y-1 border-e border-brass/10 pe-4">
+          <ol className="sticky top-6 space-y-1 border-e border-line pe-4">
             {SECTIONS.map((s) => (
               <li key={s.id}>
                 <a
                   href={`#${s.id}`}
-                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-cream/70 transition-colors hover:text-cream"
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-ink/80 transition-colors hover:text-ink"
                 >
-                  <span className="font-mono text-[11px] text-cream/55">{s.eyebrow}</span>
+                  <span className="font-mono text-[11px] text-muted">{s.eyebrow}</span>
                   {s.label}
                 </a>
               </li>
@@ -131,7 +131,7 @@ export function CreateEventForm({
 
         <div className="space-y-6">
           {serverError && (
-            <div className="flex items-center gap-2 rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-400">
+            <div className="flex items-center gap-2 rounded-lg border border-rose-400/25 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-700">
               <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
               {serverError}
             </div>
@@ -156,7 +156,7 @@ export function CreateEventForm({
                   ))}
                 </select>
                 {clients.length === 0 && (
-                  <p className="mt-1.5 text-xs text-cream/65">
+                  <p className="mt-1.5 text-xs text-muted">
                     לא נמצאו לקוחות. יש להוסיף לקוח בטבלת הלקוחות לפני יצירת אירוע.
                   </p>
                 )}
@@ -174,7 +174,7 @@ export function CreateEventForm({
                       </option>
                     ))}
                   </select>
-                  <p className="mt-1.5 text-xs text-cream/65">המגייס/ת יוכל/תוכל לנהל את האירוע ואת ההרשמות אליו.</p>
+                  <p className="mt-1.5 text-xs text-muted">המגייס/ת יוכל/תוכל לנהל את האירוע ואת ההרשמות אליו.</p>
                 </Field>
               )}
             </FieldGrid>
@@ -241,11 +241,11 @@ export function CreateEventForm({
           {/* 04 — dynamic roster */}
           <Section id="roster" eyebrow="04" title="מצבת כוח אדם">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-xs text-cream/65">
+              <p className="text-xs text-muted">
                 כל שורה = תפקיד. אפשר להשאיר תעריף ריק ולמלא אחר כך — האירוע פשוט ייפתח כ״ממתין לתעריפים״.
               </p>
               {missingRateCount > 0 && (
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-sm bg-[#D4FF00]/15 px-2.5 py-1 text-[11px] font-semibold text-[#D4FF00]">
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-sm bg-sky/25 px-2.5 py-1 text-[11px] font-semibold text-sky-deep">
                   <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                   {missingRateCount} תפקידים ללא תעריף
                 </span>
@@ -278,22 +278,22 @@ export function CreateEventForm({
             <button
               type="button"
               onClick={() => append(emptyRole)}
-              className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-indigo-400/30 py-3.5 text-sm font-semibold text-indigo-400 transition-colors hover:border-indigo-400/60 hover:bg-indigo-500/5 active:scale-[0.99]"
+              className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-primary/30 py-3.5 text-sm font-semibold text-primary-soft transition-colors hover:border-primary/60 hover:bg-pink/15"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               הוספת תפקיד
             </button>
             {errors.roles?.root?.message && (
-              <p className="mt-2 text-xs text-rose-400">{errors.roles.root.message}</p>
+              <p className="mt-2 text-xs text-rose-700">{errors.roles.root.message}</p>
             )}
           </Section>
         </div>
       </div>
 
       {/* sticky, thumb-reachable action bar */}
-      <div className="sticky bottom-20 z-10 mt-6 rounded-xl border border-brass/15 bg-surface/95 px-4 py-3 backdrop-blur lg:bottom-4">
+      <div className="sticky bottom-20 z-10 mt-6 rounded-lg border border-line bg-surface/95 px-4 py-3 backdrop-blur lg:bottom-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-          <p className="hidden text-xs text-cream/65 sm:block">
+          <p className="hidden text-xs text-muted sm:block">
             {missingRateCount > 0
               ? `יישמר כ"ממתין לתעריפים" — ${missingRateCount} שורות עדיין ללא תעריף`
               : "כל התעריפים מולאו — האירוע ייפתח מיד לעובדים"}
@@ -301,7 +301,7 @@ export function CreateEventForm({
           <button
             type="submit"
             disabled={submitting}
-            className="ms-auto flex items-center gap-1.5 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-50"
+            className="btn btn-primary ms-auto"
           >
             {submitting ? "שומר..." : "יצירת אירוע"}
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -315,7 +315,7 @@ export function CreateEventForm({
 // ---- presentational helpers -------------------------------------------------
 
 const inputClass =
-  "w-full rounded-xl border border-brass/15 bg-surface2 px-3 py-2.5 text-sm text-cream outline-none transition-colors placeholder:text-cream/70 focus:border-indigo-400";
+  "w-full rounded-lg border border-line bg-surface2 px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-ink/80 focus:border-primary";
 
 function Section({
   id,
@@ -329,9 +329,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-6 rounded-2xl border border-brass/10 bg-surface p-5">
-      <h2 className="mb-4 flex items-center gap-2 font-display text-lg text-cream">
-        <span className="font-mono text-xs text-indigo-400 lg:hidden">{eyebrow}</span>
+    <section id={id} className="scroll-mt-6 card p-5">
+      <h2 className="mb-4 flex items-center gap-2 font-display text-lg text-ink">
+        <span className="font-mono text-xs text-primary-soft lg:hidden">{eyebrow}</span>
         {title}
       </h2>
       {children}
@@ -356,9 +356,9 @@ function Field({
 }) {
   return (
     <label className={`block ${span === 2 ? "sm:col-span-2" : ""}`}>
-      <span className="mb-1.5 block text-xs font-semibold text-cream/60">{label}</span>
+      <span className="mb-1.5 block text-xs font-semibold text-muted">{label}</span>
       {children}
-      {error && <span className="mt-1 block text-xs text-rose-400">{error}</span>}
+      {error && <span className="mt-1 block text-xs text-rose-700">{error}</span>}
     </label>
   );
 }
@@ -377,7 +377,7 @@ function RoleRow({
   onRemove?: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-brass/10 bg-surface2 p-4">
+    <div className="rounded-lg border border-line bg-surface2 p-4">
       <div className="mb-3 flex items-start gap-3">
         <div className="flex-1">
           <input
@@ -385,14 +385,14 @@ function RoleRow({
             placeholder="שם התפקיד (למשל: ברמנית)"
             className={`${inputClass} font-semibold`}
           />
-          {error?.role_name && <p className="mt-1 text-xs text-rose-400">{error.role_name.message}</p>}
+          {error?.role_name && <p className="mt-1 text-xs text-rose-700">{error.role_name.message}</p>}
         </div>
         {onRemove && (
           <button
             type="button"
             onClick={onRemove}
             aria-label="הסרת תפקיד"
-            className="mt-1 rounded-lg p-2 text-cream/55 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+            className="mt-1 rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-700"
           >
             <Trash2 className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -401,27 +401,27 @@ function RoleRow({
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="col-span-2 sm:col-span-1">
-          <span className="mb-1 block text-[11px] font-semibold text-cream/65">כמות</span>
+          <span className="mb-1 block text-[11px] font-semibold text-muted">כמות</span>
           <Controller
             control={control}
             name={`roles.${index}.headcount` as const}
             render={({ field }) => (
-              <div className="flex items-center gap-1 rounded-xl border border-brass/15 bg-surface px-1 py-1">
+              <div className="flex items-center gap-1 card px-1 py-1">
                 <button
                   type="button"
                   onClick={() => field.onChange(Math.max(1, Number(field.value) - 1))}
-                  className="grid h-9 w-9 place-items-center rounded-lg text-cream/60 hover:bg-cream/5"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-ink/5"
                   aria-label="הפחתת כמות"
                 >
                   <Minus className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
-                <span className="w-6 text-center text-sm font-semibold tabular-nums text-cream">
+                <span className="w-6 text-center text-sm font-semibold tabular-nums text-ink">
                   {field.value ?? 1}
                 </span>
                 <button
                   type="button"
                   onClick={() => field.onChange(Number(field.value) + 1)}
-                  className="grid h-9 w-9 place-items-center rounded-lg text-cream/60 hover:bg-cream/5"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-ink/5"
                   aria-label="הוספת כמות"
                 >
                   <Plus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -432,12 +432,12 @@ function RoleRow({
         </div>
 
         <div>
-          <span className="mb-1 block text-[11px] font-semibold text-cream/65">התחלה</span>
+          <span className="mb-1 block text-[11px] font-semibold text-muted">התחלה</span>
           <input type="time" {...register(`roles.${index}.start_time` as const)} className={inputClass} />
-          {error?.start_time && <p className="mt-1 text-xs text-rose-400">{error.start_time.message}</p>}
+          {error?.start_time && <p className="mt-1 text-xs text-rose-700">{error.start_time.message}</p>}
         </div>
         <div>
-          <span className="mb-1 block text-[11px] font-semibold text-cream/65">תעריף לשעה (₪)</span>
+          <span className="mb-1 block text-[11px] font-semibold text-muted">תעריף לשעה (₪)</span>
           <Controller
             control={control}
             name={`roles.${index}.base_rate` as const}
@@ -449,7 +449,7 @@ function RoleRow({
                 onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
                 placeholder="ריק = לטיפול"
                 className={`${inputClass} ${
-                  field.value == null ? "border-[#D4FF00]/40 text-[#D4FF00] placeholder:text-[#D4FF00]/50" : ""
+                  field.value == null ? "border-sky text-sky-deep placeholder:text-sky-deep/50" : ""
                 }`}
               />
             )}

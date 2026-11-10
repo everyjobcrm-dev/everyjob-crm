@@ -82,7 +82,7 @@ export function EventStatusControl({
                 type="button"
                 disabled={isPending}
                 onClick={() => run(() => (target === restoreTarget ? restoreEvent(eventId) : restoreEvent(eventId, target)))}
-                className="rounded-md border border-indigo-500/30 px-2.5 py-1 text-xs text-indigo-200 hover:bg-indigo-500/10 disabled:opacity-50"
+                className="rounded-md border border-primary/30 px-2.5 py-1 text-xs text-primary-soft hover:bg-pink/15 disabled:opacity-50"
               >
                 שחזור ל{EVENT_STATUS_LABEL[target]}
                 {target === restoreTarget ? " (ברירת מחדל)" : ""}
@@ -96,14 +96,14 @@ export function EventStatusControl({
                   type="button"
                   disabled={isPending}
                   onClick={() => run(() => updateEventStatus(eventId, "cancelled"))}
-                  className="rounded-md bg-rose-500/25 px-2.5 py-1 text-xs font-semibold text-rose-100 disabled:opacity-50"
+                  className="rounded-md bg-rose-500/25 px-2.5 py-1 text-xs font-semibold text-rose-700 disabled:opacity-50"
                 >
                   לאשר ביטול?
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmCancel(false)}
-                  className="rounded-md px-2 py-1 text-xs text-cream/60"
+                  className="rounded-md px-2 py-1 text-xs text-muted"
                 >
                   חזרה
                 </button>
@@ -114,7 +114,7 @@ export function EventStatusControl({
                 type="button"
                 disabled={isPending}
                 onClick={() => setConfirmCancel(true)}
-                className="rounded-md px-2.5 py-1 text-xs text-rose-300 hover:bg-rose-500/10 disabled:opacity-50"
+                className="rounded-md px-2.5 py-1 text-xs text-rose-700 hover:bg-rose-500/10 disabled:opacity-50"
               >
                 {ACTION_LABEL.cancelled}
               </button>
@@ -126,7 +126,7 @@ export function EventStatusControl({
               type="button"
               disabled={isPending}
               onClick={() => run(() => updateEventStatus(eventId, target))}
-              className="rounded-md bg-[#4F46E5] px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-600 disabled:opacity-50"
+              className="btn btn-primary btn-sm"
             >
               {ACTION_LABEL[target] ?? EVENT_STATUS_LABEL[target]}
             </button>
@@ -134,14 +134,14 @@ export function EventStatusControl({
         })}
       </div>
       {current === "cancelled" && !canRestoreEvent(role) && (
-        <p className="text-xs text-cream/50">רק מנהל/ת או אדמין יכולים לשחזר אירוע שבוטל.</p>
+        <p className="text-xs text-muted">רק מנהל/ת או אדמין יכולים לשחזר אירוע שבוטל.</p>
       )}
       {confirmCancel && (
-        <p className="text-xs text-cream/60">
+        <p className="text-xs text-muted">
           ביטול מסמן את האירוע בלבד: ההרשמות נשמרות, והאירוע לא נספר בחישובי איוש ודוחות.
         </p>
       )}
-      {error && <p className="text-xs text-rose-400">{error}</p>}
+      {error && <p className="text-xs text-rose-700">{error}</p>}
     </div>
   );
 }

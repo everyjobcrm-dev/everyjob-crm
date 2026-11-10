@@ -26,7 +26,7 @@ import {
 type ViewerRole = "admin" | "manager" | "recruiter";
 
 const inputClass =
-  "w-full border border-cream/15 bg-surface2 px-3 py-2.5 text-sm text-cream outline-none transition-colors placeholder:text-cream/50 focus:border-[#4F46E5] disabled:opacity-60";
+  "w-full border border-line bg-surface2 px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-primary disabled:opacity-60";
 
 // Edit form for an existing event. Every rule (who may change what, headcount >= occupied, no past dates, locks once
 // hours exist) is enforced by the p9 RPCs; the hints here only explain them up front.
@@ -44,9 +44,9 @@ export function EditEventForm({
   return (
     <div className="space-y-8">
       <DetailsForm event={event} viewerRole={viewerRole} clients={clients} recruiters={recruiters} />
-      <section className="border-s-4 border-[#D4FF00]/60 bg-surface p-5">
-        <h2 className="mb-1 font-display text-lg text-cream">תפקידים ומצבת כוח אדם</h2>
-        <p className="mb-4 text-xs text-cream/65">
+      <section className="border-s-4 border-sky bg-surface p-5">
+        <h2 className="mb-1 font-display text-lg text-ink">תפקידים ומצבת כוח אדם</h2>
+        <p className="mb-4 text-xs text-muted">
           אי אפשר להקטין מתחת למספר התפוסים (משובצים + ממתינים לאישור). הגדלה מעלה ממתינים מרשימת ההמתנה לפי סדר ההרשמה.
           תפקיד עם הרשמות לא ניתן להסרה.
         </p>
@@ -119,8 +119,8 @@ function DetailsForm({
   const timeChanged = date !== event.eventDate || start !== event.startTime;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="border-s-4 border-[#4F46E5] bg-surface p-5">
-      <h2 className="mb-4 font-display text-lg text-cream">פרטי האירוע</h2>
+    <form onSubmit={handleSubmit(onSubmit)} className="border-s-4 border-primary bg-surface p-5">
+      <h2 className="mb-4 font-display text-lg text-ink">פרטי האירוע</h2>
       {serverError && <ErrorLine text={serverError} />}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="לקוח" error={errors.client_id?.message} hint={isAdmin ? undefined : "שינוי לקוח - אדמין בלבד"}>
@@ -173,7 +173,7 @@ function DetailsForm({
           <textarea rows={3} {...register("notes")} className={`${inputClass} resize-none`} />
         </Field>
       </div>
-      <p className="mt-3 text-xs text-cream/65">
+      <p className="mt-3 text-xs text-muted">
         אחרי שהוזנו שעות לאירוע אי אפשר לשנות תאריך ושעה. אחרי אישור שעות אי אפשר לשנות גם נסיעות ומגייס/ת.
       </p>
       {timeChanged && <TimeChangeWarning count={registrants} />}
@@ -181,12 +181,12 @@ function DetailsForm({
         <button
           type="submit"
           disabled={isSubmitting || !isDirty}
-          className="bg-[#4F46E5] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+          className="btn btn-primary"
         >
           {isSubmitting ? "שומר..." : "שמירת פרטים"}
         </button>
         {saved && !isDirty && (
-          <span role="status" className="flex items-center gap-1 text-xs text-[#D4FF00]">
+          <span role="status" className="flex items-center gap-1 text-xs text-sky-deep">
             <Check className="h-3.5 w-3.5" aria-hidden="true" /> נשמר
           </span>
         )}
@@ -297,9 +297,9 @@ function RoleForm({
   const [start, end] = useWatch({ control: form.control, name: ["start_time", "end_time"] });
   const timeChanged = start !== role.startTime || (end || null) !== role.endTime;
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="border border-cream/10 bg-surface2/40 p-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="border border-line bg-surface2/40 p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-cream/65">
+        <p className="text-xs text-muted">
           תפוסים: {role.occupied}/{role.headcount}
           {role.hasRegistrations ? " · יש הרשמות" : ""}
         </p>
@@ -308,7 +308,7 @@ function RoleForm({
           onClick={onRemove}
           disabled={!removable || removing}
           title={removable ? "הסרת תפקיד" : role.hasRegistrations ? "יש הרשמות לתפקיד" : "לאירוע חייב להישאר תפקיד אחד"}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-rose-300 transition-colors hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center gap-1 px-2 py-1 text-xs text-rose-700 transition-colors hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> הסרה
         </button>
@@ -320,7 +320,7 @@ function RoleForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-3 bg-[#4F46E5] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+          className="btn btn-primary btn-sm mt-3"
         >
           {isSubmitting ? "שומר..." : "שמירת תפקיד"}
         </button>
@@ -355,26 +355,26 @@ function NewRole({ eventId, viewerRole }: { eventId: string; viewerRole: ViewerR
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-center gap-2 border border-dashed border-[#4F46E5]/50 py-3 text-sm font-semibold text-indigo-300 transition-colors hover:border-[#4F46E5] hover:bg-[#4F46E5]/5"
+        className="flex w-full items-center justify-center gap-2 border border-dashed border-primary/50 py-3 text-sm font-semibold text-primary-soft transition-colors hover:border-primary hover:bg-pink/15"
       >
         <Plus className="h-4 w-4" aria-hidden="true" /> הוספת תפקיד
       </button>
     );
   }
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="border border-[#4F46E5]/40 p-4">
-      <p className="mb-3 text-xs font-semibold text-indigo-300">תפקיד חדש</p>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="border border-primary/40 p-4">
+      <p className="mb-3 text-xs font-semibold text-primary-soft">תפקיד חדש</p>
       {serverError && <ErrorLine text={serverError} />}
       <RoleFields form={form} viewerRole={viewerRole} minHeadcount={1} />
       <div className="mt-3 flex gap-3">
         <button
           type="submit"
           disabled={form.formState.isSubmitting}
-          className="bg-[#4F46E5] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+          className="btn btn-primary btn-sm"
         >
           {form.formState.isSubmitting ? "שומר..." : "הוספה"}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className="px-3 py-2 text-xs text-cream/70 hover:text-cream">
+        <button type="button" onClick={() => setOpen(false)} className="px-3 py-2 text-xs text-ink/80 hover:text-ink">
           ביטול
         </button>
       </div>
@@ -399,10 +399,10 @@ function Field({
 }) {
   return (
     <label className={`block ${wide ? "sm:col-span-2" : ""} ${className}`}>
-      <span className="mb-1.5 block text-xs font-medium text-cream/75">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-ink/80">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-[11px] text-cream/55">{hint}</span>}
-      {error && <span className="mt-1 block text-xs text-rose-400">{error}</span>}
+      {hint && <span className="mt-1 block text-[11px] text-muted">{hint}</span>}
+      {error && <span className="mt-1 block text-xs text-rose-700">{error}</span>}
     </label>
   );
 }
@@ -411,7 +411,7 @@ function Field({
 function TimeChangeWarning({ count }: { count: number }) {
   if (count === 0) return null;
   return (
-    <p role="status" className="mt-3 flex items-center gap-2 border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+    <p role="status" className="mt-3 flex items-center gap-2 border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800">
       <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
       שינוי מועד ישפיע על {count} רשומים (משובצים וממתינים לאישור). הם לא יקבלו הודעה אוטומטית - יש לעדכן אותם ישירות.
     </p>
@@ -420,7 +420,7 @@ function TimeChangeWarning({ count }: { count: number }) {
 
 function ErrorLine({ text }: { text: string }) {
   return (
-    <p className="mb-3 flex items-center gap-2 border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
+    <p className="mb-3 flex items-center gap-2 border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-700">
       <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
       {text}
     </p>

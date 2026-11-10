@@ -25,7 +25,7 @@ export default async function EditEventPage({ params }: Props) {
   const back = (
     <Link
       href={`/manager/events/${eventId}`}
-      className="inline-flex items-center gap-1.5 text-xs text-cream/65 transition-colors hover:text-cream"
+      className="inline-flex items-center gap-1.5 text-xs text-muted transition-colors hover:text-ink"
     >
       <ArrowRight className="h-4 w-4" aria-hidden="true" /> חזרה לאירוע
     </Link>
@@ -34,7 +34,7 @@ export default async function EditEventPage({ params }: Props) {
   if (!data.ok) {
     return (
       <div className="mx-auto max-w-md space-y-4 py-16 text-center">
-        <h1 className="font-display text-xl text-cream">אין לך הרשאה לערוך אירוע זה</h1>
+        <h1 className="font-display text-xl text-ink">אין לך הרשאה לערוך אירוע זה</h1>
         {back}
       </div>
     );
@@ -44,9 +44,9 @@ export default async function EditEventPage({ params }: Props) {
     <div className="space-y-6 pb-12">
       {back}
       <header>
-        <p className="text-xs font-semibold tracking-[0.2em] text-indigo-400">עריכת אירוע</p>
-        <h1 className="font-display text-2xl text-cream">{data.event.location}</h1>
-        <p className="text-xs text-cream/65">{EVENT_STATUS_LABEL[data.event.status]}</p>
+        <p className="text-xs font-semibold tracking-[0.2em] text-primary-soft">עריכת אירוע</p>
+        <h1 className="font-display text-2xl text-ink">{data.event.location}</h1>
+        <p className="text-xs text-muted">{EVENT_STATUS_LABEL[data.event.status]}</p>
       </header>
       {data.editable ? (
         <EditEventForm
@@ -56,7 +56,7 @@ export default async function EditEventPage({ params }: Props) {
           recruiters={data.recruiters}
         />
       ) : (
-        <p className="border-s-4 border-rose-400/60 bg-surface p-4 text-sm text-cream/75">
+        <p className="border-s-4 border-rose-400/60 bg-surface p-4 text-sm text-ink/80">
           אירוע מבוטל, שהושלם או מושהה אינו ניתן לעריכה. אדמין או מנהל/ת יכולים לשחזר אירוע מבוטל ואז לערוך אותו.
         </p>
       )}

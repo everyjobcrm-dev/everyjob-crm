@@ -3,6 +3,7 @@ import { StatStub } from "@/components/employee/StatStub";
 import { MyShiftsList } from "@/components/employee/MyShiftsList";
 import { fetchMyMonthlyHours, fetchMyShifts } from "@/app/employee/events/actions";
 import { MonthlyHoursCard } from "@/components/employee/MonthlyHoursCard";
+import { PageHeader } from "@/components/ui/page-header";
 
 // "המשמרות שלי": the signed-in worker's own registrations (employees and staff-as-workers alike).
 // Counts are derived from the rows on every render - nothing is stored.
@@ -15,10 +16,7 @@ export default async function MyShiftsPage() {
 
   return (
     <div className="pb-10">
-      <header className="mb-6">
-        <h1 className="font-display text-3xl text-cream">המשמרות שלי</h1>
-        <p className="mt-1 text-sm text-cream/50">משמרות קרובות, בקשות ממתינות והיסטוריה.</p>
-      </header>
+      <PageHeader title="המשמרות שלי" subtitle="משמרות קרובות, בקשות ממתינות והיסטוריה." />
 
       <div className="mb-8 grid grid-cols-2 gap-4">
         <StatStub label="משמרות קרובות שאושרו" value={upcomingApproved} icon={CalendarCheck} />

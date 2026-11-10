@@ -11,6 +11,7 @@ import {
   canSelfWithdraw,
   cancelToastFor,
 } from "@/components/employee/RegistrationCancelControls";
+import { formatEventDate } from "@/lib/format";
 
 const STATUS_LABEL: Record<RegistrationStatus, string> = {
   pending: "ממתין לאישור",
@@ -25,24 +26,24 @@ const STATUS_LABEL: Record<RegistrationStatus, string> = {
 const getStatusLabel = (s: RegistrationStatus) => STATUS_LABEL[s] || s;
 
 const STATUS_STYLE: Record<RegistrationStatus, string> = {
-  pending: "bg-indigo-500/15 text-indigo-400",
-  approved: "bg-indigo-500/20 text-indigo-300",
-  rejected: "bg-rose-500/15 text-rose-400",
-  waitlisted: "bg-[#D4FF00]/15 text-[#D4FF00]",
-  cancelled: "bg-cream/10 text-cream/50",
-  removed: "bg-cream/10 text-cream/50",
+  pending: "bg-sun/40 text-sun-deep",
+  approved: "bg-sky/30 text-sky-deep",
+  rejected: "bg-rose-500/15 text-rose-700",
+  waitlisted: "bg-pink/15 text-primary-soft",
+  cancelled: "bg-ink/10 text-muted",
+  removed: "bg-ink/10 text-muted",
 };
 
-const getStatusStyle = (s: RegistrationStatus) => STATUS_STYLE[s] || "bg-cream/10 text-cream/70";
+const getStatusStyle = (s: RegistrationStatus) => STATUS_STYLE[s] || "bg-ink/10 text-ink/80";
 
 export function EventCard({ event }: { event: EmployeeEvent }) {
   const { toast, show } = useToast();
   return (
-    <div className="rounded-2xl border border-brass/10 bg-surface p-5">
-      <p className="text-xs font-semibold text-indigo-400">{event.clientName}</p>
-      <h2 className="font-display text-lg text-cream">{event.location}</h2>
-      <p className="mt-0.5 text-xs text-cream/50">{event.eventDate}</p>
-      {event.notes && <p className="mt-2 text-xs text-cream/65">{event.notes}</p>}
+    <div className="card p-5">
+      <p className="text-xs font-semibold text-primary-soft">{event.clientName}</p>
+      <h2 className="font-display text-lg text-ink">{event.location}</h2>
+      <p className="mt-0.5 text-xs text-muted">{formatEventDate(event.eventDate)}</p>
+      {event.notes && <p className="mt-2 text-xs text-muted">{event.notes}</p>}
 
       <div className="mt-4 space-y-2">
         {event.roles.map((role) => (
@@ -93,18 +94,18 @@ function RoleRow({ role, onToast }: { role: EmployeeEvent["roles"][number]; onTo
   const canRegister = status === null || status === "cancelled";
 
   return (
-    <div className="rounded-xl border border-brass/10 bg-surface2 p-3">
+    <div className="rounded-lg border border-line bg-surface2 p-3">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-cream">{role.roleName}</p>
-          <p className="flex items-center gap-1 text-xs text-cream/65">
+          <p className="text-sm font-semibold text-ink">{role.roleName}</p>
+          <p className="flex items-center gap-1 text-xs text-muted">
             <Clock3 className="h-3 w-3" aria-hidden="true" />
-            {role.startTime}–{role.endTime ?? "טרם נקבע"} · ₪{role.baseRate}/ש&apos;
+            {role.startTime.slice(0, 5)}–{role.endTime?.slice(0, 5) ?? "טרם נקבע"} · ₪{role.baseRate}/ש&apos;
           </p>
         </div>
         <span
-          className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-            isFull ? "bg-cream/10 text-cream/50" : "bg-cream/5 text-cream/70"
+          className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ${
+            isFull ? "bg-ink/10 text-muted" : "bg-ink/5 text-ink/80"
           }`}
         >
           <Users className="h-3 w-3" aria-hidden="true" />
@@ -112,18 +113,18 @@ function RoleRow({ role, onToast }: { role: EmployeeEvent["roles"][number]; onTo
         </span>
       </div>
 
-      {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
+      {error && <p className="mt-2 text-xs text-rose-700">{error}</p>}
 
       <div className="mt-2.5 flex items-center justify-between gap-2">
         {status && !canRegister ? (
           <>
-            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusStyle(status)}`}>
+            <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${getStatusStyle(status)}`}>
               <Check className="h-3 w-3" aria-hidden="true" />
               {getStatusLabel(status)}
             </span>
             {canCancel && (
               showRequested ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-cream/5 px-2 py-1 text-[11px] text-cream/50">
+                <span className="inline-flex items-center gap-1 rounded-md bg-ink/5 px-2 py-1 text-[11px] text-muted">
                   <AlertCircle className="h-3 w-3" aria-hidden="true" />
                   בקשת ביטול ממתינה
                 </span>
@@ -132,7 +133,7 @@ function RoleRow({ role, onToast }: { role: EmployeeEvent["roles"][number]; onTo
                   <button
                     type="button"
                     onClick={() => setCancelOpen(true)}
-                    className="rounded-full bg-rose-500/10 px-3 py-1 text-[11px] font-semibold text-rose-400 transition-colors hover:bg-rose-500/20"
+                    className="rounded-md bg-rose-500/10 px-3 py-1 text-[11px] font-semibold text-rose-700 transition-colors hover:bg-rose-500/20"
                   >
                     {withdrawable ? "ביטול הרשמה" : "בקש ביטול"}
                   </button>
@@ -145,7 +146,7 @@ function RoleRow({ role, onToast }: { role: EmployeeEvent["roles"][number]; onTo
             type="button"
             disabled={isPending}
             onClick={handleRegister}
-            className="w-full rounded-full bg-indigo-600 py-2 text-xs font-bold text-white transition-transform active:scale-[0.98] disabled:opacity-50"
+            className="btn btn-primary btn-sm w-full"
           >
             {isPending ? "נרשם/ת..." : isFull ? "הצטרפות לרשימת המתנה" : "הרשמה למשמרת"}
           </button>

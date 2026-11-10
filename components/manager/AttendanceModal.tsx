@@ -14,6 +14,7 @@ import {
   type HoursReasonFormInput,
   type HoursReasonFormOutput,
 } from "@/lib/validations/hours";
+import { formatEventDate } from "@/lib/format";
 
 // Hours entry / re-entry for one approved registration (Manager and above) through submit_shift_hours.
 // The RPC is authoritative (scope, event status/date, not own hours, already-approved); this form only collects input.
@@ -80,14 +81,14 @@ export function AttendanceModal({ target, onClose }: { target: AttendanceTarget;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-      <div className="w-full max-w-lg space-y-5 border-s-4 border-[#4F46E5] bg-surface p-6 shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-brass/10 pb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-xs">
+      <div className="w-full max-w-lg space-y-5 border-s-4 border-primary bg-surface p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-line pb-4">
           <div>
-            <p className="text-xs font-semibold text-indigo-400">{target.roleName}</p>
-            <h3 className="font-display text-xl text-cream">דיווח שעות: {target.name}</h3>
-            <p className="text-xs text-cream/65">
-              {target.eventDate}
+            <p className="text-xs font-semibold text-primary-soft">{target.roleName}</p>
+            <h3 className="font-display text-xl text-ink">דיווח שעות: {target.name}</h3>
+            <p className="text-xs text-muted">
+              {formatEventDate(target.eventDate)}
               {target.submissionStatus ? ` · ${SUBMISSION_LABEL[target.submissionStatus] ?? target.submissionStatus}` : ""}
             </p>
           </div>
@@ -95,48 +96,48 @@ export function AttendanceModal({ target, onClose }: { target: AttendanceTarget;
             type="button"
             onClick={onClose}
             aria-label="סגירה"
-            className="rounded-md p-1 text-lg text-cream/50 transition-colors hover:bg-surface2 hover:text-cream"
+            className="rounded-md p-1 text-lg text-muted transition-colors hover:bg-surface2 hover:text-ink"
           >
             ✕
           </button>
         </div>
 
         {approved ? (
-          <p className="border-s-2 border-[#D4FF00] ps-3 text-sm text-cream/75">
+          <p className="border-s-2 border-sky ps-3 text-sm text-ink/80">
             הדוח אושר. תיקון אפשרי רק לאחר ביטול על ידי אדמין.
           </p>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="att-start" className="mb-1 block text-xs font-medium text-cream/70">
+                <label htmlFor="att-start" className="mb-1 block text-xs font-medium text-ink/80">
                   שעת התחלה בפועל
                 </label>
                 <input
                   id="att-start"
                   type="time"
                   {...register("startTime")}
-                  className="w-full rounded-md border border-brass/20 bg-surface2 px-3 py-2 text-sm text-cream focus:border-[#4F46E5] focus:outline-none"
+                  className="w-full rounded-md border border-line-strong bg-surface2 px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
                 />
-                {errors.startTime?.message && <p className="mt-1 text-xs text-rose-400">{errors.startTime.message}</p>}
+                {errors.startTime?.message && <p className="mt-1 text-xs text-rose-700">{errors.startTime.message}</p>}
               </div>
               <div>
-                <label htmlFor="att-end" className="mb-1 block text-xs font-medium text-cream/70">
+                <label htmlFor="att-end" className="mb-1 block text-xs font-medium text-ink/80">
                   שעת סיום בפועל
                 </label>
                 <input
                   id="att-end"
                   type="time"
                   {...register("endTime")}
-                  className="w-full rounded-md border border-brass/20 bg-surface2 px-3 py-2 text-sm text-cream focus:border-[#4F46E5] focus:outline-none"
+                  className="w-full rounded-md border border-line-strong bg-surface2 px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
                 />
-                {errors.endTime?.message && <p className="mt-1 text-xs text-rose-400">{errors.endTime.message}</p>}
+                {errors.endTime?.message && <p className="mt-1 text-xs text-rose-700">{errors.endTime.message}</p>}
               </div>
             </div>
-            <p className="text-[11px] text-cream/65">שעת סיום שקודמת לשעת ההתחלה נחשבת ליום שלמחרת (משמרת לילה).</p>
+            <p className="text-[11px] text-muted">שעת סיום שקודמת לשעת ההתחלה נחשבת ליום שלמחרת (משמרת לילה).</p>
 
             <div>
-              <label htmlFor="att-hours" className="mb-1 block text-xs font-medium text-cream/70">
+              <label htmlFor="att-hours" className="mb-1 block text-xs font-medium text-ink/80">
                 סה״כ שעות מדווחות
               </label>
               <input
@@ -146,13 +147,13 @@ export function AttendanceModal({ target, onClose }: { target: AttendanceTarget;
                 min="0.25"
                 max="24"
                 {...register("reportedHours")}
-                className="w-full rounded-md border border-brass/20 bg-surface2 px-3 py-2 text-sm text-cream focus:border-[#4F46E5] focus:outline-none"
+                className="w-full rounded-md border border-line-strong bg-surface2 px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none"
               />
-              {errors.reportedHours?.message && <p className="mt-1 text-xs text-rose-400">{errors.reportedHours.message}</p>}
+              {errors.reportedHours?.message && <p className="mt-1 text-xs text-rose-700">{errors.reportedHours.message}</p>}
             </div>
 
             <div>
-              <p className="mb-2 block text-xs font-medium text-cream/70">דירוג ביצוע (1 עד 5)</p>
+              <p className="mb-2 block text-xs font-medium text-ink/80">דירוג ביצוע (1 עד 5)</p>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -160,38 +161,38 @@ export function AttendanceModal({ target, onClose }: { target: AttendanceTarget;
                     type="button"
                     aria-label={`דירוג ${star}`}
                     onClick={() => setValue("rating", star, { shouldDirty: true })}
-                    className="cursor-pointer p-1 transition-transform hover:scale-110"
+                    className="cursor-pointer p-1 transition-colors hover:scale-110"
                   >
-                    <Star className={`h-6 w-6 ${star <= rating ? "fill-brass text-brass" : "text-cream/20 hover:text-cream/65"}`} />
+                    <Star className={`h-6 w-6 ${star <= rating ? "fill-primary-soft text-primary-soft" : "text-ink/20 hover:text-muted"}`} />
                   </button>
                 ))}
-                <span className="ms-2 text-xs font-semibold text-brass">{rating} / 5</span>
+                <span className="ms-2 text-xs font-semibold text-primary-soft">{rating} / 5</span>
               </div>
             </div>
 
             <div>
-              <label htmlFor="att-notes" className="mb-1 block text-xs font-medium text-cream/70">
+              <label htmlFor="att-notes" className="mb-1 block text-xs font-medium text-ink/80">
                 הערות (לא חובה)
               </label>
               <textarea
                 id="att-notes"
                 rows={3}
                 {...register("notes")}
-                className="w-full rounded-md border border-brass/20 bg-surface2 p-3 text-sm text-cream focus:border-[#4F46E5] focus:outline-none"
+                className="w-full rounded-md border border-line-strong bg-surface2 p-3 text-sm text-ink focus:border-primary focus:outline-none"
               />
-              {errors.notes?.message && <p className="mt-1 text-xs text-rose-400">{errors.notes.message}</p>}
+              {errors.notes?.message && <p className="mt-1 text-xs text-rose-700">{errors.notes.message}</p>}
             </div>
 
-            {serverError && <p className="border-s-2 border-rose-500 ps-3 text-xs text-rose-300">{serverError}</p>}
+            {serverError && <p className="border-s-2 border-rose-500 ps-3 text-xs text-rose-700">{serverError}</p>}
 
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={onClose} className="rounded-md bg-surface2 px-4 py-2 text-xs font-medium text-cream/70 hover:text-cream">
+              <button type="button" onClick={onClose} className="rounded-md bg-surface2 px-4 py-2 text-xs font-medium text-ink/80 hover:text-ink">
                 ביטול
               </button>
               <button
                 type="submit"
                 disabled={isPending}
-                className="rounded-md bg-[#4F46E5] px-5 py-2 text-xs font-semibold text-white hover:bg-indigo-600 disabled:opacity-50"
+                className="btn btn-primary btn-sm"
               >
                 {isPending ? "שומר..." : target.submissionId ? "הגשה מחדש לאישור" : "הגשה לאישור"}
               </button>
@@ -223,7 +224,7 @@ function VoidForm({ eventId, submissionId, onDone }: { eventId: string; submissi
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="text-xs text-rose-300 hover:underline">
+      <button type="button" onClick={() => setOpen(true)} className="text-xs text-rose-700 hover:underline">
         ביטול הדוח (הוזן בטעות)
       </button>
     );
@@ -243,13 +244,13 @@ function VoidForm({ eventId, submissionId, onDone }: { eventId: string; submissi
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2 border-t border-brass/10 pt-3" noValidate>
-      <label htmlFor="void-reason" className="block text-xs text-cream/70">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2 border-t border-line pt-3" noValidate>
+      <label htmlFor="void-reason" className="block text-xs text-ink/80">
         סיבת הביטול (חובה)
       </label>
-      <textarea id="void-reason" rows={2} {...register("reason")} className="w-full rounded-md border border-brass/20 bg-surface2 p-2 text-sm text-cream" />
-      {(errors.reason?.message || serverError) && <p className="text-xs text-rose-400">{errors.reason?.message ?? serverError}</p>}
-      <button type="submit" disabled={isPending} className="rounded-md bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-100 disabled:opacity-50">
+      <textarea id="void-reason" rows={2} {...register("reason")} className="w-full rounded-md border border-line-strong bg-surface2 p-2 text-sm text-ink" />
+      {(errors.reason?.message || serverError) && <p className="text-xs text-rose-700">{errors.reason?.message ?? serverError}</p>}
+      <button type="submit" disabled={isPending} className="rounded-md bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-50">
         {isPending ? "מבטל..." : "אישור ביטול הדוח"}
       </button>
     </form>

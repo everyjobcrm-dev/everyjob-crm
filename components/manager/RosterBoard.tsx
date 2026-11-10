@@ -58,11 +58,11 @@ type Props = {
 };
 
 const BUCKET_TONE: Record<RosterBucket, string> = {
-  cancellation: "text-rose-400",
-  approved: "text-indigo-300",
-  pending: "text-cream/80",
-  waitlisted: "text-[#D4FF00]",
-  inactive: "text-cream/65",
+  cancellation: "text-rose-700",
+  approved: "text-primary-soft",
+  pending: "text-ink/80",
+  waitlisted: "text-sky-deep",
+  inactive: "text-muted",
 };
 
 const btn =
@@ -79,7 +79,7 @@ export function RosterBoard({ eventId, eventDate, eventStatus, viewerId, canSeeR
   return (
     <div className="space-y-8">
       {!actionable && (
-        <p className="border-s-2 border-[#D4FF00] bg-surface px-4 py-3 text-xs text-cream/70">
+        <p className="border-s-2 border-sky bg-surface px-4 py-3 text-xs text-ink/80">
           פעולות שיבוץ זמינות רק כשהאירוע פתוח או סגור להרשמה. הרשימה מוצגת לקריאה בלבד.
         </p>
       )}
@@ -88,16 +88,16 @@ export function RosterBoard({ eventId, eventDate, eventStatus, viewerId, canSeeR
         const roleRows = rows.filter((r) => r.event_role_id === role.id);
         const occupied = occupiedSlots(rows, role.id);
         return (
-          <section key={role.id} className="overflow-hidden rounded-xl border border-brass/15 bg-surface">
-            <header className="flex flex-wrap items-end justify-between gap-3 border-b border-brass/10 bg-surface2 px-5 py-3">
+          <section key={role.id} className="overflow-hidden card">
+            <header className="flex flex-wrap items-end justify-between gap-3 border-b border-line bg-surface2 px-5 py-3">
               <div>
-                <h3 className="font-display text-lg font-semibold text-cream">{role.roleName}</h3>
-                <p className="text-xs text-cream/65">
+                <h3 className="font-display text-lg font-semibold text-ink">{role.roleName}</h3>
+                <p className="text-xs text-muted">
                   {role.startTime?.slice(0, 5)}
                   {role.endTime ? `–${role.endTime.slice(0, 5)}` : ""}
                 </p>
               </div>
-              <p className={`text-sm font-semibold ${occupied >= role.headcount ? "text-[#D4FF00]" : "text-cream/70"}`}>
+              <p className={`text-sm font-semibold ${occupied >= role.headcount ? "text-sky-deep" : "text-ink/80"}`}>
                 {occupied}/{role.headcount} מקומות תפוסים
               </p>
             </header>
@@ -130,8 +130,8 @@ export function RosterBoard({ eventId, eventDate, eventStatus, viewerId, canSeeR
       })}
 
       {orphanRows.length > 0 && (
-        <section className="rounded-xl border border-brass/10 bg-surface p-5">
-          <h3 className="mb-3 font-display text-base text-cream/70">ללא תפקיד</h3>
+        <section className="card p-5">
+          <h3 className="mb-3 font-display text-base text-ink/80">ללא תפקיד</h3>
           <Buckets
             eventId={eventId}
             rows={orphanRows}
@@ -146,7 +146,7 @@ export function RosterBoard({ eventId, eventDate, eventStatus, viewerId, canSeeR
       )}
 
       {rows.length === 0 && roles.length === 0 && (
-        <p className="text-center text-sm text-cream/65">לאירוע אין תפקידים עדיין.</p>
+        <p className="text-center text-sm text-muted">לאירוע אין תפקידים עדיין.</p>
       )}
 
       {attendance && <AttendanceModal target={attendance} onClose={() => setAttendance(null)} />}
@@ -172,7 +172,7 @@ function Buckets(props: {
   const waitlisted = grouped.get("waitlisted");
   waitlisted?.sort((a, b) => (a.waitlist_position ?? 0) - (b.waitlist_position ?? 0));
 
-  if (props.rows.length === 0) return <p className="text-xs text-cream/65">אין רישומים לתפקיד זה.</p>;
+  if (props.rows.length === 0) return <p className="text-xs text-muted">אין רישומים לתפקיד זה.</p>;
 
   return (
     <>
@@ -259,38 +259,38 @@ function RegRow({
         (bucket === "cancellation"
           ? "border-rose-500/25 bg-rose-500/5"
           : muted
-            ? "border-brass/5 bg-surface2/40 opacity-70"
-            : "border-brass/10 bg-surface2 hover:border-brass/25")
+            ? "border-line bg-surface2/40 opacity-70"
+            : "border-line bg-surface2 hover:border-line-strong")
       }
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0 space-y-0.5">
           <div className="flex flex-wrap items-center gap-2">
             {bucket === "waitlisted" && row.waitlist_position != null && (
-              <span className="rounded-sm bg-[#D4FF00]/15 px-1.5 text-xs font-bold text-[#D4FF00]">
+              <span className="rounded-sm bg-sky/25 px-1.5 text-xs font-bold text-sky-deep">
                 #{row.waitlist_position}
               </span>
             )}
-            <p className="text-sm font-medium text-cream">{displayName(row)}</p>
+            <p className="text-sm font-medium text-ink">{displayName(row)}</p>
             {isStaffWorker && (
-              <span className="rounded-sm bg-indigo-500/15 px-1.5 py-0.5 text-[11px] text-indigo-300">צוות</span>
+              <span className="rounded-sm bg-pink/15 px-1.5 py-0.5 text-[11px] text-primary-soft">צוות</span>
             )}
-            {isOwn && <span className="rounded-sm bg-cream/10 px-1.5 py-0.5 text-[11px] text-cream/60">את/ה</span>}
+            {isOwn && <span className="rounded-sm bg-ink/10 px-1.5 py-0.5 text-[11px] text-muted">את/ה</span>}
             {row.average_rating != null && Number(row.average_rating) > 0 && (
-              <span className="inline-flex items-center gap-0.5 text-xs text-brass">
-                <Star className="h-3 w-3 fill-brass text-brass" aria-hidden="true" />
+              <span className="inline-flex items-center gap-0.5 text-xs text-primary-soft">
+                <Star className="h-3 w-3 fill-primary-soft text-primary-soft" aria-hidden="true" />
                 {Number(row.average_rating).toFixed(1)}
               </span>
             )}
           </div>
-          <p className="text-xs text-cream/50">
+          <p className="text-xs text-muted">
             {row.phone_number || "ללא טלפון"}
             {row.age != null ? ` · גיל ${row.age}` : ""}
             {muted ? ` · ${REGISTRATION_STATUS_LABEL[row.status] ?? row.status}` : ""}
             {bucket === "cancellation" ? ` · ${REGISTRATION_STATUS_LABEL[row.status] ?? row.status}` : ""}
           </p>
           {row.submission_status && (
-            <p className="text-xs text-cream/65">
+            <p className="text-xs text-muted">
               דוח שעות: {row.submission_status === "approved" ? "אושר" : row.submission_status === "rejected" ? "נדחה" : "הוגש"}
               {row.reported_hours != null ? ` (${row.reported_hours} שעות)` : ""}
             </p>
@@ -305,7 +305,7 @@ function RegRow({
                   type="button"
                   disabled={isPending}
                   onClick={() => run(() => approveCancellation(eventId, row.registration_id))}
-                  className={`${btn} bg-rose-500/20 text-rose-200 hover:bg-rose-500/30`}
+                  className={`${btn} bg-rose-500/20 text-rose-700 hover:bg-rose-500/30`}
                 >
                   <Check className="h-3.5 w-3.5" aria-hidden="true" /> אישור ביטול
                 </button>
@@ -313,7 +313,7 @@ function RegRow({
                   type="button"
                   disabled={isPending}
                   onClick={() => run(() => rejectCancellation(eventId, row.registration_id))}
-                  className={`${btn} border border-brass/20 text-cream/70 hover:bg-surface`}
+                  className={`${btn} border border-line-strong text-ink/80 hover:bg-surface`}
                 >
                   <X className="h-3.5 w-3.5" aria-hidden="true" /> דחיית הבקשה
                 </button>
@@ -326,7 +326,7 @@ function RegRow({
                   type="button"
                   disabled={isPending}
                   onClick={() => run(() => approveRegistration(eventId, row.registration_id))}
-                  className={`${btn} bg-[#4F46E5] text-white hover:bg-indigo-600`}
+                  className={`${btn} bg-ink text-white hover:bg-ink/85`}
                 >
                   <Check className="h-3.5 w-3.5" aria-hidden="true" /> אישור
                 </button>
@@ -334,7 +334,7 @@ function RegRow({
                   type="button"
                   disabled={isPending}
                   onClick={() => run(() => rejectRegistration(eventId, row.registration_id))}
-                  className={`${btn} border border-brass/20 text-cream/70 hover:bg-surface`}
+                  className={`${btn} border border-line-strong text-ink/80 hover:bg-surface`}
                 >
                   <X className="h-3.5 w-3.5" aria-hidden="true" /> דחייה
                 </button>
@@ -348,7 +348,7 @@ function RegRow({
                   disabled={isPending || roleFull}
                   title={roleFull ? "התפקיד מלא" : undefined}
                   onClick={() => run(() => promoteWaitlist(eventId, row.registration_id))}
-                  className={`${btn} bg-indigo-500/20 text-indigo-200 hover:bg-indigo-500/30`}
+                  className={`${btn} bg-pink/15 text-primary-soft hover:bg-primary/30`}
                 >
                   <ArrowUpCircle className="h-3.5 w-3.5" aria-hidden="true" /> שיבוץ מהמתנה
                 </button>
@@ -356,7 +356,7 @@ function RegRow({
                   type="button"
                   disabled={isPending}
                   onClick={() => run(() => rejectRegistration(eventId, row.registration_id))}
-                  className={`${btn} border border-brass/20 text-cream/70 hover:bg-surface`}
+                  className={`${btn} border border-line-strong text-ink/80 hover:bg-surface`}
                 >
                   <X className="h-3.5 w-3.5" aria-hidden="true" /> דחייה
                 </button>
@@ -371,7 +371,7 @@ function RegRow({
               <button
                 type="button"
                 onClick={() => onAttendance(row)}
-                className={`${btn} bg-[#4F46E5] text-white hover:bg-indigo-600`}
+                className={`${btn} bg-ink text-white hover:bg-ink/85`}
               >
                 <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                 {row.submission_status === "approved" ? "שעות אושרו" : row.submission_id ? "עדכון דיווח" : "דיווח שעות"}
@@ -383,7 +383,7 @@ function RegRow({
                 type="button"
                 disabled={isPending}
                 onClick={() => setRemoving(true)}
-                className={`${btn} text-rose-300 hover:bg-rose-500/10`}
+                className={`${btn} text-rose-700 hover:bg-rose-500/10`}
               >
                 <UserMinus className="h-3.5 w-3.5" aria-hidden="true" /> הסרה
               </button>
@@ -392,7 +392,7 @@ function RegRow({
         )}
 
         {!canAct && bucket === "approved" && canSeeRates && row.wage_rate != null && (
-          <p className="text-xs text-cream/60">₪{Number(row.wage_rate).toFixed(2)} לשעה</p>
+          <p className="text-xs text-muted">₪{Number(row.wage_rate).toFixed(2)} לשעה</p>
         )}
       </div>
 
@@ -404,7 +404,7 @@ function RegRow({
           onDone={() => setRemoving(false)}
         />
       )}
-      {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
+      {error && <p className="mt-2 text-xs text-rose-700">{error}</p>}
     </div>
   );
 }
@@ -445,14 +445,14 @@ function RateForm({ eventId, registrationId, current }: { eventId: string; regis
           min="0.01"
           placeholder="₪/שעה"
           {...register("wageRate")}
-          className="w-24 rounded-md border border-brass/15 bg-surface px-2 py-1.5 text-xs text-cream"
+          className="w-24 rounded-md border border-line bg-surface px-2 py-1.5 text-xs text-ink"
         />
-        <button type="submit" disabled={isPending} className={`${btn} bg-brass/15 font-semibold text-brass`}>
+        <button type="submit" disabled={isPending} className={`${btn} bg-pink/15 font-semibold text-primary-soft`}>
           שמירה
         </button>
       </div>
       {(errors.wageRate?.message || serverError) && (
-        <span className="text-xs text-rose-400">{errors.wageRate?.message ?? serverError}</span>
+        <span className="text-xs text-rose-700">{errors.wageRate?.message ?? serverError}</span>
       )}
     </form>
   );
@@ -496,23 +496,23 @@ function RemoveForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-3 space-y-2 border-s-2 border-rose-500/40 ps-3" noValidate>
-      <label htmlFor={`reason-${registrationId}`} className="block text-xs text-cream/70">
+      <label htmlFor={`reason-${registrationId}`} className="block text-xs text-ink/80">
         הסרת {name} מהאירוע. לאחר הסרה לא ניתן להירשם מחדש באופן עצמאי. סיבה (חובה):
       </label>
       <textarea
         id={`reason-${registrationId}`}
         rows={2}
         {...register("reason")}
-        className="w-full rounded-md border border-brass/20 bg-surface p-2 text-sm text-cream"
+        className="w-full rounded-md border border-line-strong bg-surface p-2 text-sm text-ink"
       />
       {(errors.reason?.message || serverError) && (
-        <p className="text-xs text-rose-400">{errors.reason?.message ?? serverError}</p>
+        <p className="text-xs text-rose-700">{errors.reason?.message ?? serverError}</p>
       )}
       <div className="flex gap-2">
-        <button type="submit" disabled={isPending} className={`${btn} bg-rose-500/25 text-rose-100 hover:bg-rose-500/35`}>
+        <button type="submit" disabled={isPending} className={`${btn} bg-rose-500/25 text-rose-700 hover:bg-rose-500/35`}>
           {isPending ? "מסיר..." : "אישור הסרה"}
         </button>
-        <button type="button" onClick={onDone} className={`${btn} text-cream/60 hover:bg-surface`}>
+        <button type="button" onClick={onDone} className={`${btn} text-muted hover:bg-surface`}>
           ביטול
         </button>
       </div>
@@ -572,7 +572,7 @@ function SchedulePanel({ eventId, role, full }: { eventId: string; role: RosterR
           onClick={() => setOpen(true)}
           disabled={full}
           title={full ? "התפקיד מלא" : undefined}
-          className={`${btn} border border-indigo-500/30 text-indigo-200 hover:bg-indigo-500/10`}
+          className={`${btn} border border-primary/30 text-primary-soft hover:bg-pink/15`}
         >
           <UserPlus className="h-3.5 w-3.5" aria-hidden="true" /> שיבוץ עובד/ת לתפקיד
         </button>
@@ -582,7 +582,7 @@ function SchedulePanel({ eventId, role, full }: { eventId: string; role: RosterR
   }
 
   return (
-    <div className="space-y-3 border-s-2 border-indigo-500/40 ps-3">
+    <div className="space-y-3 border-s-2 border-primary/40 ps-3">
       <form onSubmit={handleSubmit(onSearch)} className="flex flex-wrap items-start gap-2" noValidate>
         <div>
           <label htmlFor={`search-${role.id}`} className="sr-only">
@@ -592,28 +592,28 @@ function SchedulePanel({ eventId, role, full }: { eventId: string; role: RosterR
             id={`search-${role.id}`}
             placeholder="שם או טלפון"
             {...register("query")}
-            className="w-56 rounded-md border border-brass/20 bg-surface px-2.5 py-1.5 text-sm text-cream"
+            className="w-56 rounded-md border border-line-strong bg-surface px-2.5 py-1.5 text-sm text-ink"
           />
-          {errors.query?.message && <p className="mt-1 text-xs text-rose-400">{errors.query.message}</p>}
+          {errors.query?.message && <p className="mt-1 text-xs text-rose-700">{errors.query.message}</p>}
         </div>
-        <button type="submit" disabled={isPending} className={`${btn} bg-indigo-500/20 text-indigo-100`}>
+        <button type="submit" disabled={isPending} className={`${btn} bg-pink/15 text-primary-soft`}>
           <Search className="h-3.5 w-3.5" aria-hidden="true" /> חיפוש
         </button>
-        <button type="button" onClick={() => setOpen(false)} className={`${btn} text-cream/60`}>
+        <button type="button" onClick={() => setOpen(false)} className={`${btn} text-muted`}>
           סגירה
         </button>
       </form>
 
-      {results && results.length === 0 && <p className="text-xs text-cream/50">לא נמצאו עובדים.</p>}
+      {results && results.length === 0 && <p className="text-xs text-muted">לא נמצאו עובדים.</p>}
       {results && results.length > 0 && (
-        <ul className="divide-y divide-brass/10 rounded-md border border-brass/10">
+        <ul className="divide-y divide-line rounded-md border border-line">
           {results.map((emp) => {
             const blocked = emp.registrationStatus != null && !["cancelled", "removed"].includes(emp.registrationStatus);
             return (
               <li key={emp.employeeId} className="flex items-center justify-between gap-3 px-3 py-2">
                 <div>
-                  <p className="text-sm text-cream">{emp.name}</p>
-                  <p className="text-xs text-cream/65">
+                  <p className="text-sm text-ink">{emp.name}</p>
+                  <p className="text-xs text-muted">
                     {emp.phone ?? "ללא טלפון"}
                     {emp.age != null ? ` · גיל ${emp.age}` : ""}
                     {emp.averageRating != null && Number(emp.averageRating) > 0
@@ -628,7 +628,7 @@ function SchedulePanel({ eventId, role, full }: { eventId: string; role: RosterR
                   type="button"
                   disabled={isPending || blocked}
                   onClick={() => onSchedule(emp)}
-                  className={`${btn} bg-[#4F46E5] text-white hover:bg-indigo-600`}
+                  className={`${btn} bg-ink text-white hover:bg-ink/85`}
                 >
                   שיבוץ
                 </button>
@@ -637,7 +637,7 @@ function SchedulePanel({ eventId, role, full }: { eventId: string; role: RosterR
           })}
         </ul>
       )}
-      {error && <p className="text-xs text-rose-400">{error}</p>}
+      {error && <p className="text-xs text-rose-700">{error}</p>}
       <ScheduleNotice notice={notice} />
     </div>
   );
@@ -645,10 +645,10 @@ function SchedulePanel({ eventId, role, full }: { eventId: string; role: RosterR
 
 function ScheduleNotice({ notice }: { notice: string[] | null }) {
   if (!notice) return null;
-  if (notice.length === 0) return <p className="text-xs text-indigo-300">העובד/ת שובץ/ה בהצלחה.</p>;
+  if (notice.length === 0) return <p className="text-xs text-primary-soft">העובד/ת שובץ/ה בהצלחה.</p>;
   return (
-    <div className="border-s-2 border-[#D4FF00] bg-[#D4FF00]/5 px-3 py-2 text-xs text-cream/80" role="status">
-      <p className="font-semibold text-[#D4FF00]">השיבוץ בוצע, לתשומת לבך:</p>
+    <div className="border-s-2 border-sky bg-sky/25 px-3 py-2 text-xs text-ink/80" role="status">
+      <p className="font-semibold text-sky-deep">השיבוץ בוצע, לתשומת לבך:</p>
       <ul className="mt-1 list-disc ps-4">
         {notice.map((n) => (
           <li key={n}>{n}</li>

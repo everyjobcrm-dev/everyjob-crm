@@ -21,8 +21,8 @@ export function FinancialClosureSummary({ closure }: { closure: ClosureFinancial
   const isPositive = netMargin >= 0;
 
   return (
-    <div className="rounded-xl border border-brass/10 bg-surface2 p-4">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cream/65">סיכום פיננסי</p>
+    <div className="rounded-lg border border-line bg-surface2 p-4">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">סיכום פיננסי</p>
 
       <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
         <Stat label="שעות בפועל" value={`${closure.totalHoursReported}`} suffix="ש'" />
@@ -43,18 +43,18 @@ export function FinancialClosureSummary({ closure }: { closure: ClosureFinancial
         />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-brass/10 pt-3">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
         <div className="flex gap-4 text-sm">
-          <span className="text-cream/60">
-            הכנסה בפועל <span className="font-mono font-semibold tabular-nums text-cream">₪{closure.actualIncome}</span>
+          <span className="text-muted">
+            הכנסה בפועל <span className="font-mono font-semibold tabular-nums text-ink">₪{closure.actualIncome}</span>
           </span>
-          <span className="text-cream/60">
-            הוצאה בפועל <span className="font-mono font-semibold tabular-nums text-cream">₪{closure.actualExpense}</span>
+          <span className="text-muted">
+            הוצאה בפועל <span className="font-mono font-semibold tabular-nums text-ink">₪{closure.actualExpense}</span>
           </span>
         </div>
         <span
           className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-mono text-sm font-bold tabular-nums ${
-            isPositive ? "bg-indigo-500/15 text-indigo-400" : "bg-rose-500/15 text-rose-400"
+            isPositive ? "bg-pink/15 text-primary-soft" : "bg-rose-500/15 text-rose-700"
           }`}
         >
           {isPositive ? (
@@ -84,17 +84,17 @@ function Stat({
 }) {
   return (
     <div>
-      <p className="mb-0.5 flex items-center gap-1 text-[11px] text-cream/65">
+      <p className="mb-0.5 flex items-center gap-1 text-[11px] text-muted">
         {icon}
         {label}
       </p>
       <p
         className={`font-mono text-base font-bold tabular-nums ${
-          tone === "positive" ? "text-indigo-400" : tone === "negative" ? "text-rose-400" : "text-cream"
+          tone === "positive" ? "text-primary-soft" : tone === "negative" ? "text-rose-700" : "text-ink"
         }`}
       >
         {value}
-        {suffix && <span className="ms-0.5 text-xs font-normal text-cream/65">{suffix}</span>}
+        {suffix && <span className="ms-0.5 text-xs font-normal text-muted">{suffix}</span>}
       </p>
     </div>
   );

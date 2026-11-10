@@ -40,7 +40,7 @@ export function BroadcastDialog() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-full border border-brass/30 px-5 py-2.5 text-sm font-bold text-brass transition-colors hover:bg-brass hover:text-obsidian"
+        className="btn btn-secondary"
       >
         <Megaphone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         הודעה לכל העובדים
@@ -51,37 +51,37 @@ export function BroadcastDialog() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="broadcast-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm"
         >
-          <div className="w-full max-w-md rounded-2xl border border-brass/20 bg-surface p-6">
+          <div className="w-full max-w-md rounded-lg border border-line-strong bg-surface p-6">
             <div className="mb-5 flex items-center justify-between">
-              <h2 id="broadcast-title" className="font-display text-xl text-cream">
+              <h2 id="broadcast-title" className="font-display text-xl text-ink">
                 שליחת הודעה לכלל העובדים
               </h2>
               <button
                 type="button"
                 onClick={resetAndClose}
                 aria-label="סגירה"
-                className="rounded-full p-1.5 text-cream/50 hover:bg-cream/5 hover:text-cream"
+                className="rounded-md p-1.5 text-muted hover:bg-ink/5 hover:text-ink"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
 
             {error && (
-              <div className="mb-4 rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-400">
+              <div className="mb-4 rounded-lg border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-700">
                 {error}
               </div>
             )}
             {sent && (
-              <div className="mb-4 rounded-xl border border-brass/25 bg-brass/10 px-3 py-2 text-sm text-brass">
+              <div className="mb-4 rounded-lg border border-line-strong bg-pink/15 px-3 py-2 text-sm text-primary-soft">
                 ההודעה נשלחה בהצלחה.
               </div>
             )}
 
             <form className="space-y-3" onSubmit={handleSubmit}>
               <div>
-                <label className="mb-1 block text-xs font-medium text-cream/60" htmlFor="bc-title">
+                <label className="mb-1 block text-xs font-medium text-muted" htmlFor="bc-title">
                   כותרת
                 </label>
                 <input
@@ -89,12 +89,12 @@ export function BroadcastDialog() {
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-xl border border-brass/15 bg-surface2 px-3.5 py-2.5 text-sm text-cream outline-none focus:border-brass"
+                  className="w-full rounded-lg border border-line bg-surface2 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-primary"
                   placeholder="עדכון שכר לחודש הבא"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-cream/60" htmlFor="bc-body">
+                <label className="mb-1 block text-xs font-medium text-muted" htmlFor="bc-body">
                   תוכן ההודעה
                 </label>
                 <textarea
@@ -103,14 +103,14 @@ export function BroadcastDialog() {
                   rows={4}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  className="w-full resize-none rounded-xl border border-brass/15 bg-surface2 px-3.5 py-2.5 text-sm text-cream outline-none focus:border-brass"
+                  className="w-full resize-none rounded-lg border border-line bg-surface2 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-primary"
                   placeholder="תשלומים יועברו החל מה-1 לחודש..."
                 />
               </div>
               <button
                 type="submit"
                 disabled={isPending}
-                className="mt-2 w-full rounded-full bg-brass py-2.5 text-sm font-bold text-obsidian transition-transform hover:scale-[1.01] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                className="btn btn-primary mt-2 w-full"
               >
                 {isPending ? "שולח..." : "שליחה לכל העובדים"}
               </button>
