@@ -76,6 +76,10 @@ body {
   padding: 0.3125rem 0.625rem;
   border-radius: var(--radius-md);
   font-size: var(--text-xs);
+  /* compact on desktop, still a comfortable thumb target on phones */
+  @media (max-width: 639px) {
+    min-height: 2.5rem;
+  }
 }
 @utility btn-lg {
   padding: 0.875rem 1.5rem;

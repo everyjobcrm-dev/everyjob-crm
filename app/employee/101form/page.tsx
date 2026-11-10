@@ -615,7 +615,7 @@ export default function Form101Page() {
               </div>
 
               {showSpouseFields ? (
-                <div className="mt-5 grid gap-4 rounded-lg border border-line bg-ink/40 p-4 md:grid-cols-3">
+                <div className="mt-5 grid gap-4 rounded-lg border border-line bg-surface2 p-4 md:grid-cols-3">
                   <label className="text-sm text-ink/80">
                     <span className="mb-2 block font-semibold">שם בן/בת זוג</span>
                     <input
@@ -648,7 +648,7 @@ export default function Form101Page() {
               <h2 className="mb-4 text-lg font-semibold text-ink">ג. פרטי מס</h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {taxFlagMetadata.map((taxFlag) => (
-                  <label key={taxFlag.key} className="flex items-center gap-2 rounded-lg border border-line bg-ink/40 p-3 text-sm text-ink/80">
+                  <label key={taxFlag.key} className="flex items-center gap-2 rounded-lg border border-line bg-surface2 p-3 text-sm text-ink/80">
                     <input
                       type="checkbox"
                       checked={

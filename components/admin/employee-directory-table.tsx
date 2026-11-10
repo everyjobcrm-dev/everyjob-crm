@@ -78,9 +78,10 @@ export function EmployeeDirectoryTable({
         </div>
       )}
 
-      <div className="overflow-x-auto card">
-        <table className="w-full min-w-[760px] text-start text-sm">
-          <thead>
+      {/* phones: each row becomes a small block (thead hidden, cells labelled); wider screens: a normal table */}
+      <div className="card sm:overflow-x-auto">
+        <table className="w-full text-start text-sm max-sm:block sm:min-w-[760px]">
+          <thead className="max-sm:hidden">
             <tr className="border-b border-line text-muted">
               <th scope="col" className="px-4 py-3 text-start font-medium">שם</th>
               <th scope="col" className="px-4 py-3 text-start font-medium">ת.ז.</th>
@@ -91,19 +92,23 @@ export function EmployeeDirectoryTable({
               <th scope="col" className="px-4 py-3 text-start font-medium">רווח סה״כ</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-line">
+          <tbody className="divide-y divide-line max-sm:block">
             {employees.map((emp) => {
               const busy = isPending && pendingId === emp.id;
               return (
-                <tr key={emp.id} className={busy ? "opacity-50" : undefined}>
-                  <td className="px-4 py-3.5 font-semibold text-ink">{emp.name}</td>
-                  <td className="px-4 py-3.5 tabular-nums text-ink/80">{emp.tz}</td>
-                  <td className="px-4 py-3.5">
+                <tr
+                  key={emp.id}
+                  className={`max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:gap-y-3 max-sm:p-4 ${busy ? "opacity-50" : ""}`}
+                >
+                  <td className="px-4 py-3.5 max-sm:p-0 font-semibold text-ink">{emp.name}</td>
+                  <td className="px-4 py-3.5 max-sm:p-0 tabular-nums text-ink/80 max-sm:text-end">{emp.tz}</td>
+                  <td data-label="הרשאה" className="px-4 py-3.5 max-sm:p-0 max-sm:before:mb-1 max-sm:before:block max-sm:before:text-xs max-sm:before:text-muted max-sm:before:content-[attr(data-label)]">
                     <select
+                      aria-label={`הרשאה - ${emp.name}`}
                       value={emp.role}
                       disabled={busy}
                       onChange={(e) => handleRoleChange(emp.id, e.target.value as AdminEmployee["role"])}
-                      className="rounded-lg border border-line bg-surface2 px-2.5 py-1.5 text-xs font-semibold text-ink outline-none focus:border-primary disabled:opacity-50"
+                      className="rounded-lg border border-line bg-surface2 px-2.5 py-1.5 text-xs font-semibold text-ink outline-none focus:border-primary disabled:opacity-50 max-sm:w-full max-sm:py-2.5"
                     >
                       <option value="employee">{ROLE_LABEL.employee}</option>
                       <option value="recruiter">{ROLE_LABEL.recruiter}</option>
@@ -111,14 +116,14 @@ export function EmployeeDirectoryTable({
                       <option value="admin">{ROLE_LABEL.admin}</option>
                     </select>
                   </td>
-                  <td className="px-4 py-3.5">
+                  <td data-label="גויס ע״י" className="px-4 py-3.5 max-sm:p-0 max-sm:before:mb-1 max-sm:before:block max-sm:before:text-xs max-sm:before:text-muted max-sm:before:content-[attr(data-label)]">
                     {emp.role === "employee" ? (
                       <select
                         aria-label={`גויס ע״י - ${emp.name}`}
                         value={emp.recruitedBy ?? ""}
                         disabled={busy}
                         onChange={(e) => handleRecruitedBy(emp.id, e.target.value || null)}
-                        className="rounded-md border border-line bg-surface2 px-2.5 py-1.5 text-xs text-ink outline-none focus:border-primary disabled:opacity-50"
+                        className="rounded-md border border-line bg-surface2 px-2.5 py-1.5 text-xs text-ink outline-none focus:border-primary disabled:opacity-50 max-sm:w-full max-sm:py-2.5"
                       >
                         <option value="">ללא</option>
                         {recruiters.map((r) => (
@@ -131,11 +136,11 @@ export function EmployeeDirectoryTable({
                       <span className="text-xs text-muted">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3.5">
+                  <td data-label="טופס 101" className={`px-4 py-3.5 max-sm:p-0 max-sm:before:mb-1 max-sm:before:block max-sm:before:text-xs max-sm:before:text-muted max-sm:before:content-[attr(data-label)] ${emp.form101Status == null ? "max-sm:hidden" : ""}`}>
                     {emp.form101Status == null ? (
                       <span className="text-xs text-muted">—</span>
                     ) : emp.form101Status === "complete" ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-pink/15 px-2 py-1 text-[11px] font-semibold text-primary-soft">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-sky/30 px-2 py-1 text-[11px] font-semibold text-sky-deep">
                         <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
                         {FORM_LABEL.complete}
                       </span>
@@ -144,7 +149,7 @@ export function EmployeeDirectoryTable({
                         <span
                           className={`rounded-md px-2 py-1 text-[11px] font-semibold ${
                             emp.form101Status === "pending"
-                              ? "bg-ink/10 text-ink/80"
+                              ? "bg-sun/40 text-sun-deep"
                               : "bg-rose-500/10 text-rose-700"
                           }`}
                         >
@@ -161,8 +166,13 @@ export function EmployeeDirectoryTable({
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3.5 tabular-nums text-ink/80">{emp.totalHours ?? "—"}</td>
-                  <td className="px-4 py-3.5 font-semibold tabular-nums text-primary-soft">
+                  <td data-label="שעות סה״כ" className={`px-4 py-3.5 max-sm:p-0 max-sm:before:mb-1 max-sm:before:block max-sm:before:text-xs max-sm:before:text-muted max-sm:before:content-[attr(data-label)] tabular-nums text-ink/80 ${emp.totalHours == null ? "max-sm:hidden" : ""}`}>
+                    {emp.totalHours ?? "—"}
+                  </td>
+                  <td
+                    data-label="רווח סה״כ"
+                    className={`px-4 py-3.5 max-sm:p-0 max-sm:before:mb-1 max-sm:before:block max-sm:before:text-xs max-sm:before:text-muted max-sm:before:content-[attr(data-label)] font-semibold tabular-nums text-primary-soft ${emp.totalEarnings == null ? "max-sm:hidden" : ""}`}
+                  >
                     {emp.totalEarnings == null ? "—" : `₪${emp.totalEarnings.toLocaleString("he-IL")}`}
                   </td>
                 </tr>
@@ -170,7 +180,7 @@ export function EmployeeDirectoryTable({
             })}
             {employees.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted">
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted max-sm:block">
                   לא נמצאו עובדים.
                 </td>
               </tr>

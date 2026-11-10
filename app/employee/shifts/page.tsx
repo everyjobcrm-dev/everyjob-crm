@@ -1,5 +1,4 @@
-import { CalendarCheck, Clock } from "lucide-react";
-import { StatStub } from "@/components/employee/StatStub";
+import { StatRow } from "@/components/ui/stat-row";
 import { MyShiftsList } from "@/components/employee/MyShiftsList";
 import { fetchMyMonthlyHours, fetchMyShifts } from "@/app/employee/events/actions";
 import { MonthlyHoursCard } from "@/components/employee/MonthlyHoursCard";
@@ -18,10 +17,13 @@ export default async function MyShiftsPage() {
     <div className="pb-10">
       <PageHeader title="המשמרות שלי" subtitle="משמרות קרובות, בקשות ממתינות והיסטוריה." />
 
-      <div className="mb-8 grid grid-cols-2 gap-4">
-        <StatStub label="משמרות קרובות שאושרו" value={upcomingApproved} icon={CalendarCheck} />
-        <StatStub label="בקשות ביטול פתוחות" value={openRequests} icon={Clock} />
-      </div>
+      <StatRow
+        className="mb-8"
+        items={[
+          { label: "משמרות קרובות שאושרו", value: upcomingApproved },
+          { label: "בקשות ביטול פתוחות", value: openRequests },
+        ]}
+      />
 
       <MonthlyHoursCard months={monthly} currentMonth={today.slice(0, 7) + "-01"} />
 

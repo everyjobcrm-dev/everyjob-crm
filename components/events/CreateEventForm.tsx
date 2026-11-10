@@ -104,7 +104,6 @@ export function CreateEventForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="pb-6">
       <header className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-soft">אירוע חדש</p>
         <h1 className="font-display text-3xl text-ink">פתיחת דוקט אירוע</h1>
         <p className="mt-1 text-sm text-ink/80">
           כל שדה כאן הופך לשורה בדוקט שהמנהל/ת בשטח יראה/תראה. תעריפים ריקים יסומנו אוטומטית לטיפול.

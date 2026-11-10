@@ -4,6 +4,7 @@ import { getShiftSubmissions } from "@/app/admin/actions";
 import { BroadcastDialog } from "@/components/admin/broadcast-dialog";
 import ShiftSubmissionsTable from "@/components/admin/shift-submissions-table";
 import { PageHeader } from "@/components/ui/page-header";
+import { StatRow } from "@/components/ui/stat-row";
 
 export default async function AdminDashboardPage() {
   const supabase = await createServerSupabaseClient();
@@ -41,14 +42,7 @@ export default async function AdminDashboardPage() {
         <BroadcastDialog />
       </PageHeader>
 
-      <dl className="grid grid-cols-1 divide-y divide-line-strong border-y border-ink sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:divide-x-reverse">
-        {metrics.map(({ label, value }) => (
-          <div key={label} className="px-1 py-5 sm:px-6 sm:first:ps-1">
-            <dt className="text-sm text-muted">{label}</dt>
-            <dd className="mt-1 font-display text-5xl font-bold text-ink tabular-nums">{value}</dd>
-          </div>
-        ))}
-      </dl>
+      <StatRow items={metrics} />
 
       <section className="mt-10">
         <h2 className="font-display text-2xl text-ink mb-4">דיווחי שעות ממתינים לאישור</h2>

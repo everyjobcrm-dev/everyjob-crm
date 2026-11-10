@@ -90,7 +90,7 @@ export function AppShell({
       {isStaff && (
         <nav
           aria-label="ניווט ניהול"
-          className="sticky top-0 z-30 flex items-center gap-1 overflow-x-auto border-b border-line bg-ink/40 px-3 py-2 backdrop-blur-sm lg:hidden"
+          className="sticky top-0 z-30 flex items-center gap-1 overflow-x-auto border-b border-line bg-surface/95 px-3 py-2 backdrop-blur-sm [scrollbar-width:none] lg:hidden"
         >
           <span className="me-1 shrink-0 text-xs font-semibold text-muted">ניהול</span>
           {nav.manage.map((item) => {
@@ -101,7 +101,7 @@ export function AppShell({
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`flex min-h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors ${
                   active ? "bg-ink text-white" : "text-ink/80 hover:bg-ink/5"
                 }`}
               >
@@ -120,7 +120,7 @@ export function AppShell({
       {/* Mobile: bottom tab bar with the work items. Logout lives on the profile screen, away from the thumb. */}
       <nav
         aria-label="ניווט ראשי"
-        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-line bg-ink/40 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden"
       >
         {nav.work.map((item) => {
           const active = isActive(pathname, item.href);
