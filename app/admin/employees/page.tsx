@@ -9,7 +9,11 @@ type ProfileRow = {
   tz: string | null;
   role: "admin" | "manager" | "employee" | "recruiter" | null;
   recruited_by: string | null;
+  approval_status?: string | null;
+  deleted_at?: string | null;
 };
+
+const APPROVAL = new Set(["pending", "approved", "rejected"]);
 
 export default async function AdminEmployeesPage() {
   const supabase = await createServerSupabaseClient();
@@ -17,12 +21,18 @@ export default async function AdminEmployeesPage() {
     redirect("/login");
   }
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    // Only columns that exist live. No Form 101 / employee_documents data here (AGENTS.md 8.2).
-    .select("id, first_name, last_name, tz, role, recruited_by")
-    .order("last_name", { ascending: true })
-    .returns<ProfileRow[]>();
+  // Only columns that exist live. No Form 101 / employee_documents data here (AGENTS.md 8.2).
+  const columns = "id, first_name, last_name, tz, role, recruited_by, approval_status, deleted_at";
+  let { data: profiles, error } = await supabase.from("profiles").select(columns).order("last_name", { ascending: true }).returns<ProfileRow[]>();
+  // shortcut: until p10c/p10d are applied the two columns do not exist (42703); fall back so the page keeps working.
+  // Remove once supabase/pending/20261110100200 + 20261110100300 are live.
+  if (error?.code === "42703") {
+    ({ data: profiles, error } = await supabase
+      .from("profiles")
+      .select("id, first_name, last_name, tz, role, recruited_by")
+      .order("last_name", { ascending: true })
+      .returns<ProfileRow[]>());
+  }
 
   const rows: AdminEmployee[] = (profiles ?? []).map((p) => ({
     id: p.id,
@@ -33,6 +43,8 @@ export default async function AdminEmployeesPage() {
     totalEarnings: null,
     totalHours: null,
     recruitedBy: p.recruited_by,
+    approvalStatus: APPROVAL.has(p.approval_status ?? "") ? (p.approval_status as AdminEmployee["approvalStatus"]) : null,
+    deletedAt: p.deleted_at ?? null,
   }));
 
   return (
@@ -44,7 +56,7 @@ export default async function AdminEmployeesPage() {
 
       <EmployeeDirectoryTable
         employees={rows}
-        recruiters={rows.filter((r) => r.role === "recruiter").map((r) => ({ id: r.id, name: r.name }))}
+        recruiters={rows.filter((r) => r.role === "recruiter" && !r.deletedAt).map((r) => ({ id: r.id, name: r.name }))}
       />
     </div>
   );

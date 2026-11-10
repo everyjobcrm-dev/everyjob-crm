@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
 import { requireRole, type AuthOk } from "@/lib/auth/guards";
 import { canCreateEvents, canManageEvent, roleAtLeast } from "@/lib/auth/permissions";
 import {
@@ -659,6 +660,62 @@ export async function setRecruitedBy(employeeId: string, recruiterId: string | n
   if (!data?.length) return fail("העדכון לא בוצע - העובד/ת לא נמצא/ה.");
 
   revalidatePath("/admin/employees");
+  return { success: true };
+}
+
+// ── Users: soft delete (p10c) ────────────────────────────────────────────
+
+/**
+ * Auth-side lock for a soft-deleted user: ban (or unban) the auth user with the service role so no new session can be
+ * created and the current JWT stops refreshing. The DB mark (profiles.deleted_at) and the app guard already deny the
+ * user; this closes the remaining paths (RPCs that read profiles.role directly). Returns null on success.
+ */
+async function setAuthBan(userId: string, banned: boolean): Promise<string | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) return "חסר מפתח שירות בשרת (SUPABASE_SERVICE_ROLE_KEY).";
+  const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  // 100 years; "none" lifts the ban
+  const { error } = await admin.auth.admin.updateUserById(userId, { ban_duration: banned ? "876600h" : "none" });
+  return error ? error.message : null;
+}
+
+/**
+ * Soft-delete a user: profiles.deleted_at via soft_delete_user (Admin only, never self; history/registrations/hours
+ * are kept), then ban the auth user. If the ban fails the DB mark stays and the error says so (re-run restores + deletes).
+ */
+export async function softDeleteUser(userId: string): Promise<ActionResult> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  if (!z.string().uuid().safeParse(userId).success) return fail("בקשה לא תקינה.");
+
+  const { error } = await auth.supabase.rpc("soft_delete_user", { p_user_id: userId });
+  if (error) return fail(mapDbError(error, { fallback: "מחיקת המשתמש/ת נכשלה." }));
+
+  const banError = await setAuthBan(userId, true);
+  revalidatePath("/admin/employees");
+  if (banError) {
+    console.error("[softDeleteUser] ban failed", banError);
+    return fail("המשתמש/ת סומן/ה כמחוק/ה, אך חסימת ההתחברות נכשלה. נסה/י לשחזר ולמחוק שוב.");
+  }
+  return { success: true };
+}
+
+/** Restore a soft-deleted user (restore_user, Admin only) and lift the auth ban. */
+export async function restoreUser(userId: string): Promise<ActionResult> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  if (!z.string().uuid().safeParse(userId).success) return fail("בקשה לא תקינה.");
+
+  const { error } = await auth.supabase.rpc("restore_user", { p_user_id: userId });
+  if (error) return fail(mapDbError(error, { fallback: "שחזור המשתמש/ת נכשל." }));
+
+  const banError = await setAuthBan(userId, false);
+  revalidatePath("/admin/employees");
+  if (banError) {
+    console.error("[restoreUser] unban failed", banError);
+    return fail("המשתמש/ת שוחזר/ה, אך ביטול חסימת ההתחברות נכשל. נסה/י שוב.");
+  }
   return { success: true };
 }
 

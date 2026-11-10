@@ -90,6 +90,12 @@ const BY_MESSAGE: ReadonlyArray<readonly [string, string]> = [
   ["invalid_value", "אחד הערכים אינו תקין."],
   // profiles guard
   ["protected profile fields", "רק אדמין יכול לשנות שדות מוגנים בפרופיל."],
+  // users: soft delete / approval (soft_delete_user / restore_user / set_employee_approval)
+  ["cannot_delete_self", "לא ניתן למחוק את המשתמש/ת שלך."],
+  ["already_deleted", "המשתמש/ת כבר מחוק/ה."],
+  ["not_deleted", "המשתמש/ת אינו/ה מחוק/ה."],
+  ["user_deleted", "המשתמש/ת מחוק/ה - יש לשחזר אותו/ה תחילה."],
+  ["user_not_found", "המשתמש/ת לא נמצא/ה."],
   // generic permission text last
   ["forbidden", "אין לך הרשאה לבצע פעולה זו."],
 ];
