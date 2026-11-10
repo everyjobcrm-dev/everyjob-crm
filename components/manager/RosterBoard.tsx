@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle, ArrowUpCircle, Check, Clock, Search, Star, UserMinus, UserPlus, X } from "lucide-react";
 import {
   approveCancellation,
+  approveEmployee,
   approveRegistration,
   promoteWaitlist,
   rejectCancellation,
@@ -564,6 +565,23 @@ function SchedulePanel({ eventId, role, full }: { eventId: string; role: RosterR
     });
   };
 
+  // Approve a new employee from the picker (Admin/Manager/Recruiter); the row loses its "ממתין/ה לאישור" warning.
+  const onApprove = (employee: EmployeeSearchResult) => {
+    setError(null);
+    startTransition(async () => {
+      const res = await approveEmployee(employee.employeeId);
+      if (!res.success) {
+        setError(res.error);
+        return;
+      }
+      setResults((prev) =>
+        prev?.map((e) =>
+          e.employeeId === employee.employeeId ? { ...e, warnings: e.warnings.filter((w) => w !== "pending_approval") } : e,
+        ) ?? null,
+      );
+    });
+  };
+
   if (!open) {
     return (
       <div className="space-y-2">
@@ -609,10 +627,18 @@ function SchedulePanel({ eventId, role, full }: { eventId: string; role: RosterR
         <ul className="divide-y divide-brass/10 rounded-md border border-brass/10">
           {results.map((emp) => {
             const blocked = emp.registrationStatus != null && !["cancelled", "removed"].includes(emp.registrationStatus);
+            const pendingApproval = emp.warnings.includes("pending_approval");
             return (
-              <li key={emp.employeeId} className="flex items-center justify-between gap-3 px-3 py-2">
-                <div>
-                  <p className="text-sm text-cream">{emp.name}</p>
+              <li key={emp.employeeId} className="flex items-start justify-between gap-3 px-3 py-2">
+                <div className="min-w-0">
+                  <p className="flex flex-wrap items-center gap-2 text-sm text-cream">
+                    {emp.name}
+                    {pendingApproval && (
+                      <span className="rounded-sm bg-[#D4FF00]/15 px-1.5 py-0.5 text-[11px] font-semibold text-[#D4FF00]">
+                        ממתין/ה לאישור
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-cream/65">
                     {emp.phone ?? "ללא טלפון"}
                     {emp.age != null ? ` · גיל ${emp.age}` : ""}
@@ -623,15 +649,38 @@ function SchedulePanel({ eventId, role, full }: { eventId: string; role: RosterR
                       ? ` · ${REGISTRATION_STATUS_LABEL[emp.registrationStatus] ?? emp.registrationStatus} באירוע זה`
                       : ""}
                   </p>
+                  {/* side warnings: the picker never filters; the warnings explain what does not meet the conditions */}
+                  {emp.warnings.length > 0 && (
+                    <ul className="mt-1 space-y-0.5 border-s-2 border-[#D4FF00]/60 ps-2 text-[11px] text-cream/75" role="note">
+                      {emp.warnings.map((w) => (
+                        <li key={w} className="flex items-start gap-1">
+                          <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-[#D4FF00]" aria-hidden="true" />
+                          {SCHEDULE_WARNING_LABEL[w] ?? w}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  disabled={isPending || blocked}
-                  onClick={() => onSchedule(emp)}
-                  className={`${btn} bg-[#4F46E5] text-white hover:bg-indigo-600`}
-                >
-                  שיבוץ
-                </button>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <button
+                    type="button"
+                    disabled={isPending || blocked}
+                    onClick={() => onSchedule(emp)}
+                    className={`${btn} bg-[#4F46E5] text-white hover:bg-indigo-600`}
+                  >
+                    שיבוץ
+                  </button>
+                  {pendingApproval && (
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => onApprove(emp)}
+                      className={`${btn} border border-[#D4FF00]/40 text-[#D4FF00] hover:bg-[#D4FF00]/10`}
+                    >
+                      <Check className="h-3.5 w-3.5" aria-hidden="true" /> אישור עובד/ת
+                    </button>
+                  )}
+                </div>
               </li>
             );
           })}

@@ -55,8 +55,13 @@ export type CancellationRequestFormInput = z.input<typeof cancellationRequestSch
 export type CancellationRequestFormOutput = z.output<typeof cancellationRequestSchema>;
 export const cancellationArgsSchema = cancellationRequestSchema.extend({ registrationId: uuid });
 
-/** Hebrew labels for schedule_employee's non-blocking warnings. */
+/** Hebrew labels for the non-blocking warnings of search_employees / schedule_employee (picker side warnings). */
 export const SCHEDULE_WARNING_LABEL: Record<string, string> = {
+  pending_approval: "העובד/ת עדיין לא אושר/ה במערכת (ממתין/ה לאישור).",
+  approval_rejected: "בקשת ההצטרפות של העובד/ת נדחתה.",
   below_min_rating: "דירוג העובד/ת נמוך מהדירוג המינימלי לאירוע.",
+  below_min_age: "העובד/ת מתחת לגיל המינימלי לאירוע (או שחסר תאריך לידה).",
   overlap: "לעובד/ת משמרת חופפת באותו יום באירוע אחר.",
 };
+
+export const approvalArgsSchema = z.object({ employeeId: uuid });
