@@ -385,20 +385,25 @@ export async function fetchEventForEdit(eventId: string): Promise<EditEventPageD
   if (!canManageEvent(auth.profile, ev)) return { ok: false, reason: "forbidden" };
 
   const isAdmin = auth.role === "admin";
-  const [{ data: roleRows }, { data: fills }, { data: roster }, clients, recruiters] = await Promise.all([
+  // bill_to_client (client price) is not SELECT-granted on event_roles (p10b); Admin reads it through get_event_role_pricing.
+  const [{ data: roleRows }, { data: fills }, { data: roster }, { data: pricing }, clients, recruiters] = await Promise.all([
     auth.supabase
       .from("event_roles")
-      .select("id, role_name, headcount, start_time, end_time, base_rate, bill_to_client")
+      .select("id, role_name, headcount, start_time, end_time, base_rate")
       .eq("event_id", eventId)
       .order("start_time", { ascending: true }),
     auth.supabase.from("event_role_fill_counts").select("event_role_id, filled_count").eq("event_id", eventId),
     auth.supabase.rpc("get_event_roster", { p_event_id: eventId }),
+    isAdmin ? auth.supabase.rpc("get_event_role_pricing", { p_event_id: eventId }) : Promise.resolve({ data: null }),
     fetchClients(),
     roleAtLeast(auth.role, "manager") ? listRecruiters(auth.supabase) : Promise.resolve([] as RecruiterOption[]),
   ]);
 
   const occupiedByRole = new Map(
     ((fills ?? []) as { event_role_id: string; filled_count: number }[]).map((f) => [f.event_role_id, Number(f.filled_count ?? 0)]),
+  );
+  const priceByRole = new Map(
+    ((pricing ?? []) as { role_id: string; bill_to_client: number | null }[]).map((p) => [p.role_id, p.bill_to_client]),
   );
   const rolesWithRegistrations = new Set(
     ((roster ?? []) as { event_role_id: string | null }[]).map((r) => r.event_role_id).filter(Boolean),
@@ -432,7 +437,6 @@ export async function fetchEventForEdit(eventId: string): Promise<EditEventPageD
           start_time: string;
           end_time: string | null;
           base_rate: number | null;
-          bill_to_client: number | null;
         }[]
       ).map((r) => ({
         id: r.id,
@@ -443,7 +447,7 @@ export async function fetchEventForEdit(eventId: string): Promise<EditEventPageD
         startTime: r.start_time.slice(0, 5),
         endTime: r.end_time ? r.end_time.slice(0, 5) : null,
         baseRate: r.base_rate,
-        billToClient: isAdmin ? r.bill_to_client : null,
+        billToClient: isAdmin ? (priceByRole.get(r.id) ?? null) : null,
       })),
     },
   };
