@@ -66,7 +66,7 @@ Done — Waitlist: signup for full shifts with automatic promotion trigger on ca
 
 Done — cancellation_requests: controlled cancellation flow, not self-service
 
-In Progress — Events lifecycle (October 2026): DB enforcement done (event status state machine incl. frozen completed/paused, registration write guard, registration RPC with staff-as-worker, waitlist trigger fixes, role hierarchy Admin ⊇ Manager ⊇ Recruiter with recruiter scope on `events.recruiter_id`); Phase 2 app layer done (consolidated actions, hierarchy helpers, Hebrew error mapping, manager portal guard). Remaining: staff approval UI (roster, status control, recruiter nav) on top of schedule_employee / remove_scheduled_employee, and the employee "My shifts" screen with cancellation requests.
+Done — Events lifecycle (October 2026): DB enforcement (status state machine, registration write guard, role hierarchy with recruiter scope), staff RPCs and roster (Phase 3), worker cancellation requests and "המשמרות שלי" (Phase 4). Only two items remain: run M6c by hand (supabase/p4_m6c_drop_legacy_registration_policy.sql) and the browser verification in docs/manual-test-plan-events.md.
 
 Planned — Shift Registration State Machine: Full UI/Server implementation of the registration lifecycle:
 
@@ -80,7 +80,7 @@ Waitlisted: Shift is full; employee joins queue.
 
 Cancellation semantics (decided): an approved cancellation request -> `cancelled` (employee may re-register); staff removal -> `removed` (no self re-registration); `rejected` cannot re-apply.
 
-Deferred (separate session) — Hours flow: attendance guards, RLS policies for shift_hour_submissions / employee_ratings / recruiter_bonuses, two-person review constraint, recruiter-credit trigger (supabase/recruiter_compensation_redesign.sql was never applied live and is superseded: it re-adds events.recruiter_id).
+Done (October 2026, Phase 6 h0-h5 applied; docs/design-hours-flow.md) — Hours flow; remaining: credit redemption semantics + p6_h6 (PROPOSED), optional removal of the duplicate rating trigger. Original scope: attendance guards, RLS policies for shift_hour_submissions / employee_ratings / recruiter_bonuses, two-person review constraint, recruiter-credit trigger (supabase/recruiter_compensation_redesign.sql was never applied live and is superseded: it re-adds events.recruiter_id).
 
 Planned — Smart Shift Filtering: Ensure employees only see and can request shifts matching their profiles.role arrays and age constraints.
 

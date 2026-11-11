@@ -29,7 +29,7 @@ export function ClientDetailDrawer({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
         onClick={onClose}
-        className="absolute inset-0 bg-obsidian/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
       />
 
       <motion.aside
@@ -37,18 +37,18 @@ export function ClientDetailDrawer({
         animate={{ x: 0 }}
         exit={{ x: "-100%" }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute inset-y-0 end-0 flex h-full w-full max-w-lg flex-col border-s border-cream/10 bg-obsidian shadow-[0_0_80px_rgba(0,0,0,0.6)]"
+        className="absolute inset-y-0 end-0 flex h-full w-full max-w-lg flex-col border-s border-line bg-canvas shadow-pop"
       >
-        <div className="flex items-start justify-between border-b border-cream/10 p-6">
+        <div className="flex items-start justify-between border-b border-line p-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#4F46E5]/15 font-display text-xl text-[#8b85f5]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-pink/15 font-display text-xl text-primary-soft">
               {client.name.charAt(0)}
             </div>
             <div>
-              <h2 id="client-drawer-title" className="font-display text-xl text-cream">
+              <h2 id="client-drawer-title" className="font-display text-xl text-ink">
                 {client.name}
               </h2>
-              <p className="text-sm text-cream/45">
+              <p className="text-sm text-muted">
                 {client.status === "active" ? "לקוח פעיל" : "לקוח מושהה"}
               </p>
             </div>
@@ -58,7 +58,7 @@ export function ClientDetailDrawer({
               type="button"
               onClick={() => setEditOpen(true)}
               aria-label="עריכת לקוח"
-              className="rounded-full p-2 text-cream/50 hover:bg-cream/5 hover:text-cream"
+              className="rounded-md p-2 text-muted hover:bg-ink/5 hover:text-ink"
             >
               <Pencil className="h-4.5 w-4.5" aria-hidden="true" />
             </button>
@@ -66,7 +66,7 @@ export function ClientDetailDrawer({
               type="button"
               onClick={onClose}
               aria-label="סגירה"
-              className="rounded-full p-2 text-cream/50 hover:bg-cream/5 hover:text-cream"
+              className="rounded-md p-2 text-muted hover:bg-ink/5 hover:text-ink"
             >
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
@@ -76,42 +76,42 @@ export function ClientDetailDrawer({
         <div className="flex-1 overflow-y-auto p-6">
           {/* Contact + address */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm">
-              <User className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
-              <span className="truncate text-cream/80">{client.contactName || "—"}</span>
+            <div className="flex items-center gap-2.5 card p-3.5 text-sm">
+              <User className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+              <span className="truncate text-ink/80">{client.contactName || "—"}</span>
             </div>
-            <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm">
-              <Phone className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
-              <span dir="ltr" className="truncate text-cream/80">
+            <div className="flex items-center gap-2.5 card p-3.5 text-sm">
+              <Phone className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+              <span dir="ltr" className="truncate text-ink/80">
                 {client.contactPhone || "—"}
               </span>
             </div>
-            <div className="flex items-center gap-2.5 rounded-xl border border-cream/10 bg-surface p-3.5 text-sm sm:col-span-2">
-              <MapPin className="h-4 w-4 shrink-0 text-cream/40" aria-hidden="true" />
-              <span className="truncate text-cream/80">{client.address || "—"}</span>
+            <div className="flex items-center gap-2.5 card p-3.5 text-sm sm:col-span-2">
+              <MapPin className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+              <span className="truncate text-ink/80">{client.address || "—"}</span>
             </div>
           </div>
 
           {/* Events metric */}
-          <div className="mt-5 rounded-xl border border-[#D4FF00]/20 bg-surface2 p-4">
-            <p className="flex items-center gap-1.5 text-[11px] text-cream/40">
+          <div className="mt-5 rounded-lg border border-sky bg-surface2 p-4">
+            <p className="flex items-center gap-1.5 text-[11px] text-muted">
               <CalendarRange className="h-3 w-3" aria-hidden="true" />
               סה&quot;כ אירועים עם הלקוח
             </p>
-            <p className="mt-1 font-display text-3xl text-[#D4FF00] tabular-nums">{client.eventsCount}</p>
+            <p className="mt-1 font-display text-3xl text-sky-deep tabular-nums">{client.eventsCount}</p>
           </div>
 
           {/* Preferred roles */}
           {client.preferredRoles.length > 0 && (
             <div className="mt-6">
-              <h3 className="mb-3 text-sm font-semibold text-cream/70">תפקידים מועדפים ותעריף</h3>
+              <h3 className="mb-3 text-sm font-semibold text-ink/80">תפקידים מועדפים ותעריף</h3>
               <div className="flex flex-wrap gap-2">
                 {client.preferredRoles.map((r, idx) => (
                   <span
                     key={idx}
-                    className="rounded-lg border border-cream/10 bg-surface px-3 py-1.5 text-sm text-cream/80"
+                    className="card px-3 py-1.5 text-sm text-ink/80"
                   >
-                    {r.role} <span className="text-cream/40">·</span> ₪{r.rate}/שעה
+                    {r.role} <span className="text-muted">·</span> ₪{r.rate}/שעה
                   </span>
                 ))}
               </div>
@@ -121,24 +121,24 @@ export function ClientDetailDrawer({
           {/* Notes */}
           {client.notes && (
             <div className="mt-6">
-              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-cream/70">
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-ink/80">
                 <StickyNote className="h-3.5 w-3.5" aria-hidden="true" />
                 הערות
               </h3>
-              <p className="whitespace-pre-wrap rounded-xl border border-cream/10 bg-surface p-4 text-sm leading-relaxed text-cream/70">
+              <p className="whitespace-pre-wrap card p-4 text-sm leading-relaxed text-ink/80">
                 {client.notes}
               </p>
             </div>
           )}
 
           {/* Danger zone */}
-          <div className="mt-8 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4">
-            <h3 className="text-sm font-semibold text-rose-400">אזור מסוכן</h3>
-            <p className="mt-1 text-xs text-cream/50">מחיקת הלקוח היא פעולה בלתי הפיכה.</p>
+          <div className="mt-8 rounded-lg border border-rose-500/20 bg-rose-500/5 p-4">
+            <h3 className="text-sm font-semibold text-rose-700">אזור מסוכן</h3>
+            <p className="mt-1 text-xs text-muted">מחיקת הלקוח היא פעולה בלתי הפיכה.</p>
             <button
               type="button"
               onClick={() => setDeleteOpen(true)}
-              className="mt-3 inline-flex items-center gap-2 rounded-full border border-rose-500/30 px-4 py-2 text-xs font-bold text-rose-400 hover:bg-rose-500/10"
+              className="mt-3 inline-flex items-center gap-2 rounded-md border border-rose-500/30 px-4 py-2 text-xs font-bold text-rose-700 hover:bg-rose-500/10"
             >
               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               מחיקת לקוח

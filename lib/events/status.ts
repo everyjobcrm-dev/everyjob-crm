@@ -32,12 +32,12 @@ export const EVENT_STATUS_LABEL: Record<EventStatus, string> = {
 };
 
 export const EVENT_STATUS_STYLE: Record<EventStatus, string> = {
-  pending_rates: "bg-[#D4FF00]/15 text-[#D4FF00]",
-  open: "bg-indigo-500/15 text-indigo-400",
-  closed: "bg-cream/10 text-cream/60",
-  cancelled: "bg-rose-500/15 text-rose-400",
-  completed: "bg-cream/10 text-cream/60",
-  paused: "bg-cream/10 text-cream/60",
+  pending_rates: "bg-sun/40 text-sun-deep",
+  open: "bg-sky/30 text-sky-deep",
+  closed: "bg-ink/10 text-muted",
+  cancelled: "bg-rose-500/15 text-rose-700",
+  completed: "bg-ink/10 text-muted",
+  paused: "bg-ink/10 text-muted",
 };
 
 export function isEventStatus(value: unknown): value is EventStatus {

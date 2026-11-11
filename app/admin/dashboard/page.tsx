@@ -1,9 +1,10 @@
-import { CalendarClock, FileWarning, Users } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getShiftSubmissions } from "@/app/admin/actions";
 import { BroadcastDialog } from "@/components/admin/broadcast-dialog";
 import ShiftSubmissionsTable from "@/components/admin/shift-submissions-table";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatRow } from "@/components/ui/stat-row";
 
 export default async function AdminDashboardPage() {
   const supabase = await createServerSupabaseClient();
@@ -30,35 +31,21 @@ export default async function AdminDashboardPage() {
   const { data: submissions } = await getShiftSubmissions();
 
   const metrics = [
-    { label: "עובדים פעילים", value: activeEmployees ?? 0, icon: Users },
-    { label: "טפסי 101 ממתינים לאישור", value: pendingForms ?? 0, icon: FileWarning },
-    { label: "אירועים השבוע", value: upcomingEvents ?? 0, icon: CalendarClock },
+    { label: "עובדים פעילים", value: activeEmployees ?? 0 },
+    { label: "טפסי 101 ממתינים לאישור", value: pendingForms ?? 0 },
+    { label: "אירועים השבוע", value: upcomingEvents ?? 0 },
   ];
 
   return (
     <div className="pb-10">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm text-cream/50">ממשק מנהל</p>
-          <h1 className="font-display text-3xl text-cream">דף הבית</h1>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <BroadcastDialog />
-        </div>
-      </header>
+      <PageHeader title="דף הבית">
+        <BroadcastDialog />
+      </PageHeader>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {metrics.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="rounded-2xl border border-brass/15 bg-surface p-6">
-            <Icon className="h-5 w-5 text-brass" strokeWidth={1.8} aria-hidden="true" />
-            <p className="mt-4 text-sm text-cream/50">{label}</p>
-            <p className="mt-1 font-display text-4xl text-cream tabular-nums">{value}</p>
-          </div>
-        ))}
-      </div>
+      <StatRow items={metrics} />
 
       <section className="mt-10">
-        <h2 className="font-display text-2xl text-cream mb-4">דיווחי שעות ממתינים לאישור</h2>
+        <h2 className="font-display text-2xl text-ink mb-4">דיווחי שעות ממתינים לאישור</h2>
         <ShiftSubmissionsTable initialSubmissions={submissions || []} />
       </section>
     </div>

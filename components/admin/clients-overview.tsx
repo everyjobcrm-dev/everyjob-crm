@@ -106,16 +106,15 @@ export function ClientsOverview({
     <div>
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm text-cream/50">ממשק מנהל</p>
-          <h1 className="font-display text-3xl text-cream">ניהול לקוחות</h1>
-          <p className="mt-1 text-sm text-cream/45">מרכז לקוחות ותפעול · {currentMonthLabel()}</p>
+          <h1 className="font-display text-3xl text-ink">ניהול לקוחות</h1>
+          <p className="mt-1 text-sm text-muted">מרכז לקוחות ותפעול · {currentMonthLabel()}</p>
         </div>
 
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => exportClientsCsv(filtered)}
-            className="inline-flex items-center gap-2 rounded-full border border-cream/15 px-5 py-2.5 text-sm font-semibold text-cream/80 transition-colors hover:border-[#D4FF00]/40 hover:text-[#D4FF00]"
+            className="btn btn-secondary"
           >
             <FileSpreadsheet className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
             ייצוא לאקסל
@@ -123,7 +122,7 @@ export function ClientsOverview({
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-2 rounded-full bg-[#4F46E5] px-5 py-2.5 text-sm font-bold text-white shadow-[0_15px_35px_-12px_rgba(79,70,229,0.7)] transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            className="btn btn-primary"
           >
             <Plus className="h-4 w-4" strokeWidth={2.4} aria-hidden="true" />
             לקוח חדש
@@ -132,7 +131,7 @@ export function ClientsOverview({
       </header>
 
       {loadError && (
-        <div className="mb-6 flex items-center gap-2.5 rounded-2xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
+        <div className="mb-6 flex items-center gap-2.5 rounded-lg border border-rose-400/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">
           <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
           שגיאה בטעינת רשימת הלקוחות מהשרת. רענן/י את הדף או פנה/י לתמיכה.
         </div>
@@ -145,19 +144,14 @@ export function ClientsOverview({
           initial="hidden"
           animate="show"
           custom={0}
-          className="relative overflow-hidden rounded-3xl border border-[#D4FF00]/25 bg-surface p-6 lg:col-span-5 lg:row-span-2"
+          className="relative overflow-hidden rounded-lg border border-sky bg-surface p-6 lg:col-span-5 lg:row-span-2"
         >
-          <div
-            className="pointer-events-none absolute -end-16 -top-16 h-56 w-56 rounded-full opacity-25 blur-3xl"
-            style={{ background: "radial-gradient(circle, #D4FF00, transparent 70%)" }}
-            aria-hidden="true"
-          />
-          <CalendarRange className="h-5 w-5 text-[#D4FF00]" strokeWidth={1.8} aria-hidden="true" />
-          <p className="mt-4 text-sm text-cream/50">סה&quot;כ אירועים עם לקוחות</p>
-          <p className="relative mt-2 font-display text-5xl text-[#D4FF00] tabular-nums">
+          <CalendarRange className="h-5 w-5 text-sky-deep" strokeWidth={1.8} aria-hidden="true" />
+          <p className="mt-4 text-sm text-muted">סה&quot;כ אירועים עם לקוחות</p>
+          <p className="relative mt-2 font-display text-5xl text-sky-deep tabular-nums">
             {globals.totalEvents.toLocaleString("he-IL")}
           </p>
-          <p className="mt-3 text-xs text-cream/40">נספר על פני כל הלקוחות, פעילים ומושהים כאחד.</p>
+          <p className="mt-3 text-xs text-muted">נספר על פני כל הלקוחות, פעילים ומושהים כאחד.</p>
         </motion.div>
 
         <motion.div
@@ -165,11 +159,11 @@ export function ClientsOverview({
           initial="hidden"
           animate="show"
           custom={1}
-          className="rounded-2xl border border-cream/10 bg-surface p-6 lg:col-span-3"
+          className="card p-6 lg:col-span-3"
         >
-          <Building2 className="h-5 w-5 text-[#4F46E5]" strokeWidth={1.8} aria-hidden="true" />
-          <p className="mt-4 text-sm text-cream/50">לקוחות פעילים</p>
-          <p className="mt-1 font-display text-4xl text-cream tabular-nums">{globals.activeCount}</p>
+          <Building2 className="h-5 w-5 text-primary-soft" strokeWidth={1.8} aria-hidden="true" />
+          <p className="mt-4 text-sm text-muted">לקוחות פעילים</p>
+          <p className="mt-1 font-display text-4xl text-ink tabular-nums">{globals.activeCount}</p>
         </motion.div>
 
         <motion.div
@@ -177,10 +171,10 @@ export function ClientsOverview({
           initial="hidden"
           animate="show"
           custom={2}
-          className="rounded-2xl border border-cream/10 bg-surface2 p-6 lg:col-span-4"
+          className="rounded-lg border border-line bg-surface2 p-6 lg:col-span-4"
         >
-          <p className="text-sm text-cream/50">סה&quot;כ לקוחות במערכת</p>
-          <p className="mt-1 font-display text-4xl text-cream tabular-nums">{globals.total}</p>
+          <p className="text-sm text-muted">סה&quot;כ לקוחות במערכת</p>
+          <p className="mt-1 font-display text-4xl text-ink tabular-nums">{globals.total}</p>
         </motion.div>
 
         <motion.div
@@ -188,10 +182,10 @@ export function ClientsOverview({
           initial="hidden"
           animate="show"
           custom={3}
-          className="rounded-2xl border border-cream/10 bg-surface2 p-6 lg:col-span-4"
+          className="rounded-lg border border-line bg-surface2 p-6 lg:col-span-4"
         >
-          <p className="text-sm text-cream/50">ממוצע אירועים ללקוח פעיל</p>
-          <p className="mt-1 font-display text-4xl text-cream tabular-nums">
+          <p className="text-sm text-muted">ממוצע אירועים ללקוח פעיל</p>
+          <p className="mt-1 font-display text-4xl text-ink tabular-nums">
             {globals.avgEvents.toFixed(1)}
           </p>
         </motion.div>
@@ -201,23 +195,23 @@ export function ClientsOverview({
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search
-            className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cream/35"
+            className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
             aria-hidden="true"
           />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="חיפוש לפי שם לקוח, איש קשר או כתובת..."
-            className="w-full rounded-full border border-cream/12 bg-surface py-2.5 ps-10 pe-4 text-sm text-cream outline-none transition-colors focus:border-[#4F46E5]"
+            className="w-full rounded-md border border-ink/12 bg-surface py-2.5 ps-10 pe-4 text-sm text-ink outline-none transition-colors focus:border-primary"
           />
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-cream/50">
+        <label className="flex items-center gap-2 text-sm text-muted">
           מיון לפי
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="rounded-full border border-cream/12 bg-surface px-3.5 py-2 text-sm font-semibold text-cream outline-none focus:border-[#4F46E5]"
+            className="rounded-md border border-ink/12 bg-surface px-3.5 py-2 text-sm font-semibold text-ink outline-none focus:border-primary"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -239,33 +233,33 @@ export function ClientsOverview({
             initial="hidden"
             animate="show"
             custom={i * 0.6}
-            className={`group relative overflow-hidden rounded-2xl border p-5 text-start transition-all hover:-translate-y-0.5 ${
+            className={`group relative overflow-hidden rounded-lg border p-5 text-start transition-all hover:-translate-y-0.5 ${
               client.id === topClientId
-                ? "border-[#D4FF00]/35 bg-surface shadow-[0_25px_50px_-25px_rgba(212,255,0,0.35)]"
-                : "border-cream/10 bg-surface hover:border-[#4F46E5]/40 hover:shadow-[0_25px_50px_-25px_rgba(79,70,229,0.55)]"
+                ? "border-sky bg-surface shadow-pop"
+                : "border-line bg-surface hover:border-primary/40 hover:shadow-pop"
             } ${client.status === "paused" ? "opacity-60" : ""}`}
           >
             {client.id === topClientId && (
-              <span className="absolute end-4 top-4 inline-flex items-center gap-1 rounded-md bg-[#D4FF00]/15 px-2 py-1 text-[10px] font-bold text-[#D4FF00]">
+              <span className="absolute end-4 top-4 inline-flex items-center gap-1 rounded-md bg-sky/25 px-2 py-1 text-[10px] font-bold text-sky-deep">
                 <CalendarRange className="h-3 w-3" aria-hidden="true" />
                 הכי הרבה אירועים
               </span>
             )}
 
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#4F46E5]/15 font-display text-lg text-[#8b85f5]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-pink/15 font-display text-lg text-primary-soft">
                 {client.name.charAt(0)}
               </div>
               <div className="min-w-0">
-                <p className="truncate font-semibold text-cream">{client.name}</p>
+                <p className="truncate font-semibold text-ink">{client.name}</p>
                 {client.contactName && (
-                  <p className="truncate text-xs text-cream/45">{client.contactName}</p>
+                  <p className="truncate text-xs text-muted">{client.contactName}</p>
                 )}
               </div>
             </div>
 
             {client.status === "paused" && (
-              <span className="mt-3 inline-flex rounded-md bg-cream/10 px-2 py-1 text-[10px] font-semibold text-cream/60">
+              <span className="mt-3 inline-flex rounded-md bg-ink/10 px-2 py-1 text-[10px] font-semibold text-muted">
                 מושהה
               </span>
             )}
@@ -275,23 +269,23 @@ export function ClientsOverview({
                 {client.preferredRoles.slice(0, 3).map((r, idx) => (
                   <span
                     key={idx}
-                    className="rounded-md bg-cream/5 px-2 py-1 text-[11px] font-medium text-cream/70"
+                    className="rounded-md bg-ink/5 px-2 py-1 text-[11px] font-medium text-ink/80"
                   >
                     {r.role} · ₪{r.rate}
                   </span>
                 ))}
                 {client.preferredRoles.length > 3 && (
-                  <span className="rounded-md bg-cream/5 px-2 py-1 text-[11px] font-medium text-cream/50">
+                  <span className="rounded-md bg-ink/5 px-2 py-1 text-[11px] font-medium text-muted">
                     +{client.preferredRoles.length - 3}
                   </span>
                 )}
               </div>
             )}
 
-            <div className="mt-4 grid grid-cols-2 gap-2 border-t border-cream/10 pt-4 text-xs">
+            <div className="mt-4 grid grid-cols-2 gap-2 border-t border-line pt-4 text-xs">
               {client.contactPhone && (
-                <div className="flex items-center gap-1.5 text-cream/60">
-                  <Phone className="h-3.5 w-3.5 shrink-0 text-cream/35" aria-hidden="true" />
+                <div className="flex items-center gap-1.5 text-muted">
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden="true" />
                   <span dir="ltr" className="truncate">
                     {client.contactPhone}
                   </span>
@@ -299,13 +293,13 @@ export function ClientsOverview({
               )}
             </div>
 
-            <div className="mt-4 flex items-center justify-between text-xs text-cream/40">
+            <div className="mt-4 flex items-center justify-between text-xs text-muted">
               <span className="inline-flex items-center gap-1">
                 <CalendarRange className="h-3.5 w-3.5" aria-hidden="true" />
                 {client.eventsCount} אירועים
-                {client.notes && <StickyNote className="ms-1.5 h-3.5 w-3.5 text-cream/30" aria-hidden="true" />}
+                {client.notes && <StickyNote className="ms-1.5 h-3.5 w-3.5 text-muted" aria-hidden="true" />}
               </span>
-              <span className="inline-flex items-center gap-1 font-semibold text-[#4F46E5] opacity-0 transition-opacity group-hover:opacity-100">
+              <span className="inline-flex items-center gap-1 font-semibold text-primary-soft opacity-0 transition-opacity group-hover:opacity-100">
                 פרטי לקוח
                 <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
@@ -314,7 +308,7 @@ export function ClientsOverview({
         ))}
 
         {filtered.length === 0 && !loadError && (
-          <div className="col-span-full rounded-2xl border border-dashed border-cream/15 px-4 py-14 text-center text-sm text-cream/45">
+          <div className="col-span-full rounded-lg border border-dashed border-line px-4 py-14 text-center text-sm text-muted">
             {clients.length === 0 ? "עדיין לא נוספו לקוחות. לחצ/י על \"לקוח חדש\" כדי להתחיל." : "לא נמצאו לקוחות התואמים את החיפוש."}
           </div>
         )}

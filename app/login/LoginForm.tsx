@@ -136,9 +136,9 @@ export default function LoginForm() {
       redirectTo ??
       (role === "admin"
         ? "/admin/dashboard"
-        : role === "manager"
+        : role === "manager" || role === "recruiter"
         ? "/manager/events"
-        : role === "employee" || role === "recruiter"
+        : role === "employee"
         ? "/employee/dashboard"
         : null);
 
@@ -158,7 +158,7 @@ export default function LoginForm() {
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="identifier">
+          <label className="mb-1.5 block text-sm font-semibold text-ink" htmlFor="identifier">
             תעודת זהות או אימייל
           </label>
           <input
@@ -168,14 +168,14 @@ export default function LoginForm() {
             required
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            className="field"
             placeholder="הקלידו תעודת זהות או אימייל"
             suppressHydrationWarning={true}
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="password">
+          <label className="mb-1.5 block text-sm font-semibold text-ink" htmlFor="password">
             סיסמה
           </label>
           <input
@@ -185,14 +185,14 @@ export default function LoginForm() {
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            className="field"
             placeholder="••••••••"
             suppressHydrationWarning={true}
           />
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <Link className="font-medium text-sky-600 transition hover:text-sky-700" href="/forgot-password">
+          <Link className="font-medium text-primary-soft hover:underline" href="/forgot-password">
             שכחת סיסמה?
           </Link>
         </div>
@@ -201,16 +201,16 @@ export default function LoginForm() {
           type="submit"
           disabled={loading}
           suppressHydrationWarning={true}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn btn-primary btn-lg group w-full"
         >
           {loading ? "מתחבר..." : "התחבר"}
           <ArrowRight className="h-4 w-4" />
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-muted">
         חדש כאן?{' '}
-        <Link className="font-semibold text-sky-600 hover:text-sky-700" href="/register">
+        <Link className="font-semibold text-primary-soft hover:underline" href="/register">
           צור חשבון
         </Link>
       </p>

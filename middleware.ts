@@ -47,10 +47,11 @@ export async function middleware(request: NextRequest) {
     if (role === "admin") {
       return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     }
-    if (role === "manager") {
+    // Staff area: Manager and Recruiter both land on the events list (recruiter: own events only).
+    if (role === "manager" || role === "recruiter") {
       return NextResponse.redirect(new URL("/manager/events", request.url));
     }
-    if (role === "employee" || role === "recruiter") {
+    if (role === "employee") {
       return NextResponse.redirect(new URL("/employee/dashboard", request.url));
     }
     
@@ -68,7 +69,8 @@ export async function middleware(request: NextRequest) {
   const role = await getUserRole(supabase, user.id);
 
   if (pathname.startsWith(ADMIN_PREFIX) && role !== "admin") {
-    return NextResponse.redirect(new URL("/employee/dashboard", request.url));
+    const fallback = role === "manager" || role === "recruiter" ? "/manager/events" : "/employee/dashboard";
+    return NextResponse.redirect(new URL(fallback, request.url));
   }
 
   // Staff portal (admin >= manager >= recruiter). The layout re-checks server-side; this is the early redirect.

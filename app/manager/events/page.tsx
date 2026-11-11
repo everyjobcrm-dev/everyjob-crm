@@ -1,66 +1,186 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Users, AlertCircle } from "lucide-react";
+import { redirect } from "next/navigation";
+import { Plus, Users } from "lucide-react";
+import { getAuthContext } from "@/lib/auth/guards";
+import { canCreateEvents, roleAtLeast } from "@/lib/auth/permissions";
+import { fetchRecruiterOptions } from "@/app/admin/actions";
+import { EVENT_STATUS_LABEL, EVENT_STATUS_STYLE, isEventStatus } from "@/lib/events/status";
+import { PageHeader } from "@/components/ui/page-header";
+import { formatEventDate } from "@/lib/format";
 
+type EventItem = {
+  id: string;
+  location: string;
+  event_date: string;
+  status: string;
+  clientName: string;
+  filled: number;
+  headcount: number;
+  pending: number;
+  waitlisted: number;
+  requests: number;
+  recruiterName: string | null; // Admin/Manager view only
+};
+
+const ACTIVE_STATUSES = ["open", "closed", "pending_rates"];
+
+function jerusalemToday(): string {
+  // en-CA formats as YYYY-MM-DD
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
+}
+
+// Staff events list. Admin / Manager: every event. Recruiter: only events they own (events.recruiter_id).
+// Staffing numbers are derived from the event_role_fill_counts view (pending + approved), never stored.
 export default async function ManagerEventsPage() {
-  const supabase = await createServerSupabaseClient();
-  if (!supabase) return <div>שגיאת תצורה</div>;
+  const ctx = await getAuthContext();
+  if (!ctx.ok) redirect(ctx.reason === "unauthenticated" ? "/login" : "/employee/dashboard");
+  if (!roleAtLeast(ctx.role, "recruiter")) redirect("/employee/dashboard");
+  const { supabase } = ctx;
+  const isRecruiter = ctx.role === "recruiter";
 
-  const { data: events } = await supabase
+  let query = supabase
     .from("events")
-    .select("id, location, event_date, clients(name)")
-    .eq("status", "open")
+    .select("id, location, event_date, status, recruiter_id, clients(name)")
     .order("event_date", { ascending: true });
+  if (isRecruiter) query = query.eq("recruiter_id", ctx.userId);
+  const { data: events, error } = await query;
 
-  if (!events || events.length === 0) {
-    return <div className="text-cream/50 text-center mt-10">אין אירועים פתוחים כרגע.</div>;
+  const ids = (events ?? []).map((e) => e.id);
+  const { data: fills } = ids.length
+    ? await supabase.from("event_role_fill_counts").select("event_id, headcount, filled_count").in("event_id", ids)
+    : { data: [] as { event_id: string; headcount: number; filled_count: number }[] };
+
+  // "מגייס/ת אחראי/ת" labels (list_staff_recruiters returns rows for Admin/Manager only)
+  const recruiters = isRecruiter ? [] : await fetchRecruiterOptions();
+  const recruiterNameById = new Map(recruiters.map((r) => [r.id, r.name]));
+
+  // per-event pending / waitlisted / open cancellation requests (get_staff_event_request_counts: scoped, cancelled excluded)
+  const { data: requestCounts } = await supabase.rpc("get_staff_event_request_counts");
+  const countsByEvent = new Map<string, { pending: number; waitlisted: number; requests: number }>();
+  for (const c of (requestCounts ?? []) as {
+    event_id: string;
+    pending_count: number;
+    waitlisted_count: number;
+    cancellation_request_count: number;
+  }[]) {
+    countsByEvent.set(c.event_id, {
+      pending: Number(c.pending_count ?? 0),
+      waitlisted: Number(c.waitlisted_count ?? 0),
+      requests: Number(c.cancellation_request_count ?? 0),
+    });
   }
 
-  // We should also fetch the count of pending cancellations per event
-  const { data: pendingReqs } = await supabase
-    .from("event_registrations")
-    .select("event_id, id")
-    .not("cancellation_requested_at", "is", null)
-    .not("status", "in", '("cancelled","no_show")');
+  const totals = new Map<string, { filled: number; headcount: number }>();
+  for (const f of fills ?? []) {
+    const t = totals.get(f.event_id) ?? { filled: 0, headcount: 0 };
+    t.filled += Number(f.filled_count ?? 0);
+    t.headcount += Number(f.headcount ?? 0);
+    totals.set(f.event_id, t);
+  }
 
-  const pendingCountByEvent = new Map<string, number>();
-  pendingReqs?.forEach(req => {
-    pendingCountByEvent.set(req.event_id, (pendingCountByEvent.get(req.event_id) || 0) + 1);
+  const items: EventItem[] = (events ?? []).map((e) => {
+    const c = Array.isArray(e.clients) ? e.clients[0] : e.clients;
+    const clientName = (c && typeof c === "object" && "name" in c ? (c as { name: string }).name : null) || "לקוח";
+    const t = totals.get(e.id) ?? { filled: 0, headcount: 0 };
+    const counts = countsByEvent.get(e.id) ?? { pending: 0, waitlisted: 0, requests: 0 };
+    const recruiterName = isRecruiter ? null : e.recruiter_id ? (recruiterNameById.get(e.recruiter_id) ?? "מגייס/ת") : "ללא מגייס/ת";
+    return { id: e.id, location: e.location, event_date: e.event_date, status: e.status, clientName, recruiterName, ...t, ...counts };
   });
 
+  const today = jerusalemToday();
+  const upcoming = items.filter((e) => ACTIVE_STATUSES.includes(e.status) && e.event_date >= today);
+  const past = items.filter((e) => ACTIVE_STATUSES.includes(e.status) && e.event_date < today).reverse();
+  const archived = items.filter((e) => !ACTIVE_STATUSES.includes(e.status)).reverse();
+
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-display text-cream mb-4">כל האירועים</h2>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {events.map((event) => {
-          const pending = pendingCountByEvent.get(event.id) || 0;
-          return (
-            <Link key={event.id} href={`/manager/events/${event.id}`}>
-              <div className="rounded-xl border border-brass/10 bg-surface p-5 transition-colors hover:bg-surface2 cursor-pointer relative">
-                <p className="text-xs font-semibold text-indigo-400">
-                  {(() => {
-                    const c = Array.isArray(event.clients) ? event.clients[0] : event.clients;
-                    return (c && typeof c === "object" && "name" in c ? (c as { name: string }).name : null) || "לקוח";
-                  })()}
-                </p>
-                <h3 className="font-display text-lg text-cream">{event.location}</h3>
-                <p className="mt-0.5 text-xs text-cream/50">{event.event_date}</p>
-                
-                {pending > 0 && (
-                  <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-400">
-                    <AlertCircle className="h-3 w-3" />
-                    {pending} בקשות ביטול
-                  </div>
+    <div className="space-y-8 pb-10">
+      <PageHeader
+        title={isRecruiter ? "האירועים שלי" : "כל האירועים"}
+        subtitle={isRecruiter ? "אירועים שבאחריותך בלבד." : "אירועים פתוחים, סגורים להרשמה וממתינים לתעריפים."}
+      >
+        {canCreateEvents(ctx.profile) && (
+          <Link
+            href="/new"
+            className="btn btn-primary"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" /> אירוע חדש
+          </Link>
+        )}
+      </PageHeader>
+
+      {error && <p className="text-sm text-rose-700">טעינת האירועים נכשלה.</p>}
+
+      <EventGrid items={upcoming} empty="אין אירועים קרובים." />
+
+      {past.length > 0 && (
+        <details>
+          <summary className="cursor-pointer text-sm font-semibold text-muted">אירועים שתאריכם עבר ({past.length})</summary>
+          <div className="mt-4">
+            <EventGrid items={past} empty="" />
+          </div>
+        </details>
+      )}
+
+      {archived.length > 0 && (
+        <details>
+          <summary className="cursor-pointer text-sm font-semibold text-muted">
+            בוטלו / נסגרו פיננסית / מושהים ({archived.length})
+          </summary>
+          <div className="mt-4">
+            <EventGrid items={archived} empty="" />
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function EventGrid({ items, empty }: { items: EventItem[]; empty: string }) {
+  if (items.length === 0) return empty ? <p className="text-sm text-muted">{empty}</p> : null;
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {items.map((event) => {
+        const status = isEventStatus(event.status) ? event.status : null;
+        const full = event.headcount > 0 && event.filled >= event.headcount;
+        return (
+          <Link
+            key={event.id}
+            href={`/manager/events/${event.id}`}
+            className="group block border-s-2 border-line bg-surface p-5 transition-colors hover:border-primary hover:bg-surface2"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-xs font-semibold text-primary-soft">{event.clientName}</p>
+              {status && (
+                <span className={`shrink-0 rounded-sm px-2 py-0.5 text-[11px] font-semibold ${EVENT_STATUS_STYLE[status]}`}>
+                  {EVENT_STATUS_LABEL[status]}
+                </span>
+              )}
+            </div>
+            <h3 className="mt-1 font-display text-lg text-ink">{event.location}</h3>
+            <p className="text-xs text-muted">{formatEventDate(event.event_date)}</p>
+            {event.recruiterName && <p className="mt-1 text-xs text-muted">מגייס/ת: {event.recruiterName}</p>}
+            {(event.requests > 0 || event.pending > 0 || event.waitlisted > 0) && (
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+                {event.requests > 0 && (
+                  <span className="rounded-sm bg-rose-500/15 px-2 py-0.5 text-rose-700">{event.requests} בקשות ביטול</span>
                 )}
-                <div className="mt-4 flex items-center justify-between text-xs text-cream/45">
-                  <span>נהל צוות</span>
-                  <Users className="h-4 w-4" />
-                </div>
+                {event.pending > 0 && (
+                  <span className="rounded-sm bg-ink/10 px-2 py-0.5 text-ink/80">{event.pending} ממתינים לאישור</span>
+                )}
+                {event.waitlisted > 0 && (
+                  <span className="rounded-sm bg-sky/25 px-2 py-0.5 text-sky-deep">{event.waitlisted} בהמתנה</span>
+                )}
               </div>
-            </Link>
-          );
-        })}
-      </div>
+            )}
+            <div className="mt-4 flex items-center justify-between text-xs">
+              <span className={`tabular-nums ${full ? "font-semibold text-sky-deep" : "text-muted"}`}>
+                {event.status === "cancelled" ? "—" : `${event.filled}/${event.headcount} מקומות תפוסים`}
+              </span>
+              <Users className="h-4 w-4 text-muted" aria-hidden="true" />
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }

@@ -37,12 +37,12 @@ export function EventHistoryCard({ event, tilt = 0 }: { event: HistoryEvent; til
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border border-brass/10 bg-surface p-5"
+      className="relative overflow-hidden card p-5"
       style={{ transform: `rotate(${tilt}deg)` }}
     >
       {hasMissingRates && (
         <div
-          className="pointer-events-none absolute -end-9 top-4 w-36 rotate-45 select-none bg-[#D4FF00] py-1 text-center text-[10px] font-bold uppercase tracking-wider text-obsidian shadow-[0_0_0_1px_rgba(0,0,0,0.15)]"
+          className="pointer-events-none absolute -end-9 top-4 w-36 rotate-45 select-none bg-sky py-1 text-center text-[10px] font-bold uppercase tracking-wider text-ink shadow-[0_0_0_1px_rgba(0,0,0,0.15)]"
           aria-hidden="true"
         >
           תעריפים חסרים
@@ -51,21 +51,21 @@ export function EventHistoryCard({ event, tilt = 0 }: { event: HistoryEvent; til
 
       <div className="flex items-start justify-between gap-3 pe-2">
         <div>
-          <p className="text-xs font-semibold text-indigo-400">{event.clientName}</p>
-          <h3 className="font-display text-lg text-cream">{event.title}</h3>
+          <p className="text-xs font-semibold text-primary-soft">{event.clientName}</p>
+          <h3 className="font-display text-lg text-ink">{event.title}</h3>
         </div>
         <StatusBadge status={event.status} />
       </div>
 
-      <dl className="mt-3 space-y-1.5 text-sm text-cream/60">
+      <dl className="mt-3 space-y-1.5 text-sm text-muted">
         <div className="flex items-center gap-2">
-          <Clock className="h-3.5 w-3.5 shrink-0 text-cream/35" aria-hidden="true" />
+          <Clock className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden="true" />
           <span>
             {event.eventDate} · {event.startTime}–{event.endTime ?? "טרם נקבע"}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-cream/35" aria-hidden="true" />
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden="true" />
           <span>{event.location}</span>
         </div>
       </dl>
@@ -76,8 +76,8 @@ export function EventHistoryCard({ event, tilt = 0 }: { event: HistoryEvent; til
             key={role.id}
             className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold ${
               role.baseRate == null
-                ? "bg-[#D4FF00]/10 text-[#D4FF00]"
-                : "bg-cream/5 text-cream/75"
+                ? "bg-sky/25 text-sky-deep"
+                : "bg-ink/5 text-ink/80"
             }`}
           >
             <Users className="h-3 w-3" aria-hidden="true" />
@@ -90,14 +90,14 @@ export function EventHistoryCard({ event, tilt = 0 }: { event: HistoryEvent; til
       </div>
 
       {hasMissingRates && (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[#D4FF00]/25 bg-[#D4FF00]/5 px-3 py-2.5">
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-[#D4FF00]">
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-sky bg-sky/25 px-3 py-2.5">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-sky-deep">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             {missingRoles.length} מתוך {event.roles.length} תפקידים ללא תעריף — עובדים לא יראו את האירוע
           </p>
           <a
             href={`/admin/events/${event.id}/rates`}
-            className="shrink-0 text-xs font-bold text-[#D4FF00] underline underline-offset-2"
+            className="shrink-0 text-xs font-bold text-sky-deep underline underline-offset-2"
           >
             השלמת תעריפים
           </a>
@@ -115,14 +115,14 @@ export function EventHistoryCard({ event, tilt = 0 }: { event: HistoryEvent; til
 
 function StatusBadge({ status }: { status: HistoryEvent["status"] }) {
   const styles: Record<HistoryEvent["status"], string> = {
-    pending_rates: "bg-[#D4FF00]/15 text-[#D4FF00]",
-    open: "bg-indigo-500/15 text-indigo-400",
-    closed: "bg-cream/10 text-cream/60",
-    completed: "bg-cream/10 text-cream/60",
-    cancelled: "bg-rose-500/15 text-rose-400",
+    pending_rates: "bg-sky/25 text-sky-deep",
+    open: "bg-pink/15 text-primary-soft",
+    closed: "bg-ink/10 text-muted",
+    completed: "bg-ink/10 text-muted",
+    cancelled: "bg-rose-500/15 text-rose-700",
   };
   return (
-    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${styles[status]}`}>
+    <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-semibold ${styles[status]}`}>
       {STATUS_LABEL[status]}
     </span>
   );

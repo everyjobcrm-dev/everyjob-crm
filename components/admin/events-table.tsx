@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useState, useTransition } from "react";
-import { ChevronDown, ChevronUp, Trash2, Users, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, ChevronUp, ClipboardList, Trash2, Users, AlertTriangle } from "lucide-react";
 import { updateEventStatus, restoreEvent, deleteEvent, type AdminEvent } from "@/app/admin/actions";
 export type { AdminEvent };
 import { FinancialClosureSummary } from "@/components/admin/financial-closure-summary";
@@ -12,6 +13,7 @@ import {
   defaultRestoreStatus,
   type EventStatus,
 } from "@/lib/events/status";
+import { formatEventDate } from "@/lib/format";
 
 type Staffing = { filled: number; total: number; label: string; tone: "ok" | "warn" | "danger" };
 
@@ -29,16 +31,16 @@ function computeStaffing(event: AdminEvent): Staffing {
 }
 
 const STAFFING_TONE: Record<Staffing["tone"], string> = {
-  ok: "bg-indigo-500/15 text-indigo-400",
-  warn: "bg-cream/10 text-cream/70",
-  danger: "bg-[#D4FF00]/15 text-[#D4FF00]",
+  ok: "bg-sky/30 text-sky-deep",
+  warn: "bg-sun/40 text-sun-deep",
+  danger: "bg-rose-500/15 text-rose-700",
 };
 
 // end_time is null until the event is closed (see closeEvent()) — this is
 // the single formatting rule for that, reused by both layouts below so a
 // future copy tweak only has to happen once.
 function formatTimeRange(startTime: string, endTime: string | null): string {
-  return `${startTime}–${endTime ?? "טרם נקבע"}`;
+  return `${startTime.slice(0, 5)}–${endTime?.slice(0, 5) ?? "טרם נקבע"}`;
 }
 
 export function EventsTable({ events }: { events: AdminEvent[] }) {
@@ -81,7 +83,7 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
   return (
     <div className="space-y-3">
       {error && (
-        <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-400">
+        <div className="rounded-lg border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-700">
           {error}
         </div>
       )}
@@ -100,16 +102,16 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
           />
         ))}
         {events.length === 0 && (
-          <p className="rounded-2xl border border-brass/10 bg-surface px-4 py-10 text-center text-sm text-cream/40">
+          <p className="card px-4 py-10 text-center text-sm text-muted">
             לא נוצרו אירועים עדיין.
           </p>
         )}
       </div>
 
-      <div className="hidden overflow-x-auto rounded-2xl border border-brass/15 bg-surface sm:block">
+      <div className="hidden overflow-x-auto card sm:block">
         <table className="w-full min-w-[860px] text-start text-sm">
           <thead>
-            <tr className="border-b border-brass/10 text-cream/50">
+            <tr className="border-b border-line text-muted">
               <th scope="col" className="px-4 py-3 text-start font-medium">לקוח / מיקום</th>
               <th scope="col" className="px-4 py-3 text-start font-medium">תאריך</th>
               <th scope="col" className="px-4 py-3 text-start font-medium">איוש</th>
@@ -117,7 +119,7 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
               <th scope="col" className="px-4 py-3 text-start font-medium sr-only">פעולות</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-brass/10">
+          <tbody className="divide-y divide-line">
             {events.map((event) => {
               const expanded = expandedId === event.id;
               const busy = isPending && pendingId === event.id;
@@ -126,17 +128,17 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
                 <Fragment key={event.id}>
                   <tr className={busy ? "opacity-50" : undefined}>
                     <td className="px-4 py-3.5">
-                      <p className="font-semibold text-cream">{event.clientName}</p>
-                      <p className="text-xs text-cream/45">{event.location}</p>
+                      <p className="font-semibold text-ink">{event.clientName}</p>
+                      <p className="text-xs text-muted">{event.location}</p>
                     </td>
-                    <td className="px-4 py-3.5 text-cream/70">
-                      {event.eventDate} · {formatTimeRange(event.startTime, event.endTime)}
+                    <td className="px-4 py-3.5 text-ink/80">
+                      {formatEventDate(event.eventDate)} · {formatTimeRange(event.startTime, event.endTime)}
                     </td>
                     <td className="px-4 py-3.5">
                       <button
                         type="button"
                         onClick={() => setExpandedId(expanded ? null : event.id)}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${STAFFING_TONE[staffing.tone]}`}
+                        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${STAFFING_TONE[staffing.tone]}`}
                       >
                         {staffing.tone === "danger" ? (
                           <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
@@ -160,12 +162,13 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
                       />
                     </td>
                     <td className="px-4 py-3.5 text-end">
+                      <RosterLink eventId={event.id} />
                       <button
                         type="button"
                         disabled={busy}
                         onClick={() => handleDelete(event.id, `${event.clientName} · ${event.eventDate}`)}
                         aria-label="מחיקת אירוע"
-                        className="rounded-lg p-2 text-cream/40 transition-colors hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
+                        className="rounded-lg p-2 text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-700 disabled:opacity-50"
                       >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </button>
@@ -188,7 +191,7 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
             })}
             {events.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-sm text-cream/40">
+                <td colSpan={5} className="px-4 py-10 text-center text-sm text-muted">
                   לא נוצרו אירועים עדיין.
                 </td>
               </tr>
@@ -207,7 +210,7 @@ function RolesRoster({ event }: { event: AdminEvent }) {
         <span
           key={role.id}
           className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold ${
-            role.baseRate == null ? "bg-[#D4FF00]/10 text-[#D4FF00]" : "bg-cream/5 text-cream/75"
+            role.baseRate == null ? "bg-sky/25 text-sky-deep" : "bg-ink/5 text-ink/80"
           }`}
         >
           <Users className="h-3 w-3" aria-hidden="true" />
@@ -217,7 +220,7 @@ function RolesRoster({ event }: { event: AdminEvent }) {
           </span>
         </span>
       ))}
-      {event.roles.length === 0 && <p className="text-sm text-cream/40">אין תפקידים מוגדרים.</p>}
+      {event.roles.length === 0 && <p className="text-sm text-muted">אין תפקידים מוגדרים.</p>}
     </div>
   );
 }
@@ -241,16 +244,16 @@ function EventCard({
 }) {
   const staffing = computeStaffing(event);
   return (
-    <div className={`rounded-2xl border border-brass/10 bg-surface p-4 ${busy ? "opacity-50" : ""}`}>
+    <div className={`card p-4 ${busy ? "opacity-50" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold text-indigo-400">{event.clientName}</p>
-          <p className="font-display text-base text-cream">{event.location}</p>
-          <p className="mt-0.5 text-xs text-cream/50">
-            {event.eventDate} · {formatTimeRange(event.startTime, event.endTime)}
+          <p className="text-xs font-semibold text-primary-soft">{event.clientName}</p>
+          <p className="font-display text-base text-ink">{event.location}</p>
+          <p className="mt-0.5 text-xs text-muted">
+            {formatEventDate(event.eventDate)} · {formatTimeRange(event.startTime, event.endTime)}
           </p>
         </div>
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${STATUS_STYLE[event.status]}`}>
+        <span className={`shrink-0 rounded-sm px-2.5 py-1 text-[11px] font-semibold ${STATUS_STYLE[event.status]}`}>
           {STATUS_LABEL[event.status]}
         </span>
       </div>
@@ -258,7 +261,7 @@ function EventCard({
       <button
         type="button"
         onClick={onToggle}
-        className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${STAFFING_TONE[staffing.tone]}`}
+        className={`mt-3 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${STAFFING_TONE[staffing.tone]}`}
       >
         {staffing.tone === "danger" ? (
           <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
@@ -270,22 +273,23 @@ function EventCard({
       </button>
 
       {expanded && (
-        <div className="mt-3 space-y-3 border-t border-brass/10 pt-3">
+        <div className="mt-3 space-y-3 border-t border-line pt-3">
           <RolesRoster event={event} />
           {event.status === "completed" && event.closure && <FinancialClosureSummary closure={event.closure} />}
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-brass/10 pt-3">
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3">
         <div className="w-full">
           <StatusControl event={event} busy={busy} onChange={onStatusChange} onRestore={onRestore} />
         </div>
+        <RosterLink eventId={event.id} />
         <button
           type="button"
           disabled={busy}
           onClick={onDelete}
           aria-label="מחיקת אירוע"
-          className="shrink-0 rounded-xl p-2.5 text-cream/40 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
+          className="shrink-0 rounded-lg p-2.5 text-muted hover:bg-rose-500/10 hover:text-rose-700 disabled:opacity-50"
         >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -326,7 +330,7 @@ function StatusControl({
         disabled={busy}
         onChange={(e) => onChange(e.target.value as EventStatus)}
         aria-label="סטטוס האירוע"
-        className="w-full rounded-lg border border-brass/15 bg-surface2 px-2.5 py-1.5 text-xs font-semibold text-cream outline-none focus:border-brass disabled:opacity-60"
+        className="w-full rounded-lg border border-line bg-surface2 px-2.5 py-1.5 text-xs font-semibold text-ink outline-none focus:border-primary disabled:opacity-60"
       >
         <option value={event.status}>{STATUS_LABEL[event.status]}</option>
         {allowed.map((status) => (
@@ -340,11 +344,26 @@ function StatusControl({
           type="button"
           disabled={busy}
           onClick={onRestore}
-          className="w-full rounded-md bg-brass/15 px-2.5 py-1.5 text-xs font-semibold text-brass transition-colors hover:bg-brass/25 disabled:opacity-50"
+          className="w-full rounded-md bg-pink/15 px-2.5 py-1.5 text-xs font-semibold text-primary-soft transition-colors hover:bg-pink/15 disabled:opacity-50"
         >
           שחזור ל{STATUS_LABEL[defaultRestoreStatus(event.cancelledFromStatus)]}
         </button>
       )}
     </div>
+  );
+}
+
+/** Roster / staffing actions for the event (staff event page, reachable by admin through the staff layout). */
+function RosterLink({ eventId }: { eventId: string }) {
+  return (
+    <Link
+      href={`/manager/events/${eventId}`}
+      aria-label="רשימת צוות וניהול שיבוצים"
+      title="רשימת צוות וניהול שיבוצים"
+      className="inline-flex shrink-0 items-center gap-1 rounded-lg p-2 text-xs text-muted transition-colors hover:bg-pink/15 hover:text-primary-soft"
+    >
+      <ClipboardList className="h-4 w-4" aria-hidden="true" />
+      <span>צוות</span>
+    </Link>
   );
 }
