@@ -8,7 +8,7 @@ export async function getUserProfile(
 ) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("first_name,last_name,tz,birth_date,email,role,recruiter_bonus_rate")
+    .select("first_name,last_name,tz,birth_date,email,role,recruiter_bonus_rate,deleted_at")
     .eq("id", userId)
     .single();
 
@@ -35,7 +35,7 @@ export async function getUserProfile(
       return null;
     }
 
-    return { ...coreProfile, recruiter_bonus_rate: null };
+    return { ...coreProfile, recruiter_bonus_rate: null, deleted_at: null };
   }
 
   if (!data) {
@@ -45,7 +45,9 @@ export async function getUserProfile(
   return data;
 }
 
+/** The caller's app role, or null when there is no profile or the profile is soft-deleted (p10c). */
 export async function getUserRole(supabase: SupabaseClient, userId: string) {
   const profile = await getUserProfile(supabase, userId);
-  return (profile?.role as ProfileRole | null) ?? null;
+  if (!profile || profile.deleted_at != null) return null;
+  return (profile.role as ProfileRole | null) ?? null;
 }

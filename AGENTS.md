@@ -154,7 +154,7 @@ Reads: `get_event_roster(event)` (staff scope; no tz/email/documents; rates for 
 
 ### 6.1 Event status model (`events.status`)
 
-`closed` means **closed for registration** — it is not the financial closure (`completed`).
+Two closure levels: `closed` = **level 1, closed for registration** (Admin/Manager any event, Recruiter own events; the same roles reopen). `completed` = **level 2, final closure ("סגירה סופית")**: Admin/Manager only, from `closed`; read-only for edits and scheduling; "reopen for editing" = `completed → closed` (Admin/Manager). Refused while a non-voided pending hour report exists (`pending_hours_exist`, p10a). Admin may still submit/approve hours on a completed event, so level 2 is not immutable.
 
 | Status | New signups (incl. waitlist joins) | Staff approve / assign / remove | Visible to employees | Counted in derived data |
 |---|:---:|:---:|:---:|:---:|
@@ -164,7 +164,7 @@ Reads: `get_event_roster(event)` (staff scope; no tz/email/documents; rates for 
 | `cancelled` | No | No (Admin must restore first) | No | **No** — excluded everywhere; registrations are left untouched |
 | `completed`, `paused` | No | Admin only (`completed`) | History only | Yes |
 
-Allowed transitions, enforced by the DB trigger `enforce_event_status_transition` (UI/server pre-checks mirror it): `open ↔ closed`; `open|closed|pending_rates → cancelled`; `pending_rates → open` (only when every role has a rate); `cancelled → open|closed|pending_rates` for Admin/Manager only — the default restore target is `events.cancelled_from_status` (null/`completed`/`paused` → `closed`), and `open`/`closed` still require every role to have a rate. A Recruiter may do the open/close/cancel/`pending_rates → open` transitions on **own** events only and can never restore. **`completed` and `paused` are frozen**: no transition into or out of them through the app (service_role / direct DB only). Cancelling an event is refused while an approved hour report exists for it. Deleting an event is Admin-only, and refused when audit history exists (cancel instead).
+Allowed transitions, enforced by the DB trigger `enforce_event_status_transition` (UI/server pre-checks mirror it): `open ↔ closed`; `open|closed|pending_rates → cancelled`; `pending_rates → open` (only when every role has a rate); `cancelled → open|closed|pending_rates` for Admin/Manager only — the default restore target is `events.cancelled_from_status` (null/`completed`/`paused` → `closed`), and `open`/`closed` still require every role to have a rate. A Recruiter may do the open/close/cancel/`pending_rates → open` transitions on **own** events only and can never restore or close finally. `closed → completed` and `completed → closed` for Admin/Manager only (p10a, pending SQL). **`paused` is frozen**: no transition into or out of it through the app (service_role / direct DB only). Cancelling an event is refused while an approved hour report exists for it. Deleting an event is Admin-only, and refused when audit history exists (cancel instead).
 
 ## 7. RTL, Design System, and UI Conventions
 
@@ -201,3 +201,9 @@ Loaded on demand, not part of the always-on context:
 - `docs/roadmap.md` — phased build status and architecture decisions log. Check before starting new feature work to confirm it isn't already in progress or blocked by an earlier, incomplete phase.
 
 Keep this file under roughly 300–400 lines. If it grows past that, split by topic into `.agents/rules/<topic>.md` (e.g. `rbac.md`, `schema.md`) rather than continuing to expand this file — a bloated always-loaded context measurably degrades agent output quality.
+## 11. Claude Code notes (owner, 2026-10-13)
+- AGENTS.md is the source of truth. If docs/events-module-decisions.md conflicts with it, stop and ask me.
+- Never run DDL/DML against any database (AGENTS §8.1). Write SQL to supabase/pending/ and show it to me; I run it in the Supabase SQL Editor. After I confirm it was applied: save it as a timestamped file in supabase/migrations/, give me the `supabase migration repair --status applied <version> --linked` command, then regenerate types (AGENTS §5.6). This keeps dev, staging and prod migration history aligned.
+- 2FA is deferred until the end of the project (pre-launch, mandatory). Do NOT implement or touch 2FA now. Form 101 and bank details stay blocked for EVERYONE, including Admin, until 2FA exists: keep every existing aal2 gate failing closed, never weaken or bypass it, never add a dev workaround.
+- Earlier work (status control, event edit, cancel/restore, roster, employees directory) exists, uncommitted, in git branch backup/before-restore-2026-10-12. Port it slice by slice (git show / git checkout <branch> -- <path>) instead of rewriting it. That branch also contains unrelated old WIP; do not port that blindly.
+- Save tokens: open only the files you need, no repo-wide audits or full builds unless I ask, final replies under 200 words.

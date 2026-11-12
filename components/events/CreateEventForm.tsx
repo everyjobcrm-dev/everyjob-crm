@@ -1,6 +1,6 @@
 "use client";
 //components/events/CreateEventForm.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   useForm,
   useFieldArray,
@@ -68,8 +68,11 @@ export function CreateEventForm({
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: "roles" });
+  const { fields, append, remove, replace } = useFieldArray({ control, name: "roles" });
   const roles = useWatch({ control, name: "roles" });
+  // Roles prefill: the first time a client is chosen while the roster is still untouched, seed it with the client's
+  // preferred role names (rates are not prefilled here - the client's price is applied server-side to bill_to_client).
+  const prefilledForClient = useRef<string | null>(null);
   const missingRateCount = roles?.filter((r: EventRoleFormValues) => r.base_rate == null || r.base_rate === "").length ?? 0;
 
   // --- Address Prefill Logic ---
@@ -85,6 +88,16 @@ export function CreateEventForm({
       shouldTouch: true,
     });
   }, [clientId, clients, currentLocation, setValue]);
+
+  useEffect(() => {
+    if (!clientId || prefilledForClient.current === clientId) return;
+    const client = clients.find((c) => c.id === clientId);
+    if (!client || client.preferredRoles.length === 0) return;
+    const untouched = (roles ?? []).every((r: EventRoleFormValues) => !r.role_name);
+    if (!untouched) return;
+    prefilledForClient.current = clientId;
+    replace(client.preferredRoles.map((role_name) => ({ ...emptyRole, role_name })));
+  }, [clientId, clients, roles, replace]);
 
   // Receives the parsed/coerced CreateEventInput (numbers, nulls) — not
   // the raw form state — because of the third useForm generic above.

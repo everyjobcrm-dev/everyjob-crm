@@ -1,6 +1,19 @@
-# Session handoff - everyJob CRM (updated 2026-10-16)
+# Session handoff - everyJob CRM (updated 2026-11-11)
 
 Read this file and AGENTS.md before doing anything. AGENTS.md (§8 especially) wins over this file.
+Latest run details: `REPORT-2026-11-10.md` (Phase 0 gap list, DECISIONs D1-D11, open questions O1-O7).
+
+## 0. Start here (2026-11-11)
+- **Working branch:** `claude/everyjob-crm-backlog-run-c5839e` = PR #6 (-> `master`). It sits on top of `6c98e00`
+  (= `hopeful-gates-rtzhto-01c57f`), so PR #6 already contains everything in PR #4 + M8v2. Local `master` (`9c13cb6`)
+  is a stale stub: never branch from it. PR #3 is superseded. PR #5 (light redesign) is open and untested against #6.
+- **p10a-p10f are LIVE on dev and tested** (2026-11-11, owner-authorised, via MCP `execute_sql`): 83/83 PASS
+  (`supabase/tests/p10*_tests.sql`). Files live in `supabase/migrations/2026111010xxxx_*.sql`. tsc/lint/build clean.
+- **Owner still has to run** (records history only):
+  `supabase migration repair --status applied 20261110100000 20261110100100 20261110100200 20261110100300 20261110100400 20261110100500 --linked`
+- **Open owner questions:** O2 (block unapproved employees from self-registering? currently not), O4 (may a recruiter
+  set a role's `base_rate`?). O1 answered: final closure = Admin and Manager.
+- **Next milestone:** §7 step 4 (browser verification), then ship, then Payroll & Billing.
 
 ## 1. Mission
 Ship a working, tested, Hebrew/RTL workforce CRM for the Israeli shift market. Near-term goal: **get the events
@@ -47,6 +60,15 @@ Demo users (all verified; password chosen by the owner; roles set in `profiles`)
   `supabase/tests/p4_behavior_tests.sql` 43/43 (the M6c expectation asserts the employee's direct UPDATE affects 0 rows
   and leaves the row unchanged), `supabase/tests/p6_hours_behavior_tests.sql` 55/55 (fixture tz base moved to 31415900
   after a live profile collided with fixture n=5). Nothing persisted after any run.
+- P10 (2026-11-11, `supabase/migrations/20261110100000..100500`): p10a final closure (`closed -> completed`,
+  `completed -> closed` Admin/Manager, blocked by pending hours, `paused` frozen); p10b `event_roles.bill_to_client`
+  column-revoked + Admin-only `get_event_role_pricing`; p10c soft delete (`profiles.deleted_at/deleted_by`,
+  `soft_delete_user`/`restore_user`, helpers deny deleted users, app bans the auth user); p10d employee approval
+  (`profiles.approval_status`, existing rows approved, new signups pending, `set_employee_approval` for
+  Admin/Manager/Recruiter); p10e `search_employees` v3 warnings `pending_approval`/`approval_rejected`, deleted excluded;
+  p10f `billing_cycles` + `purge_form_101_submissions` (Admin + aal2 + closed cycle -> always fails closed until 2FA),
+  `form_101_submissions` created LOCKED (no policies, no grants).
+  **Gotcha:** any new `event_roles` column must be added to the column GRANT in p10b or the app cannot read it.
 
 ## 4. Git state (consolidated 2026-10-15)
 - `master` has Phases 1-2 (PR #2) and is what Vercel production serves.
@@ -59,7 +81,10 @@ Demo users (all verified; password chosen by the owner; roles set in `profiles`)
 ## 5. Closed decisions (do not reopen)
 - Event status: `open` (signups; full role -> waitlist), `closed` (no new signups, staff still manage, hidden from
   employees except "My shifts"), `cancelled` (excluded from everything, registrations untouched, restore to
-  `cancelled_from_status`), `completed`/`paused` frozen. No auto-close when full; staffing status is view-derived.
+  `cancelled_from_status`), `completed` = final closure (level 2, Admin/Manager, reopen to `closed`; decided
+  2026-11-11), `paused` frozen. No auto-close when full; staffing status is view-derived.
+- New employees wait for approval ("ממתין/ה לאישור"); the picker never filters, it only warns. Users are soft-deleted,
+  never hard-deleted.
 - Hierarchy Admin ⊇ Manager ⊇ Recruiter. Admin/Manager act on all events; Recruiter only on events with
   `events.recruiter_id = self`; creating events needs `can_create_events`.
 - Admin-only: final hours approval, pricing, recruiter credit rate, Form 101, role changes, event deletion (events
@@ -89,9 +114,10 @@ UPDATE. The edit path goes through `update_event_details` (P9 E1), which also ch
    `remove_event_role`; rules: headcount >= occupied, no removing roles with registrations, no past dates, no
    date/time change once hours exist, cancelled/completed read-only, admin-only client/recruiter/bill_to_client.
    "עריכת פרטי אירוע" button on the staff event page + `/manager/events/[id]/edit`.
-4. **Browser verification** with the demo users on the consolidated branch (`docs/manual-test-plan-events.md`), fix
-   what fails.
-5. **Ship:** merge PR #4 to `master`; on Vercel fix the Preview `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Supabase returns 401
+4. **Browser verification** with the demo users on PR #6's branch (`docs/manual-test-plan-events.md`), fix
+   what fails. Add to the plan: final closure + reopen, approve a pending employee from the picker, soft delete /
+   restore a user (deleted user cannot log in), edit page price field visible to Admin only.
+5. **Ship:** merge PR #6 to `master` (it includes PR #4; close #4 and #3 afterwards; decide on #5 separately); on Vercel fix the Preview `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Supabase returns 401
    for preview logins), make sure `DEV_SKIP_EMAIL_VERIFICATION` is not set in production; smoke-test production.
 6. **Payroll & Billing** (design first, then build): monthly payroll per employee (approved hours × wage_rate +
    travel), client billing per client/event, Excel export, Admin only, views for all derived numbers.
@@ -112,8 +138,15 @@ UPDATE. The edit path goes through `update_event_details` (P9 E1), which also ch
   owner runs such blocks in the SQL Editor and the agent verifies read-only.
 
 ## 9. Backlog (non-blocking, found 2026-10-15)
-- `event_roles` is `SELECT true` for all authenticated users, so `bill_to_client` (client pricing) is readable by employees.
-  Fix proposed with the payroll batch (column-level revoke + Admin RPC reads) - docs/payroll-billing-design.md §3.
+- ~~`event_roles.bill_to_client` readable by employees~~ - fixed by p10b (2026-11-11).
+- **Must fix before real users (O3):** `clients` is `SELECT true` for every authenticated user, so the client price list
+  (`preferred_roles[].rate`, `overtime_threshold_hours`, `min_billable_hours`) is readable via PostgREST. Not urgent on
+  dev (demo users only); do it as the FIRST item of the Payroll & Billing batch: column grant on `clients` + Admin RPC
+  for `app/admin/clients/actions.ts` + BEFORE INSERT trigger on `event_roles` that applies the price list.
+- `lib/auth/guards.ts` and `app/admin/employees/page.tsx` keep a `42703` fallback (marked `shortcut:`) from before p10c
+  was live; now removable.
+- Form 101: `approveForm101` / dashboard count read the non-existent `profiles.form_101_status`; the employee 101 page
+  writes to the locked `form_101_submissions`. 2FA batch only (pre-launch); keep failing closed.
 - Direct UPDATE on `events` / `event_roles` is still open to whoever manages the event (RLS `*_update_scoped`); the p9
   RPCs enforce the edit rules, the direct path does not. Narrow to RPC-only once status changes also go through an RPC.
 - Vercel Preview has no `SUPABASE_SERVICE_ROLE_KEY` (Production has it), so /api/auth/register and ensure-profile fail on

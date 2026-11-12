@@ -33,14 +33,25 @@ export async function getAuthContext(): Promise<AuthResult> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, reason: "unauthenticated", error: "לא מחובר/ת למערכת." };
 
-  const { data: profile, error } = await supabase
+  let { data: profile, error } = await supabase
     .from("profiles")
-    .select("role, can_create_events")
+    .select("role, can_create_events, deleted_at")
     .eq("id", user.id)
     .maybeSingle();
+  // shortcut: until p10c is applied profiles.deleted_at does not exist (42703); fall back to the old select so the app
+  // keeps working. Remove this block once supabase/pending/20261110100200_p10c_profiles_soft_delete.sql is live.
+  if (error?.code === "42703") {
+    const legacy = await supabase.from("profiles").select("role, can_create_events").eq("id", user.id).maybeSingle();
+    profile = legacy.data ? { ...legacy.data, deleted_at: null } : null;
+    error = legacy.error;
+  }
 
   if (error || !profile || !isAppRole(profile.role)) {
     return { ok: false, reason: "forbidden", error: "אין לך הרשאה לבצע פעולה זו." };
+  }
+  // Soft-deleted users (p10c) keep their auth session until the ban lands; they get no role here.
+  if (profile.deleted_at != null) {
+    return { ok: false, reason: "forbidden", error: "המשתמש/ת הוסר/ה מהמערכת." };
   }
 
   return {

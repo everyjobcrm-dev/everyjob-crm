@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/guards";
 import { mapDbError } from "@/lib/events/errors";
 import {
+  approvalArgsSchema,
   rateArgsSchema,
   removeArgsSchema,
   scheduleArgsSchema,
@@ -140,9 +141,14 @@ export type EmployeeSearchResult = {
   age: number | null;
   averageRating: number | null;
   registrationStatus: string | null;
+  /** Non-blocking side warnings from search_employees (pending_approval, approval_rejected, below_min_age, below_min_rating, overlap). */
+  warnings: string[];
 };
 
-/** Employee picker for scheduling (search_employees: name / phone match, employees only, no tz or email). */
+/**
+ * Employee picker for scheduling (search_employees: name / phone match, employees only, no tz or email). The picker does
+ * no filtering: every match is returned with its warnings, and the UI shows them beside the row.
+ */
 export async function searchEmployeesForEvent(
   eventId: string,
   query: string,
@@ -170,6 +176,7 @@ export async function searchEmployeesForEvent(
     age_years: number | null;
     average_rating: number | null;
     registration_status: string | null;
+    warnings: string[] | null;
   };
   // search_employees also returns every employee already registered to the event; keep only the query matches
   // (same rule as the RPC: name or phone contains the query, case-insensitive).
@@ -188,9 +195,35 @@ export async function searchEmployeesForEvent(
       age: r.age_years,
       averageRating: r.average_rating,
       registrationStatus: r.registration_status,
+      warnings: r.warnings ?? [],
     });
   }
   return { success: true, results };
+}
+
+/**
+ * Approve a new employee (profiles.approval_status -> 'approved') - set_employee_approval (p10d).
+ * Approvers: Admin, Manager, Recruiter; the RPC re-checks the role, that the target is an employee, not deleted, not self.
+ */
+export async function approveEmployee(employeeId: string): Promise<ActionResult> {
+  const auth = await requireRole("recruiter");
+  if (!auth.ok) return { success: false, error: auth.error };
+
+  const args = approvalArgsSchema.safeParse({ employeeId });
+  if (!args.success) return { success: false, error: "בקשה לא תקינה." };
+
+  const { error } = await auth.supabase.rpc("set_employee_approval", {
+    p_employee_id: args.data.employeeId,
+    p_status: "approved",
+  });
+  if (error) {
+    console.error("[set_employee_approval]", error.code, error.message);
+    return { success: false, error: mapDbError(error, { fallback: "אישור העובד/ת נכשל." }) };
+  }
+
+  revalidatePath("/manager/events");
+  revalidatePath("/admin/employees");
+  return { success: true };
 }
 
 export type SubmitShiftAttendanceInput = {

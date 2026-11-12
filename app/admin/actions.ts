@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
 import { requireRole, type AuthOk } from "@/lib/auth/guards";
 import { canCreateEvents, canManageEvent, roleAtLeast } from "@/lib/auth/permissions";
 import {
@@ -47,7 +48,22 @@ export type ClientOption = {
   id: string;
   name: string;
   address: string | null;
+  /** Role names from the client's price list (names only - the client's rates never leave the server). */
+  preferredRoles: string[];
 };
+
+type PreferredRoleRow = { role?: unknown; rate?: unknown };
+
+/** clients.preferred_roles (jsonb [{role, rate}]) -> clean [{role, rate}] rows. */
+function parsePreferredRoles(raw: unknown): { role: string; rate: number | null }[] {
+  if (!Array.isArray(raw)) return [];
+  return (raw as PreferredRoleRow[])
+    .map((r) => ({
+      role: typeof r?.role === "string" ? r.role.trim() : "",
+      rate: typeof r?.rate === "number" && r.rate > 0 ? r.rate : null,
+    }))
+    .filter((r) => r.role.length > 0);
+}
 
 export type EventRoleView = {
   id: string;
@@ -85,13 +101,18 @@ export async function fetchClients(): Promise<ClientOption[]> {
   const auth = await requireRole("recruiter");
   if (!auth.ok) return [];
 
-  const { data, error } = await auth.supabase.from("clients").select("id, name, address").order("name");
+  const { data, error } = await auth.supabase.from("clients").select("id, name, address, preferred_roles").order("name");
 
   if (error) {
     console.error("[fetchClients]", error.message);
     return [];
   }
-  return data ?? [];
+  return (data ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    address: c.address,
+    preferredRoles: parsePreferredRoles(c.preferred_roles).map((r) => r.role),
+  }));
 }
 
 type RawEventRole = {
@@ -263,14 +284,31 @@ export async function createEvent(
     return fail(mapDbError(eventError, { fallback: "יצירת האירוע נכשלה. נסה/י שוב." }));
   }
 
-  const rolesPayload = roles.map((r) => ({
-    event_id: eventRow.id,
-    role_name: r.role_name,
-    headcount: r.headcount,
-    start_time: r.start_time,
-    end_time: r.end_time ?? null,
-    base_rate: r.base_rate ?? null,
-  }));
+  // DECISION: the client's price list (clients.preferred_roles[].rate) is the price the client pays per role, so it
+  // prefills event_roles.bill_to_client for roles with a matching name - for every creator, server-side only (the
+  // creator never receives the rate; bill_to_client stays Admin-only to read/edit). base_rate (worker wage) is never
+  // prefilled from it. Admin can still change the price on the edit page (upsert_event_role).
+  const { data: clientRow } = await auth.supabase
+    .from("clients")
+    .select("preferred_roles")
+    .eq("id", event.client_id)
+    .maybeSingle();
+  const priceByRole = new Map(
+    parsePreferredRoles(clientRow?.preferred_roles).map((r) => [r.role.toLowerCase(), r.rate] as const),
+  );
+
+  const rolesPayload = roles.map((r) => {
+    const price = priceByRole.get(r.role_name.trim().toLowerCase()) ?? null;
+    return {
+      event_id: eventRow.id,
+      role_name: r.role_name,
+      headcount: r.headcount,
+      start_time: r.start_time,
+      end_time: r.end_time ?? null,
+      base_rate: r.base_rate ?? null,
+      ...(price != null ? { bill_to_client: price } : {}),
+    };
+  });
 
   const { error: rolesError } = await auth.supabase.from("event_roles").insert(rolesPayload);
 
@@ -348,20 +386,25 @@ export async function fetchEventForEdit(eventId: string): Promise<EditEventPageD
   if (!canManageEvent(auth.profile, ev)) return { ok: false, reason: "forbidden" };
 
   const isAdmin = auth.role === "admin";
-  const [{ data: roleRows }, { data: fills }, { data: roster }, clients, recruiters] = await Promise.all([
+  // bill_to_client (client price) is not SELECT-granted on event_roles (p10b); Admin reads it through get_event_role_pricing.
+  const [{ data: roleRows }, { data: fills }, { data: roster }, { data: pricing }, clients, recruiters] = await Promise.all([
     auth.supabase
       .from("event_roles")
-      .select("id, role_name, headcount, start_time, end_time, base_rate, bill_to_client")
+      .select("id, role_name, headcount, start_time, end_time, base_rate")
       .eq("event_id", eventId)
       .order("start_time", { ascending: true }),
     auth.supabase.from("event_role_fill_counts").select("event_role_id, filled_count").eq("event_id", eventId),
     auth.supabase.rpc("get_event_roster", { p_event_id: eventId }),
+    isAdmin ? auth.supabase.rpc("get_event_role_pricing", { p_event_id: eventId }) : Promise.resolve({ data: null }),
     fetchClients(),
     roleAtLeast(auth.role, "manager") ? listRecruiters(auth.supabase) : Promise.resolve([] as RecruiterOption[]),
   ]);
 
   const occupiedByRole = new Map(
     ((fills ?? []) as { event_role_id: string; filled_count: number }[]).map((f) => [f.event_role_id, Number(f.filled_count ?? 0)]),
+  );
+  const priceByRole = new Map(
+    ((pricing ?? []) as { role_id: string; bill_to_client: number | null }[]).map((p) => [p.role_id, p.bill_to_client]),
   );
   const rolesWithRegistrations = new Set(
     ((roster ?? []) as { event_role_id: string | null }[]).map((r) => r.event_role_id).filter(Boolean),
@@ -395,7 +438,6 @@ export async function fetchEventForEdit(eventId: string): Promise<EditEventPageD
           start_time: string;
           end_time: string | null;
           base_rate: number | null;
-          bill_to_client: number | null;
         }[]
       ).map((r) => ({
         id: r.id,
@@ -406,7 +448,7 @@ export async function fetchEventForEdit(eventId: string): Promise<EditEventPageD
         startTime: r.start_time.slice(0, 5),
         endTime: r.end_time ? r.end_time.slice(0, 5) : null,
         baseRate: r.base_rate,
-        billToClient: isAdmin ? r.bill_to_client : null,
+        billToClient: isAdmin ? (priceByRole.get(r.id) ?? null) : null,
       })),
     },
   };
@@ -516,7 +558,7 @@ async function applyEventStatus(auth: AuthOk, eventId: string, status: EventStat
 
 /**
  * Change an event's registration status. Admin/Manager: any event; Recruiter: own events only.
- * completed and paused are frozen (no transition in or out through the app). Rules mirror the DB trigger.
+ * paused is frozen; completed (final closure, level 2) is Admin/Manager only: closed -> completed and back. Rules mirror the DB trigger.
  */
 export async function updateEventStatus(eventId: string, status: EventStatus): Promise<ActionResult> {
   const auth = await requireRole("recruiter");
@@ -618,6 +660,62 @@ export async function setRecruitedBy(employeeId: string, recruiterId: string | n
   if (!data?.length) return fail("העדכון לא בוצע - העובד/ת לא נמצא/ה.");
 
   revalidatePath("/admin/employees");
+  return { success: true };
+}
+
+// ── Users: soft delete (p10c) ────────────────────────────────────────────
+
+/**
+ * Auth-side lock for a soft-deleted user: ban (or unban) the auth user with the service role so no new session can be
+ * created and the current JWT stops refreshing. The DB mark (profiles.deleted_at) and the app guard already deny the
+ * user; this closes the remaining paths (RPCs that read profiles.role directly). Returns null on success.
+ */
+async function setAuthBan(userId: string, banned: boolean): Promise<string | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) return "חסר מפתח שירות בשרת (SUPABASE_SERVICE_ROLE_KEY).";
+  const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  // 100 years; "none" lifts the ban
+  const { error } = await admin.auth.admin.updateUserById(userId, { ban_duration: banned ? "876600h" : "none" });
+  return error ? error.message : null;
+}
+
+/**
+ * Soft-delete a user: profiles.deleted_at via soft_delete_user (Admin only, never self; history/registrations/hours
+ * are kept), then ban the auth user. If the ban fails the DB mark stays and the error says so (re-run restores + deletes).
+ */
+export async function softDeleteUser(userId: string): Promise<ActionResult> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  if (!z.string().uuid().safeParse(userId).success) return fail("בקשה לא תקינה.");
+
+  const { error } = await auth.supabase.rpc("soft_delete_user", { p_user_id: userId });
+  if (error) return fail(mapDbError(error, { fallback: "מחיקת המשתמש/ת נכשלה." }));
+
+  const banError = await setAuthBan(userId, true);
+  revalidatePath("/admin/employees");
+  if (banError) {
+    console.error("[softDeleteUser] ban failed", banError);
+    return fail("המשתמש/ת סומן/ה כמחוק/ה, אך חסימת ההתחברות נכשלה. נסה/י לשחזר ולמחוק שוב.");
+  }
+  return { success: true };
+}
+
+/** Restore a soft-deleted user (restore_user, Admin only) and lift the auth ban. */
+export async function restoreUser(userId: string): Promise<ActionResult> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  if (!z.string().uuid().safeParse(userId).success) return fail("בקשה לא תקינה.");
+
+  const { error } = await auth.supabase.rpc("restore_user", { p_user_id: userId });
+  if (error) return fail(mapDbError(error, { fallback: "שחזור המשתמש/ת נכשל." }));
+
+  const banError = await setAuthBan(userId, false);
+  revalidatePath("/admin/employees");
+  if (banError) {
+    console.error("[restoreUser] unban failed", banError);
+    return fail("המשתמש/ת שוחזר/ה, אך ביטול חסימת ההתחברות נכשל. נסה/י שוב.");
+  }
   return { success: true };
 }
 

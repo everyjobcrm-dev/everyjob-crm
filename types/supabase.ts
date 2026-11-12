@@ -14,6 +14,127 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_cycles: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          form_101_purged_at: string | null
+          form_101_purged_by: string | null
+          form_101_purged_count: number | null
+          month: string
+          reopened_at: string | null
+          reopened_by: string | null
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          form_101_purged_at?: string | null
+          form_101_purged_by?: string | null
+          form_101_purged_count?: number | null
+          month: string
+          reopened_at?: string | null
+          reopened_by?: string | null
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          form_101_purged_at?: string | null
+          form_101_purged_by?: string | null
+          form_101_purged_count?: number | null
+          month?: string
+          reopened_at?: string | null
+          reopened_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_cycles_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_form_101_purged_by_fkey"
+            columns: ["form_101_purged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_form_101_purged_by_fkey"
+            columns: ["form_101_purged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_form_101_purged_by_fkey"
+            columns: ["form_101_purged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_form_101_purged_by_fkey"
+            columns: ["form_101_purged_by"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_reopened_by_fkey"
+            columns: ["reopened_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_reopened_by_fkey"
+            columns: ["reopened_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_reopened_by_fkey"
+            columns: ["reopened_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_reopened_by_fkey"
+            columns: ["reopened_by"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       client_role_rates: {
         Row: {
           bill_rate: number
@@ -924,6 +1045,162 @@ export type Database = {
           },
         ]
       }
+      form_101_submissions: {
+        Row: {
+          account_number: string
+          address: string
+          bank_name: string
+          branch_number: string
+          city: string
+          created_at: string
+          date_of_birth: string | null
+          department: string | null
+          dependents: string | null
+          email: string
+          emergency_contact: string | null
+          emergency_phone: string | null
+          employer_name: string
+          full_name: string
+          iban: string
+          id: string
+          identity_number: string
+          job_title: string
+          manager: string | null
+          marital_status: string | null
+          notes: string | null
+          phone: string
+          position: string | null
+          postal_code: string | null
+          start_date: string | null
+          tax_id: string | null
+          updated_at: string | null
+          updated_by: string | null
+          user_id: string
+          wage: string
+        }
+        Insert: {
+          account_number: string
+          address: string
+          bank_name: string
+          branch_number: string
+          city: string
+          created_at?: string
+          date_of_birth?: string | null
+          department?: string | null
+          dependents?: string | null
+          email: string
+          emergency_contact?: string | null
+          emergency_phone?: string | null
+          employer_name: string
+          full_name: string
+          iban: string
+          id?: string
+          identity_number: string
+          job_title: string
+          manager?: string | null
+          marital_status?: string | null
+          notes?: string | null
+          phone: string
+          position?: string | null
+          postal_code?: string | null
+          start_date?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          user_id: string
+          wage: string
+        }
+        Update: {
+          account_number?: string
+          address?: string
+          bank_name?: string
+          branch_number?: string
+          city?: string
+          created_at?: string
+          date_of_birth?: string | null
+          department?: string | null
+          dependents?: string | null
+          email?: string
+          emergency_contact?: string | null
+          emergency_phone?: string | null
+          employer_name?: string
+          full_name?: string
+          iban?: string
+          id?: string
+          identity_number?: string
+          job_title?: string
+          manager?: string | null
+          marital_status?: string | null
+          notes?: string | null
+          phone?: string
+          position?: string | null
+          postal_code?: string | null
+          start_date?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          user_id?: string
+          wage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_101_submissions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_101_submissions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_101_submissions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_101_submissions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "form_101_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_101_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_101_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_101_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -982,10 +1259,15 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approval_set_at: string | null
+          approval_set_by: string | null
+          approval_status: string
           average_rating: number | null
           birth_date: string | null
           can_create_events: boolean | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           email: string | null
           email_verified: boolean | null
           first_name: string
@@ -1001,10 +1283,15 @@ export type Database = {
           tz: string
         }
         Insert: {
+          approval_set_at?: string | null
+          approval_set_by?: string | null
+          approval_status?: string
           average_rating?: number | null
           birth_date?: string | null
           can_create_events?: boolean | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           email_verified?: boolean | null
           first_name: string
@@ -1020,10 +1307,15 @@ export type Database = {
           tz: string
         }
         Update: {
+          approval_set_at?: string | null
+          approval_set_by?: string | null
+          approval_status?: string
           average_rating?: number | null
           birth_date?: string | null
           can_create_events?: boolean | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           email_verified?: boolean | null
           first_name?: string
@@ -1039,6 +1331,62 @@ export type Database = {
           tz?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_approval_set_by_fkey"
+            columns: ["approval_set_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_approval_set_by_fkey"
+            columns: ["approval_set_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_approval_set_by_fkey"
+            columns: ["approval_set_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_approval_set_by_fkey"
+            columns: ["approval_set_by"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "profiles_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
           {
             foreignKeyName: "profiles_recruited_by_fkey"
             columns: ["recruited_by"]
@@ -1815,6 +2163,10 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: boolean
       }
+      app_event_has_pending_hours: {
+        Args: { p_event_id: string }
+        Returns: boolean
+      }
       app_lock_event_status: { Args: { p_event_id: string }; Returns: string }
       app_manager_rate_deadline: {
         Args: { p_event_date: string }
@@ -1853,6 +2205,26 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      close_billing_cycle: {
+        Args: { p_month: string }
+        Returns: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          form_101_purged_at: string | null
+          form_101_purged_by: string | null
+          form_101_purged_count: number | null
+          month: string
+          reopened_at: string | null
+          reopened_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "billing_cycles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       consume_signup_tz_attempt: {
         Args: {
           p_max_attempts?: number
@@ -1860,6 +2232,26 @@ export type Database = {
           p_window_seconds?: number
         }
         Returns: boolean
+      }
+      get_billing_cycles: {
+        Args: never
+        Returns: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          form_101_purged_at: string | null
+          form_101_purged_by: string | null
+          form_101_purged_count: number | null
+          month: string
+          reopened_at: string | null
+          reopened_by: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "billing_cycles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_employee_detail: {
         Args: { p_employee_id: string }
@@ -1886,6 +2278,13 @@ export type Database = {
           role_name: string
           total_ratings: number
           tz: string
+        }[]
+      }
+      get_event_role_pricing: {
+        Args: { p_event_id: string }
+        Returns: {
+          bill_to_client: number
+          role_id: string
         }[]
       }
       get_event_roster: {
@@ -1955,6 +2354,7 @@ export type Database = {
           last_name: string
         }[]
       }
+      purge_form_101_submissions: { Args: { p_month: string }; Returns: number }
       redeem_recruiter_credits: {
         Args: { p_count: number; p_event_id: string }
         Returns: number
@@ -2023,6 +2423,26 @@ export type Database = {
         Args: { p_reason: string; p_registration_id: string }
         Returns: string
       }
+      reopen_billing_cycle: {
+        Args: { p_month: string }
+        Returns: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          form_101_purged_at: string | null
+          form_101_purged_by: string | null
+          form_101_purged_count: number | null
+          month: string
+          reopened_at: string | null
+          reopened_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "billing_cycles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       request_registration_cancellation: {
         Args: { p_reason?: string; p_registration_id: string }
         Returns: {
@@ -2049,6 +2469,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      restore_user: { Args: { p_user_id: string }; Returns: undefined }
       schedule_employee: {
         Args: { p_employee_id: string; p_event_role_id: string }
         Returns: {
@@ -2074,6 +2495,10 @@ export type Database = {
           wage_rate: number
           warnings: string[]
         }[]
+      }
+      set_employee_approval: {
+        Args: { p_employee_id: string; p_status: string }
+        Returns: undefined
       }
       set_registration_wage_rate: {
         Args: { p_registration_id: string; p_wage_rate: number }
@@ -2101,6 +2526,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      soft_delete_user: { Args: { p_user_id: string }; Returns: undefined }
       staff_transition_registration: {
         Args: { p_action: string; p_reason?: string; p_registration_id: string }
         Returns: {
