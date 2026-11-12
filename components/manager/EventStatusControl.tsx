@@ -99,7 +99,7 @@ export function EventStatusControl({
                 type="button"
                 disabled={isPending}
                 onClick={() => run(() => (target === restoreTarget ? restoreEvent(eventId) : restoreEvent(eventId, target)))}
-                className="rounded-md border border-indigo-500/30 px-2.5 py-1 text-xs text-indigo-200 hover:bg-indigo-500/10 disabled:opacity-50"
+                className="rounded-md border border-primary/30 px-2.5 py-1 text-xs text-primary-soft hover:bg-pink/15 disabled:opacity-50"
               >
                 שחזור ל{EVENT_STATUS_LABEL[target]}
                 {target === restoreTarget ? " (ברירת מחדל)" : ""}
@@ -110,8 +110,8 @@ export function EventStatusControl({
           if (confirm) {
             const tone =
               target === "cancelled"
-                ? { ask: "text-rose-300 hover:bg-rose-500/10", yes: "bg-rose-500/25 text-rose-100" }
-                : { ask: "text-cream/80 hover:bg-cream/10", yes: "bg-[#D4FF00]/20 text-[#D4FF00]" };
+                ? { ask: "text-rose-700 hover:bg-rose-500/10", yes: "bg-rose-500/25 text-rose-700" }
+                : { ask: "text-primary hover:bg-primary/10", yes: "bg-primary/15 text-primary" };
             return confirming === target ? (
               <span key={target} className="inline-flex items-center gap-1">
                 <button
@@ -122,7 +122,8 @@ export function EventStatusControl({
                 >
                   {confirm.button}
                 </button>
-                <button type="button" onClick={() => setConfirming(null)} className="rounded-md px-2 py-1 text-xs text-cream/60">
+                <button type="button" onClick={() => setConfirming(null)} className="rounded-md px-2 py-1 text-xs text-muted">
+
                   חזרה
                 </button>
               </span>
@@ -144,7 +145,7 @@ export function EventStatusControl({
               type="button"
               disabled={isPending}
               onClick={() => run(() => updateEventStatus(eventId, target))}
-              className="rounded-md bg-[#4F46E5] px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-600 disabled:opacity-50"
+              className="btn btn-primary btn-sm"
             >
               {label(target)}
             </button>
@@ -152,13 +153,13 @@ export function EventStatusControl({
         })}
       </div>
       {current === "cancelled" && !canRestoreEvent(role) && (
-        <p className="text-xs text-cream/50">רק מנהל/ת או אדמין יכולים לשחזר אירוע שבוטל.</p>
+        <p className="text-xs text-muted">רק מנהל/ת או אדמין יכולים לשחזר אירוע שבוטל.</p>
       )}
       {current === "completed" && (
-        <p className="text-xs text-cream/50">האירוע נסגר סופית: אין עריכה ואין שיבוצים עד לפתיחה מחדש.</p>
+        <p className="text-xs text-muted">האירוע נסגר סופית: אין עריכה ואין שיבוצים עד לפתיחה מחדש.</p>
       )}
-      {confirming && CONFIRM[confirming] && <p className="text-xs text-cream/60">{CONFIRM[confirming]?.hint}</p>}
-      {error && <p className="text-xs text-rose-400">{error}</p>}
+      {confirming && CONFIRM[confirming] && <p className="text-xs text-muted">{CONFIRM[confirming]?.hint}</p>}
+      {error && <p className="text-xs text-rose-700">{error}</p>}
     </div>
   );
 }

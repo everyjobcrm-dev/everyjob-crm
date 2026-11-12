@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { EmployeeDirectoryTable, type AdminEmployee } from "@/components/admin/employee-directory-table";
+import { PageHeader } from "@/components/ui/page-header";
 
 type ProfileRow = {
   id: string;
@@ -49,10 +50,7 @@ export default async function AdminEmployeesPage() {
 
   return (
     <div className="pb-10">
-      <header className="mb-8">
-        <p className="text-sm text-cream/50">ממשק מנהל</p>
-        <h1 className="font-display text-3xl text-cream">ניהול עובדים</h1>
-      </header>
+      <PageHeader title="עובדים" />
 
       <EmployeeDirectoryTable
         employees={rows}

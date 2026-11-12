@@ -24,7 +24,7 @@ export function useToast(durationMs = 3500) {
   const toast = (
     <div aria-live="polite" role="status" className="pointer-events-none fixed bottom-24 start-4 z-50 lg:bottom-6">
       {message && (
-        <p className="border-s-4 border-[#D4FF00] bg-surface2 px-4 py-2.5 text-sm font-medium text-cream shadow-lg">
+        <p className="border-s-4 border-sky bg-surface2 px-4 py-2.5 text-sm font-medium text-ink shadow-lg">
           {message}
         </p>
       )}

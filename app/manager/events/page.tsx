@@ -5,6 +5,8 @@ import { getAuthContext } from "@/lib/auth/guards";
 import { canCreateEvents, roleAtLeast } from "@/lib/auth/permissions";
 import { fetchRecruiterOptions } from "@/app/admin/actions";
 import { EVENT_STATUS_LABEL, EVENT_STATUS_STYLE, isEventStatus } from "@/lib/events/status";
+import { PageHeader } from "@/components/ui/page-header";
+import { formatEventDate } from "@/lib/format";
 
 type EventItem = {
   id: string;
@@ -91,31 +93,28 @@ export default async function ManagerEventsPage() {
   const archived = items.filter((e) => !ACTIVE_STATUSES.includes(e.status)).reverse();
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="font-display text-2xl text-cream">{isRecruiter ? "האירועים שלי" : "כל האירועים"}</h2>
-          <p className="text-xs text-cream/65">
-            {isRecruiter ? "אירועים שבאחריותך בלבד." : "אירועים פתוחים, סגורים להרשמה וממתינים לתעריפים."}
-          </p>
-        </div>
+    <div className="space-y-8 pb-10">
+      <PageHeader
+        title={isRecruiter ? "האירועים שלי" : "כל האירועים"}
+        subtitle={isRecruiter ? "אירועים שבאחריותך בלבד." : "אירועים פתוחים, סגורים להרשמה וממתינים לתעריפים."}
+      >
         {canCreateEvents(ctx.profile) && (
           <Link
             href="/new"
-            className="inline-flex items-center gap-1.5 rounded-md bg-[#4F46E5] px-3 py-2 text-sm font-medium text-white hover:bg-indigo-600"
+            className="btn btn-primary"
           >
             <Plus className="h-4 w-4" aria-hidden="true" /> אירוע חדש
           </Link>
         )}
-      </div>
+      </PageHeader>
 
-      {error && <p className="text-sm text-rose-400">טעינת האירועים נכשלה.</p>}
+      {error && <p className="text-sm text-rose-700">טעינת האירועים נכשלה.</p>}
 
       <EventGrid items={upcoming} empty="אין אירועים קרובים." />
 
       {past.length > 0 && (
         <details>
-          <summary className="cursor-pointer text-sm font-semibold text-cream/60">אירועים שתאריכם עבר ({past.length})</summary>
+          <summary className="cursor-pointer text-sm font-semibold text-muted">אירועים שתאריכם עבר ({past.length})</summary>
           <div className="mt-4">
             <EventGrid items={past} empty="" />
           </div>
@@ -124,7 +123,7 @@ export default async function ManagerEventsPage() {
 
       {archived.length > 0 && (
         <details>
-          <summary className="cursor-pointer text-sm font-semibold text-cream/60">
+          <summary className="cursor-pointer text-sm font-semibold text-muted">
             בוטלו / נסגרו פיננסית / מושהים ({archived.length})
           </summary>
           <div className="mt-4">
@@ -137,7 +136,7 @@ export default async function ManagerEventsPage() {
 }
 
 function EventGrid({ items, empty }: { items: EventItem[]; empty: string }) {
-  if (items.length === 0) return empty ? <p className="text-sm text-cream/65">{empty}</p> : null;
+  if (items.length === 0) return empty ? <p className="text-sm text-muted">{empty}</p> : null;
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {items.map((event) => {
@@ -147,37 +146,37 @@ function EventGrid({ items, empty }: { items: EventItem[]; empty: string }) {
           <Link
             key={event.id}
             href={`/manager/events/${event.id}`}
-            className="group block border-s-2 border-brass/15 bg-surface p-5 transition-colors hover:border-[#4F46E5] hover:bg-surface2"
+            className="group block border-s-2 border-line bg-surface p-5 transition-colors hover:border-primary hover:bg-surface2"
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="text-xs font-semibold text-indigo-400">{event.clientName}</p>
+              <p className="text-xs font-semibold text-primary-soft">{event.clientName}</p>
               {status && (
                 <span className={`shrink-0 rounded-sm px-2 py-0.5 text-[11px] font-semibold ${EVENT_STATUS_STYLE[status]}`}>
                   {EVENT_STATUS_LABEL[status]}
                 </span>
               )}
             </div>
-            <h3 className="mt-1 font-display text-lg text-cream">{event.location}</h3>
-            <p className="text-xs text-cream/65">{event.event_date}</p>
-            {event.recruiterName && <p className="mt-1 text-xs text-cream/65">מגייס/ת: {event.recruiterName}</p>}
+            <h3 className="mt-1 font-display text-lg text-ink">{event.location}</h3>
+            <p className="text-xs text-muted">{formatEventDate(event.event_date)}</p>
+            {event.recruiterName && <p className="mt-1 text-xs text-muted">מגייס/ת: {event.recruiterName}</p>}
             {(event.requests > 0 || event.pending > 0 || event.waitlisted > 0) && (
               <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
                 {event.requests > 0 && (
-                  <span className="rounded-sm bg-rose-500/15 px-2 py-0.5 text-rose-300">{event.requests} בקשות ביטול</span>
+                  <span className="rounded-sm bg-rose-500/15 px-2 py-0.5 text-rose-700">{event.requests} בקשות ביטול</span>
                 )}
                 {event.pending > 0 && (
-                  <span className="rounded-sm bg-cream/10 px-2 py-0.5 text-cream/75">{event.pending} ממתינים לאישור</span>
+                  <span className="rounded-sm bg-ink/10 px-2 py-0.5 text-ink/80">{event.pending} ממתינים לאישור</span>
                 )}
                 {event.waitlisted > 0 && (
-                  <span className="rounded-sm bg-[#D4FF00]/10 px-2 py-0.5 text-[#D4FF00]">{event.waitlisted} בהמתנה</span>
+                  <span className="rounded-sm bg-sky/25 px-2 py-0.5 text-sky-deep">{event.waitlisted} בהמתנה</span>
                 )}
               </div>
             )}
             <div className="mt-4 flex items-center justify-between text-xs">
-              <span className={full ? "font-semibold text-[#D4FF00]" : "text-cream/55"}>
+              <span className={`tabular-nums ${full ? "font-semibold text-sky-deep" : "text-muted"}`}>
                 {event.status === "cancelled" ? "—" : `${event.filled}/${event.headcount} מקומות תפוסים`}
               </span>
-              <Users className="h-4 w-4 text-cream/65" aria-hidden="true" />
+              <Users className="h-4 w-4 text-muted" aria-hidden="true" />
             </div>
           </Link>
         );

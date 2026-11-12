@@ -7,8 +7,8 @@ import { updateClient } from "@/app/admin/clients/actions";
 import type { ClientRecord, PreferredRole } from "@/lib/admin/clients-data";
 
 const inputClass =
-  "w-full rounded-xl border border-cream/15 bg-surface2 px-3.5 py-2.5 text-sm text-cream outline-none transition-colors focus:border-[#4F46E5]";
-const labelClass = "mb-1 block text-xs font-medium text-cream/60";
+  "w-full rounded-lg border border-line bg-surface2 px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-primary";
+const labelClass = "mb-1 block text-xs font-medium text-muted";
 
 const generateId = () => Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
@@ -127,7 +127,7 @@ export function EditClientDialog({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
         onClick={onClose}
-        className="absolute inset-0 bg-obsidian/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
       />
 
       <motion.div
@@ -135,14 +135,14 @@ export function EditClientDialog({
         animate={{ x: 0 }}
         exit={{ x: "-100%" }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute inset-y-0 end-0 flex h-full w-full max-w-md flex-col border-s border-cream/10 bg-obsidian shadow-[0_0_80px_rgba(0,0,0,0.6)]"
+        className="absolute inset-y-0 end-0 flex h-full w-full max-w-md flex-col border-s border-line bg-canvas shadow-pop"
       >
-        <div className="flex items-start justify-between border-b border-cream/10 p-6">
+        <div className="flex items-start justify-between border-b border-line p-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#4F46E5]/15 text-[#8b85f5]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink/15 text-primary-soft">
               <Building2 className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
             </div>
-            <h2 id="edit-client-title" className="font-display text-xl text-cream">
+            <h2 id="edit-client-title" className="font-display text-xl text-ink">
               עריכת לקוח
             </h2>
           </div>
@@ -150,7 +150,7 @@ export function EditClientDialog({
             type="button"
             onClick={onClose}
             aria-label="סגירה"
-            className="rounded-full p-2 text-cream/50 hover:bg-cream/5 hover:text-cream"
+            className="rounded-md p-2 text-muted hover:bg-ink/5 hover:text-ink"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -158,7 +158,7 @@ export function EditClientDialog({
 
         <form onSubmit={handleSubmit} className="flex-1 space-y-6 overflow-y-auto p-6">
           {error && (
-            <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-400">
+            <div className="rounded-lg border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-700">
               {error}
             </div>
           )}
@@ -231,7 +231,7 @@ export function EditClientDialog({
             </div>
           </div>
 
-          <hr className="border-cream/5" />
+          <hr className="border-line" />
 
           <div>
             <div className="mb-3 flex items-center justify-between">
@@ -239,7 +239,7 @@ export function EditClientDialog({
               <button
                 type="button"
                 onClick={addContactRow}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#8b85f5] hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary-soft hover:underline"
               >
                 <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                 הוספת איש קשר
@@ -266,7 +266,7 @@ export function EditClientDialog({
                     onClick={() => removeContactRow(row.key)}
                     disabled={contacts.length === 1}
                     aria-label="הסרת איש קשר"
-                    className="rounded-lg p-2 text-cream/65 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-30"
+                    className="rounded-lg p-2 text-muted hover:bg-rose-500/10 hover:text-rose-700 disabled:opacity-30"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -275,7 +275,7 @@ export function EditClientDialog({
             </div>
           </div>
 
-          <hr className="border-cream/5" />
+          <hr className="border-line" />
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -310,7 +310,7 @@ export function EditClientDialog({
             </div>
           </div>
 
-          <hr className="border-cream/5" />
+          <hr className="border-line" />
 
           <div>
             <div className="mb-3 flex items-center justify-between">
@@ -318,7 +318,7 @@ export function EditClientDialog({
               <button
                 type="button"
                 onClick={addRoleRow}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#8b85f5] hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary-soft hover:underline"
               >
                 <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                 הוספת תפקיד
@@ -343,7 +343,7 @@ export function EditClientDialog({
                       className={inputClass + " w-full pe-8"}
                       placeholder="0"
                     />
-                    <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-cream/65">
+                    <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-muted">
                       ₪/ש
                     </span>
                   </div>
@@ -352,7 +352,7 @@ export function EditClientDialog({
                     onClick={() => removeRoleRow(row.key)}
                     disabled={roles.length === 1}
                     aria-label="הסרת תפקיד"
-                    className="rounded-lg p-2 text-cream/65 hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-30"
+                    className="rounded-lg p-2 text-muted hover:bg-rose-500/10 hover:text-rose-700 disabled:opacity-30"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -377,7 +377,7 @@ export function EditClientDialog({
           <button
             type="submit"
             disabled={isPending}
-            className="mt-4 w-full rounded-full bg-[#4F46E5] py-3 text-sm font-bold text-white shadow-[0_15px_35px_-12px_rgba(79,70,229,0.7)] transition-transform hover:scale-[1.01] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn btn-primary mt-4 w-full"
           >
             {isPending ? "שומר שינויים..." : "שמירת שינויים"}
           </button>

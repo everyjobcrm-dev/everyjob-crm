@@ -54,9 +54,9 @@ export function RedeemCreditsControl({
   };
 
   return (
-    <section className="border-s-4 border-[#D4FF00] bg-surface px-5 py-4">
-      <h2 className="font-display text-lg text-cream">זיכויי גיוס: {recruiterName}</h2>
-      <p className="mt-1 text-sm text-cream/70">
+    <section className="border-s-4 border-sky bg-surface px-5 py-4">
+      <h2 className="font-display text-lg text-ink">זיכויי גיוס: {recruiterName}</h2>
+      <p className="mt-1 text-sm text-ink/80">
         {pendingCount} זיכויים ממתינים · {money.format(pendingAmount)}
       </p>
 
@@ -73,39 +73,39 @@ export function RedeemCreditsControl({
               max={pendingCount}
               step={1}
               {...register("count")}
-              className="w-24 rounded-md border border-brass/20 bg-surface2 px-2 py-1.5 text-sm text-cream"
+              className="w-24 rounded-md border border-line-strong bg-surface2 px-2 py-1.5 text-sm text-ink"
             />
-            {errors.count?.message && <p className="mt-1 text-xs text-rose-400">{errors.count.message}</p>}
+            {errors.count?.message && <p className="mt-1 text-xs text-rose-700">{errors.count.message}</p>}
           </div>
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-md bg-[#D4FF00]/15 px-3 py-1.5 text-xs font-semibold text-[#D4FF00] disabled:opacity-50"
+            className="rounded-md bg-sky/25 px-3 py-1.5 text-xs font-semibold text-sky-deep disabled:opacity-50"
           >
             מימוש (מהוותיק לחדש)
           </button>
         </form>
       ) : (
-        <p className="mt-2 text-xs text-cream/65">אין זיכויים ממתינים למימוש.</p>
+        <p className="mt-2 text-xs text-muted">אין זיכויים ממתינים למימוש.</p>
       )}
 
       {confirming != null && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-brass/10 pt-3 text-xs text-cream/80">
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3 text-xs text-ink/80">
           <span>לממש {confirming} זיכויים ותיקים של {recruiterName} במסגרת אירוע זה?</span>
           <button
             type="button"
             disabled={isPending}
             onClick={confirm}
-            className="rounded-md bg-[#4F46E5] px-3 py-1.5 font-semibold text-white disabled:opacity-50"
+            className="btn btn-primary btn-sm"
           >
             {isPending ? "מממש..." : "אישור מימוש"}
           </button>
-          <button type="button" onClick={() => setConfirming(null)} className="rounded-md px-2 py-1.5 text-cream/60">
+          <button type="button" onClick={() => setConfirming(null)} className="rounded-md px-2 py-1.5 text-muted">
             ביטול
           </button>
         </div>
       )}
-      {message && <p className={`mt-2 text-xs ${message.tone === "ok" ? "text-[#D4FF00]" : "text-rose-400"}`}>{message.text}</p>}
+      {message && <p className={`mt-2 text-xs ${message.tone === "ok" ? "text-sky-deep" : "text-rose-700"}`}>{message.text}</p>}
     </section>
   );
 }

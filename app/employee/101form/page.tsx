@@ -411,20 +411,20 @@ export default function Form101Page() {
     <div className="pb-10">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-cream/50">טופס 101</p>
-          <h1 className="font-display text-2xl text-cream">מילוי אוטומטי של טופס 101</h1>
+          <p className="text-sm text-muted">טופס 101</p>
+          <h1 className="font-display text-2xl text-ink">מילוי אוטומטי של טופס 101</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => window.print()}
-            className="inline-flex items-center justify-center rounded-full border border-brass/20 px-4 py-2 text-sm font-semibold text-brass transition hover:bg-brass/10"
+            className="inline-flex items-center justify-center rounded-md border border-line-strong px-4 py-2 text-sm font-semibold text-primary-soft transition hover:bg-pink/15"
           >
             הדפס / PDF
           </button>
           <Link
             href="/employee/profile"
-            className="inline-flex items-center justify-center rounded-full border border-brass/20 px-4 py-2 text-sm font-semibold text-brass transition hover:bg-brass/10"
+            className="inline-flex items-center justify-center rounded-md border border-line-strong px-4 py-2 text-sm font-semibold text-primary-soft transition hover:bg-pink/15"
           >
             חזור לפרופיל
           </Link>
@@ -432,212 +432,212 @@ export default function Form101Page() {
       </div>
 
       <form className="space-y-8" onSubmit={handleSubmit}>
-        <section className="rounded-3xl border border-brass/15 bg-surface p-6">
+        <section className="card p-6">
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brass/15 text-brass">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-pink/15 text-primary-soft">
               <ShieldCheck className="h-5 w-5" strokeWidth={1.8} />
             </div>
             <div>
-              <p className="text-sm text-cream/60">שלום, {loading ? "..." : displayName}</p>
-              <p className="text-sm text-cream/65">
+              <p className="text-sm text-muted">שלום, {loading ? "..." : displayName}</p>
+              <p className="text-sm text-muted">
                 כל שדה עם ערך קיים ממולא אוטומטית. רק השדות החסרים נשארים לפתיחה ידנית.
               </p>
             </div>
           </div>
 
           {missingFields.length > 0 ? (
-            <div className="mb-5 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-sm text-amber-200">
+            <div className="mb-5 rounded-lg border border-amber-400/20 bg-amber-500/10 p-3 text-sm text-amber-800">
               שדות חסרים להשלמה: {missingFields.join(", ")}
             </div>
           ) : null}
 
           <div className="space-y-6">
             <div>
-              <h2 className="mb-4 text-lg font-semibold text-cream">א. פרטי המעסיק</h2>
+              <h2 className="mb-4 text-lg font-semibold text-ink">א. פרטי המעסיק</h2>
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">שם המעסיק</span>
                   <input
                     value={form.employerName}
                     onChange={(event) => handleChange("employerName", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("שם המעסיק") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("שם המעסיק") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">מספר תיק ניכויים</span>
                   <input
                     value={form.employerTaxFileNumber}
                     onChange={(event) => handleChange("employerTaxFileNumber", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("מספר תיק ניכויים") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("מספר תיק ניכויים") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
               </div>
             </div>
 
             <div>
-              <h2 className="mb-4 text-lg font-semibold text-cream">ב. פרטי העובד/ת</h2>
+              <h2 className="mb-4 text-lg font-semibold text-ink">ב. פרטי העובד/ת</h2>
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">שם פרטי</span>
                   <input
                     value={form.firstName}
                     onChange={(event) => handleChange("firstName", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("שם פרטי") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("שם פרטי") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">שם משפחה</span>
                   <input
                     value={form.lastName}
                     onChange={(event) => handleChange("lastName", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("שם משפחה") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("שם משפחה") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">מספר תעודת זהות</span>
                   <input
                     value={form.identityNumber}
                     onChange={(event) => handleChange("identityNumber", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("מספר תעודת זהות") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("מספר תעודת זהות") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">תאריך לידה</span>
                   <input
                     type="date"
                     value={form.dateOfBirth}
                     onChange={(event) => handleChange("dateOfBirth", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("תאריך לידה") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("תאריך לידה") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">תאריך עלייה / הגירה</span>
                   <input
                     type="date"
                     value={form.dateOfImmigration}
                     onChange={(event) => handleChange("dateOfImmigration", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">מין</span>
                   <input
                     value={form.gender}
                     onChange={(event) => handleChange("gender", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
                     placeholder="זכר / נקבה"
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">סטטוס תושב</span>
                   <input
                     value={form.israeliResidentStatus}
                     onChange={(event) => handleChange("israeliResidentStatus", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
                     placeholder="ישראלי / תושב חוזר / עולה"
                   />
                 </label>
-                <label className="text-sm text-cream/80 md:col-span-2">
+                <label className="text-sm text-ink/80 md:col-span-2">
                   <span className="mb-2 block font-semibold">רחוב</span>
                   <input
                     value={form.street}
                     onChange={(event) => handleChange("street", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("רחוב") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("רחוב") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">מספר בית</span>
                   <input
                     value={form.houseNumber}
                     onChange={(event) => handleChange("houseNumber", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("מספר בית") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("מספר בית") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">דירה</span>
                   <input
                     value={form.apartment}
                     onChange={(event) => handleChange("apartment", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">עיר</span>
                   <input
                     value={form.city}
                     onChange={(event) => handleChange("city", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("עיר") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("עיר") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">מיקוד</span>
                   <input
                     value={form.postalCode}
                     onChange={(event) => handleChange("postalCode", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("מיקוד") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("מיקוד") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">אימייל</span>
                   <input
                     type="email"
                     value={form.email}
                     onChange={(event) => handleChange("email", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("אימייל") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("אימייל") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">מספר נייד</span>
                   <input
                     value={form.mobilePhone}
                     onChange={(event) => handleChange("mobilePhone", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("מספר נייד") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("מספר נייד") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">מצב משפחתי</span>
                   <input
                     value={form.maritalStatus}
                     onChange={(event) => handleChange("maritalStatus", event.target.value)}
-                    className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
                     placeholder="רווק/ה / נשוי/אה / גרוש/ה"
                   />
                 </label>
-                <label className="text-sm text-cream/80">
+                <label className="text-sm text-ink/80">
                   <span className="mb-2 block font-semibold">תאריך תחילת עבודה</span>
                   <input
                     type="date"
                     value={form.employmentStartDate}
                     onChange={(event) => handleChange("employmentStartDate", event.target.value)}
-                    className={`w-full rounded-2xl border px-3 py-3 text-cream outline-none ring-0 ${missingFields.includes("תאריך תחילת עבודה") ? "border-amber-300/50 bg-amber-500/5" : "border-brass/20 bg-obsidian"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("תאריך תחילת עבודה") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
               </div>
 
               {showSpouseFields ? (
-                <div className="mt-5 grid gap-4 rounded-2xl border border-brass/15 bg-obsidian/40 p-4 md:grid-cols-3">
-                  <label className="text-sm text-cream/80">
+                <div className="mt-5 grid gap-4 rounded-lg border border-line bg-surface2 p-4 md:grid-cols-3">
+                  <label className="text-sm text-ink/80">
                     <span className="mb-2 block font-semibold">שם בן/בת זוג</span>
                     <input
                       value={form.spouseName}
                       onChange={(event) => handleChange("spouseName", event.target.value)}
-                      className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                      className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
                     />
                   </label>
-                  <label className="text-sm text-cream/80">
+                  <label className="text-sm text-ink/80">
                     <span className="mb-2 block font-semibold">מספר תעודת זהות של בן/בת זוג</span>
                     <input
                       value={form.spouseId}
                       onChange={(event) => handleChange("spouseId", event.target.value)}
-                      className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                      className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
                     />
                   </label>
-                  <label className="text-sm text-cream/80">
+                  <label className="text-sm text-ink/80">
                     <span className="mb-2 block font-semibold">סטטוס תעסוקה של בן/בת זוג</span>
                     <input
                       value={form.spouseEmploymentStatus}
                       onChange={(event) => handleChange("spouseEmploymentStatus", event.target.value)}
-                      className="w-full rounded-2xl border border-brass/20 bg-obsidian px-3 py-3 text-cream outline-none ring-0"
+                      className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
                     />
                   </label>
                 </div>
@@ -645,10 +645,10 @@ export default function Form101Page() {
             </div>
 
             <div>
-              <h2 className="mb-4 text-lg font-semibold text-cream">ג. פרטי מס</h2>
+              <h2 className="mb-4 text-lg font-semibold text-ink">ג. פרטי מס</h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {taxFlagMetadata.map((taxFlag) => (
-                  <label key={taxFlag.key} className="flex items-center gap-2 rounded-2xl border border-brass/15 bg-obsidian/40 p-3 text-sm text-cream/80">
+                  <label key={taxFlag.key} className="flex items-center gap-2 rounded-lg border border-line bg-surface2 p-3 text-sm text-ink/80">
                     <input
                       type="checkbox"
                       checked={
@@ -670,20 +670,20 @@ export default function Form101Page() {
           </div>
 
           {message ? (
-            <div className="mt-5 flex items-start gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">
+            <div className="mt-5 flex items-start gap-2 rounded-lg border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-700">
               <CheckCircle2 className="mt-0.5 h-4 w-4" strokeWidth={1.8} />
               <span>{message}</span>
             </div>
           ) : null}
 
           {error ? (
-            <div className="mt-5 rounded-2xl border border-rose-400/20 bg-rose-500/10 p-3 text-sm text-rose-300">{error}</div>
+            <div className="mt-5 rounded-lg border border-rose-400/20 bg-rose-500/10 p-3 text-sm text-rose-700">{error}</div>
           ) : null}
 
           <button
             type="submit"
             disabled={submitting || loading}
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-brass px-5 py-3 text-sm font-semibold text-obsidian transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn btn-primary mt-5"
           >
             {submitting ? (
               <>

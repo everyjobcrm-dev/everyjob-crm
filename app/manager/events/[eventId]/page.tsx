@@ -9,6 +9,7 @@ import { RosterBoard } from "@/components/manager/RosterBoard";
 import { EventStatusControl } from "@/components/manager/EventStatusControl";
 import { RedeemCreditsControl } from "@/components/manager/RedeemCreditsControl";
 import { fetchRecruiterOptions } from "@/app/admin/actions";
+import { formatEventDate } from "@/lib/format";
 
 type Props = {
   params: Promise<{ eventId: string }>;
@@ -35,9 +36,9 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
   if (!canManageEvent(profile, event)) {
     return (
       <div className="mx-auto max-w-md py-16 text-center">
-        <h1 className="font-display text-xl text-cream">אין לך הרשאה לנהל אירוע זה</h1>
-        <p className="mt-2 text-sm text-cream/50">מגייס/ת יכול/ה לנהל רק אירועים שבאחריותו/ה.</p>
-        <Link href="/manager/events" className="mt-6 inline-block text-sm font-semibold text-indigo-400">
+        <h1 className="font-display text-xl text-ink">אין לך הרשאה לנהל אירוע זה</h1>
+        <p className="mt-2 text-sm text-muted">מגייס/ת יכול/ה לנהל רק אירועים שבאחריותו/ה.</p>
+        <Link href="/manager/events" className="mt-6 inline-block text-sm font-semibold text-primary-soft">
           חזרה לאירועים
         </Link>
       </div>
@@ -93,30 +94,30 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
     <div className="space-y-6 pb-12">
       <Link
         href="/manager/events"
-        className="inline-flex items-center gap-1.5 text-xs text-cream/50 transition-colors hover:text-cream"
+        className="inline-flex items-center gap-1.5 text-xs text-muted transition-colors hover:text-ink"
       >
         <ArrowRight className="h-4 w-4" aria-hidden="true" /> חזרה לאירועים
       </Link>
 
-      <div className="border-s-4 border-[#4F46E5] bg-surface p-6">
+      <div className="border-s-4 border-primary bg-surface p-6">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <p className="mb-1 flex items-center gap-2 text-sm font-semibold text-indigo-400">
+            <p className="mb-1 flex items-center gap-2 text-sm font-semibold text-primary-soft">
               <Building2 className="h-4 w-4" aria-hidden="true" /> {clientName}
             </p>
-            <h1 className="flex items-center gap-2 font-display text-2xl text-cream">
-              <MapPin className="h-5 w-5 text-brass" aria-hidden="true" /> {event.location}
+            <h1 className="flex items-center gap-2 font-display text-2xl text-ink">
+              <MapPin className="h-5 w-5 text-primary-soft" aria-hidden="true" /> {event.location}
             </h1>
-            <p className="mt-1 flex items-center gap-2 text-sm text-cream/65">
-              <Calendar className="h-4 w-4" aria-hidden="true" /> {event.event_date}
+            <p className="mt-1 flex items-center gap-2 text-sm text-muted">
+              <Calendar className="h-4 w-4" aria-hidden="true" /> {formatEventDate(event.event_date)}
             </p>
-            <p className="mt-1 flex items-center gap-2 text-sm text-cream/65">
+            <p className="mt-1 flex items-center gap-2 text-sm text-muted">
               <UserRound className="h-4 w-4" aria-hidden="true" /> מגייס/ת אחראי/ת: {recruiterLabel}
             </p>
             {editable && (
               <Link
                 href={`/manager/events/${event.id}/edit`}
-                className="mt-4 inline-flex items-center gap-1.5 border border-cream/20 px-3 py-1.5 text-xs font-semibold text-cream transition-colors hover:border-[#4F46E5] hover:text-white"
+                className="mt-4 inline-flex items-center gap-1.5 border border-line-strong px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-ink"
               >
                 <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> עריכת פרטי אירוע
               </Link>
@@ -131,14 +132,14 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
           />
         </div>
         {event.notes && (
-          <p className="mt-4 border-t border-brass/10 pt-3 text-xs text-cream/70">{event.notes}</p>
+          <p className="mt-4 border-t border-line pt-3 text-xs text-ink/80">{event.notes}</p>
         )}
       </div>
 
       <section>
-        <h2 className="mb-4 font-display text-xl text-cream">צוות האירוע</h2>
+        <h2 className="mb-4 font-display text-xl text-ink">צוות האירוע</h2>
         {rosterError ? (
-          <p className="text-sm text-rose-400">{mapDbError(rosterError, { fallback: "טעינת רשימת הצוות נכשלה." })}</p>
+          <p className="text-sm text-rose-700">{mapDbError(rosterError, { fallback: "טעינת רשימת הצוות נכשלה." })}</p>
         ) : (
           <RosterBoard
             eventId={event.id}

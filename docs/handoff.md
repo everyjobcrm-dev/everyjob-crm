@@ -97,7 +97,7 @@ Demo users (all verified; password chosen by the owner; roles set in `profiles`)
 - Hours: Admin approves (never own worked hours), no two-person rule; credit to the event's recruiter only if the
   worker's `recruited_by` matches; never for own hours; redemption FIFO by Manager/Admin.
 - **UI:** one app shell for every role (employee items for all + a "ניהול" section for staff). "אירוע חדש" is a
-  button on the events list, not a nav item. Hebrew, RTL logical classes only, Indigo #4F46E5 / Lime #D4FF00, no pills.
+  button on the events list, not a nav item. Hebrew, RTL logical classes only, light theme in the logo colours (AGENTS.md §7, 2026-11-10), no pills.
 
 ## 6. Responsible recruiter - RESOLVED (2026-10-16)
 Admin and Manager choose a "מגייס/ת אחראי/ת" (any recruiter, or none) when creating or editing an event; a recruiter

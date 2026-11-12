@@ -53,19 +53,19 @@ export function WithdrawConfirm({
   };
 
   return (
-    <div className="mt-3 space-y-2 border-t border-brass/10 pt-3">
-      <p className="text-xs text-cream/70">לבטל את ההרשמה? אפשר להירשם שוב בכל עת</p>
-      {serverError && <p className="text-xs text-rose-400">{serverError}</p>}
+    <div className="mt-3 space-y-2 border-t border-line pt-3">
+      <p className="text-xs text-ink/80">לבטל את ההרשמה? אפשר להירשם שוב בכל עת</p>
+      {serverError && <p className="text-xs text-rose-700">{serverError}</p>}
       <div className="flex gap-2">
         <button
           type="button"
           disabled={isPending}
           onClick={confirm}
-          className="rounded-md bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-100 disabled:opacity-50"
+          className="rounded-md bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-50"
         >
           {isPending ? "מבטל..." : "כן, לבטל"}
         </button>
-        <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-xs text-cream/60">
+        <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-xs text-muted">
           חזרה
         </button>
       </div>
@@ -106,31 +106,31 @@ export function CancellationRequestForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-3 space-y-2 border-t border-brass/10 pt-3" noValidate>
-      <p className="text-xs text-cream/70">
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-3 space-y-2 border-t border-line pt-3" noValidate>
+      <p className="text-xs text-ink/80">
         הבקשה תישלח לצוות לאישור. עד שהבקשה תאושר את/ה עדיין רשום/ה למשמרת. לאחר אישור ניתן יהיה להירשם שוב אם יש מקום.
       </p>
-      <label htmlFor={`cancel-reason-${registrationId}`} className="block text-xs text-cream/60">
+      <label htmlFor={`cancel-reason-${registrationId}`} className="block text-xs text-muted">
         סיבה (לא חובה)
       </label>
       <textarea
         id={`cancel-reason-${registrationId}`}
         rows={2}
         {...register("reason")}
-        className="w-full rounded-md border border-brass/20 bg-surface2 p-2 text-sm text-cream"
+        className="w-full rounded-md border border-line-strong bg-surface2 p-2 text-sm text-ink"
       />
       {(errors.reason?.message || serverError) && (
-        <p className="text-xs text-rose-400">{errors.reason?.message ?? serverError}</p>
+        <p className="text-xs text-rose-700">{errors.reason?.message ?? serverError}</p>
       )}
       <div className="flex gap-2">
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-md bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-100 disabled:opacity-50"
+          className="rounded-md bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-50"
         >
           {isPending ? "שולח..." : "אישור ושליחת בקשת ביטול"}
         </button>
-        <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-xs text-cream/60">
+        <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-xs text-muted">
           חזרה
         </button>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -59,21 +60,18 @@ export function AppShell({
   const isStaff = nav.manage.length > 0;
 
   return (
-    <div className="min-h-screen bg-obsidian text-cream">
+    <div className="min-h-screen bg-canvas text-ink">
       {/* Desktop sidebar */}
       <aside
         aria-label="ניווט ראשי"
-        className="fixed inset-y-0 start-0 z-40 hidden w-60 flex-col border-e border-cream/10 bg-obsidian px-3 py-6 lg:flex"
+        className="fixed inset-y-0 start-0 z-40 hidden w-60 flex-col border-e border-line bg-surface px-3 py-5 lg:flex"
       >
-        <Link href={HOME_BY_ROLE[nav.role]} className="mb-8 flex items-center gap-2.5 px-2">
-          <span className="h-8 w-8 rounded-lg bg-brass" aria-hidden="true" />
-          <span>
-            <span className="block font-display text-base text-cream">everyJob</span>
-            <span className="block text-xs text-cream/60">{nav.roleLabel}</span>
-          </span>
+        <Link href={HOME_BY_ROLE[nav.role]} className="mb-7 flex items-center justify-between gap-2 px-2">
+          <Image src="/images/everyJob-logo.png" alt="everyJob" width={738} height={411} priority className="h-11 w-auto" />
+          <span className="rounded-md bg-surface2 px-2 py-1 text-[11px] font-semibold text-muted">{nav.roleLabel}</span>
         </Link>
 
-        <nav className="flex flex-1 flex-col gap-6 overflow-y-auto">
+        <nav className="flex flex-1 flex-col gap-6 overflow-y-auto [scrollbar-width:thin]">
           {isStaff && <NavSection title="ניהול" items={nav.manage} pathname={pathname} />}
           <NavSection title={isStaff ? "העבודה שלי" : undefined} items={nav.work} pathname={pathname} />
         </nav>
@@ -81,7 +79,7 @@ export function AppShell({
         <button
           type="button"
           onClick={logout}
-          className="mt-4 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-cream/70 transition-colors hover:bg-rose-500/10 hover:text-rose-300"
+          className="mt-4 flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-ink/80 transition-colors hover:bg-rose-500/10 hover:text-rose-700"
         >
           <LogOut className="h-4 w-4" strokeWidth={1.7} aria-hidden="true" />
           התנתקות
@@ -92,9 +90,9 @@ export function AppShell({
       {isStaff && (
         <nav
           aria-label="ניווט ניהול"
-          className="sticky top-0 z-30 flex items-center gap-1 overflow-x-auto border-b border-cream/10 bg-obsidian/95 px-3 py-2 backdrop-blur-sm lg:hidden"
+          className="sticky top-0 z-30 flex items-center gap-1 overflow-x-auto border-b border-line bg-surface/95 px-3 py-2 backdrop-blur-sm [scrollbar-width:none] lg:hidden"
         >
-          <span className="me-1 shrink-0 text-xs font-semibold text-cream/60">ניהול</span>
+          <span className="me-1 shrink-0 text-xs font-semibold text-muted">ניהול</span>
           {nav.manage.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = ICONS[item.icon];
@@ -103,8 +101,8 @@ export function AppShell({
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  active ? "bg-brass text-obsidian" : "text-cream/75 hover:bg-cream/5"
+                className={`flex min-h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors ${
+                  active ? "bg-ink text-white" : "text-ink/80 hover:bg-ink/5"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden="true" />
@@ -119,10 +117,10 @@ export function AppShell({
         <div className={`mx-auto w-full min-w-0 ${WIDTH[width]} px-4 pt-6 sm:px-6 lg:px-10 lg:pt-10`}>{children}</div>
       </main>
 
-      {/* Mobile: bottom tab bar with the work items (+ logout) */}
+      {/* Mobile: bottom tab bar with the work items. Logout lives on the profile screen, away from the thumb. */}
       <nav
         aria-label="ניווט ראשי"
-        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-cream/10 bg-obsidian/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden"
       >
         {nav.work.map((item) => {
           const active = isActive(pathname, item.href);
@@ -133,23 +131,14 @@ export function AppShell({
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${
-                active ? "text-cream" : "text-cream/65"
+                active ? "text-ink" : "text-muted"
               }`}
             >
-              <Icon strokeWidth={active ? 2.25 : 1.6} className={`h-5 w-5 ${active ? "text-brass" : ""}`} />
+              <Icon strokeWidth={active ? 2.25 : 1.6} className={`h-5 w-5 ${active ? "text-primary-soft" : ""}`} />
               {item.label}
             </Link>
           );
         })}
-        <button
-          type="button"
-          onClick={logout}
-          aria-label="התנתקות"
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-cream/65"
-        >
-          <LogOut strokeWidth={1.6} className="h-5 w-5" aria-hidden="true" />
-          יציאה
-        </button>
       </nav>
     </div>
   );
@@ -158,7 +147,7 @@ export function AppShell({
 function NavSection({ title, items, pathname }: { title?: string; items: NavItem[]; pathname: string | null }) {
   return (
     <div>
-      {title && <p className="mb-2 px-3 text-xs font-semibold tracking-wide text-cream/55">{title}</p>}
+      {title && <p className="mb-2 px-3 text-xs font-semibold tracking-wide text-muted">{title}</p>}
       <ul className="flex flex-col gap-0.5">
         {items.map((item) => {
           const active = isActive(pathname, item.href);
@@ -168,13 +157,13 @@ function NavSection({ title, items, pathname }: { title?: string; items: NavItem
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
                   active
-                    ? "border-s-2 border-brass bg-brass/10 text-cream"
-                    : "text-cream/75 hover:bg-cream/5 hover:text-cream"
+                    ? "bg-surface2 font-semibold text-ink"
+                    : "text-ink/80 hover:bg-ink/5 hover:text-ink"
                 }`}
               >
-                <Icon className={`h-4 w-4 ${active ? "text-brass" : ""}`} strokeWidth={active ? 2.1 : 1.7} aria-hidden="true" />
+                <Icon className={`h-4 w-4 ${active ? "text-primary-soft" : ""}`} strokeWidth={active ? 2.1 : 1.7} aria-hidden="true" />
                 {item.label}
               </Link>
             </li>

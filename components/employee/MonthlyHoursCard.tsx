@@ -14,24 +14,24 @@ export function MonthlyHoursCard({ months, currentMonth }: { months: MyMonthlyHo
   const previous = months.filter((m) => m.month !== currentMonth).slice(0, 3);
 
   return (
-    <section className="mb-8 border-s-4 border-[#D4FF00] bg-surface px-5 py-4">
-      <p className="text-xs text-cream/50">{monthFmt.format(new Date(`${current.month}T00:00:00Z`))}</p>
+    <section className="mb-8 border-s-4 border-sky bg-surface px-5 py-4">
+      <p className="text-xs text-muted">{monthFmt.format(new Date(`${current.month}T00:00:00Z`))}</p>
       <div className="mt-1 flex flex-wrap items-baseline gap-x-8 gap-y-2">
-        <p className="font-display text-2xl text-cream">
-          {current.approvedHours} <span className="text-sm text-cream/60">שעות שאושרו</span>
+        <p className="font-display text-2xl text-ink">
+          {current.approvedHours} <span className="text-sm text-muted">שעות שאושרו</span>
         </p>
-        <p className="font-display text-2xl text-[#D4FF00]">
-          {money.format(current.estimatedPay)} <span className="text-sm text-cream/60">שכר משוער</span>
+        <p className="font-display text-2xl text-sky-deep">
+          {money.format(current.estimatedPay)} <span className="text-sm text-muted">שכר משוער</span>
         </p>
       </div>
       {current.shiftsWithoutRate > 0 && (
-        <p className="mt-2 text-xs text-cream/55">
+        <p className="mt-2 text-xs text-muted">
           {current.shiftsWithoutRate} משמרות עדיין ללא תעריף שעתי ולכן אינן נכללות בשכר המשוער.
         </p>
       )}
-      <p className="mt-2 text-[11px] text-cream/65">הערכה בלבד, לפני תוספות, נסיעות וניכויים.</p>
+      <p className="mt-2 text-[11px] text-muted">הערכה בלבד, לפני תוספות, נסיעות וניכויים.</p>
       {previous.length > 0 && (
-        <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-1 border-t border-brass/10 pt-3 text-xs text-cream/55">
+        <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-1 border-t border-line pt-3 text-xs text-muted">
           {previous.map((m) => (
             <li key={m.month}>
               {monthFmt.format(new Date(`${m.month}T00:00:00Z`))}: {m.approvedHours} שעות · {money.format(m.estimatedPay)}

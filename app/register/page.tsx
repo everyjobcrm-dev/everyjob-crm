@@ -216,8 +216,8 @@ export default function RegisterPage() {
     setTimeout(() => router.push("/login"), 2000);
   };
 
-  const inputClasses = "w-full rounded-sm border-2 border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition-all focus:border-[#4F46E5] focus:bg-white";
-  const labelClasses = "mb-1.5 block text-sm font-bold text-slate-900";
+  const inputClasses = "field";
+  const labelClasses = "mb-1.5 block text-sm font-semibold text-ink";
 
   return (
     <AuthCard
@@ -228,7 +228,7 @@ export default function RegisterPage() {
     >
       {verificationStep ? (
         <form className="space-y-6" onSubmit={handleVerifyEmail}>
-          <div className="border-s-4 border-[#4F46E5] bg-[#4F46E5]/5 p-4 text-sm text-[#4F46E5]">
+          <div className="rounded-lg border-s-4 border-sky bg-sky/15 p-4 text-sm text-sky-deep">
             <p className="font-bold">אימות אימייל</p>
             <p className="mt-1">שלחנו לך קוד אימות לאימייל שלך. הכנס אותו כדי להשלים את ההרשמה.</p>
           </div>
@@ -249,7 +249,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={verificationLoading}
-            className="group flex w-full items-center justify-center gap-2 rounded-sm bg-[#09090B] px-4 py-3.5 font-bold text-white transition-all hover:bg-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn btn-primary btn-lg group w-full"
           >
             {verificationLoading ? "מאמת..." : "אמת אימייל"}
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
@@ -315,7 +315,7 @@ export default function RegisterPage() {
               <label className={labelClasses} htmlFor="birth_date">
                 תאריך לידה
                 {age !== null && (
-                  <span className="ms-2 inline-flex items-center rounded-sm bg-[#D4FF00] px-2 py-0.5 text-xs font-bold text-black">
+                  <span className="ms-2 inline-flex items-center rounded-sm bg-sun px-2 py-0.5 text-xs font-bold text-ink">
                     גיל: {age}
                   </span>
                 )}
@@ -392,7 +392,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="group mt-2 flex w-full items-center justify-center gap-2 rounded-sm border-2 border-[#09090B] bg-[#4F46E5] px-4 py-3.5 font-bold text-white shadow-[4px_4px_0px_0px_#D4FF00] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
+            className="btn btn-primary btn-lg group mt-2 w-full"
           >
             {loading ? "יוצר חשבון..." : "צור משתמש"}
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
@@ -400,9 +400,9 @@ export default function RegisterPage() {
         </form>
       )}
 
-      <p className="mt-8 text-center text-sm font-medium text-slate-500">
+      <p className="mt-8 text-center text-sm font-medium text-muted">
         כבר יש לך חשבון?{' '}
-        <Link className="font-bold text-[#4F46E5] underline decoration-2 underline-offset-4 transition hover:text-[#09090B]" href="/login">
+        <Link className="font-bold text-primary-soft underline decoration-2 underline-offset-4" href="/login">
           התחבר
         </Link>
       </p>
