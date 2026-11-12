@@ -92,9 +92,10 @@ export const editEventRoleSchema = z.object({
   role_name: z.string().trim().min(1, "יש להזין שם תפקיד"),
   headcount: z.coerce.number().int().min(1, "כמות חייבת להיות לפחות 1"),
   start_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "יש להזין שעת התחלה"),
+  // nullish: the server action re-parses the form's output, where an empty end time is already null
   end_time: z
     .string()
-    .optional()
+    .nullish()
     .transform((v) => (v ? v : null)),
   base_rate: nullableNumber(z.coerce.number().positive("תעריף לא תקין")),
   // Admin only (the RPC refuses anyone else); undefined/null = unchanged.
