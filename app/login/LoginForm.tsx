@@ -39,7 +39,7 @@ export default function LoginForm() {
 
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
-      setError("Supabase has not been configured for this app.");
+      setError("שירות ההתחברות אינו מוגדר. פנו לתמיכה.");
       setLoading(false);
       return;
     }
@@ -67,14 +67,14 @@ export default function LoginForm() {
         }
 
         if (!response.ok || !payload.success || !payload.email) {
-          setError(payload.error ?? "We could not find an account for this TZ. Please try your email instead.");
+          setError(payload.error ?? "לא נמצא חשבון עם תעודת הזהות הזו. נסו להתחבר עם אימייל.");
           setLoading(false);
           return;
         }
 
         emailToLogin = payload.email;
       } catch {
-        setError("We could not resolve your TZ automatically. Please use your email and password instead.");
+        setError("לא הצלחנו לזהות את תעודת הזהות. התחברו עם אימייל וסיסמה.");
         setLoading(false);
         return;
       }
@@ -99,13 +99,16 @@ export default function LoginForm() {
     if (signInError || !data.user) {
       const message = signInError?.message ?? "";
       if (message.toLowerCase().includes("rate limit") || message.toLowerCase().includes("too many requests")) {
-        setError("Too many attempts. Please wait a few minutes and try again, or use the password reset option.");
+        setError("יותר מדי ניסיונות. המתינו כמה דקות ונסו שוב, או אפסו את הסיסמה.");
+      } else if (message.toLowerCase().includes("banned")) {
+        // soft-deleted users are banned in Auth (p10c)
+        setError("החשבון אינו פעיל. לפרטים פנו למשרד.");
       } else if (message.toLowerCase().includes("invalid login credentials")) {
-        setError("The email/TZ and password you entered do not match. Please try again.");
+        setError("תעודת הזהות/האימייל או הסיסמה שגויים. נסו שוב.");
       } else if (message.toLowerCase().includes("email not confirmed")) {
-        setError("Please confirm your email before signing in.");
+        setError("יש לאשר את כתובת האימייל לפני ההתחברות.");
       } else {
-        setError("We could not sign you in. Please verify your credentials and try again.");
+        setError("לא הצלחנו לחבר אותך. בדקו את הפרטים ונסו שוב.");
       }
       setLoading(false);
       return;
