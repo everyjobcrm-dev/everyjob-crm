@@ -50,7 +50,8 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
       .from("event_roles")
       .select("id, role_name, headcount, start_time, end_time")
       .eq("event_id", eventId)
-      .order("start_time", { ascending: true }),
+      .order("start_time", { ascending: true })
+      .order("role_name", { ascending: true }),
     supabase.rpc("get_event_roster", { p_event_id: eventId }),
   ]);
 
