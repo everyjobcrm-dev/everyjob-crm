@@ -12,16 +12,13 @@ export default async function AdminClientsPage() {
   let clients: ClientRecord[] = [];
   let loadError = false;
 
-  const { data, error } = await supabase
-    .from("clients")
-    .select("*, events(count)")
-    .order("name", { ascending: true })
-    .returns<ClientRow[]>();
+  // Pricing columns are Admin-only (B1 column grant); the RPC re-checks the role.
+  const { data, error } = await supabase.rpc("get_clients_admin");
 
   if (error) {
     loadError = true;
   } else if (data) {
-    clients = data.map(mapClientRow);
+    clients = (data as ClientRow[]).map(mapClientRow);
   }
 
   return (

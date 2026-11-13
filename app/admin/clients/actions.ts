@@ -119,7 +119,7 @@ export async function createClient(input: CreateClientInput): Promise<CreateClie
       status: "active",
       created_by: auth.userId,
     })
-    .select("*")
+    .select("id")
     .single();
 
   if (error || !data) {
@@ -136,8 +136,7 @@ export async function createClient(input: CreateClientInput): Promise<CreateClie
     return { success: false, error: error?.message || "יצירת הלקוח נכשלה. נסה/י שוב." };
   }
 
-  revalidatePath("/admin/clients");
-  return { success: true, client: mapClientRow(data as unknown as ClientRow) };
+  return readSavedClient(auth.supabase, data.id);
 }
 
 // ---------------------------------------------------------------------------
@@ -217,7 +216,7 @@ export async function updateClient(clientId: string, input: UpdateClientInput): 
       status: input.status,
     })
     .eq("id", clientId)
-    .select("*")
+    .select("id")
     .single();
 
   if (error || !data) {
@@ -234,8 +233,19 @@ export async function updateClient(clientId: string, input: UpdateClientInput): 
     return { success: false, error: error?.message || "עדכון הלקוח נכשל. נסה/י שוב." };
   }
 
+  return readSavedClient(auth.supabase, data.id);
+}
+
+/** Full client row (incl. Admin-only pricing) after a save, through get_clients_admin (B1 column grant). */
+async function readSavedClient(
+  supabase: SupabaseClient,
+  clientId: string,
+): Promise<{ success: true; client: ClientRecord } | { success: false; error: string }> {
   revalidatePath("/admin/clients");
-  return { success: true, client: mapClientRow(data as unknown as ClientRow) };
+  const { data } = await supabase.rpc("get_clients_admin", { p_client_id: clientId });
+  const row = (data as ClientRow[] | null)?.[0];
+  if (!row) return { success: false, error: "הלקוח נשמר, אך טעינתו נכשלה. רענן/י את הדף." };
+  return { success: true, client: mapClientRow(row) };
 }
 
 // ---------------------------------------------------------------------------

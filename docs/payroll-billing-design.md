@@ -1,4 +1,4 @@
-# Payroll & Billing - design (draft 2026-10-15, nothing applied)
+# Payroll & Billing - design (draft 2026-10-15, B0 decided 2026-11-13, nothing applied)
 
 Scope: handoff §7.6. Internal reports + Excel only, no external accounting API (AGENTS.md §1). Admin only.
 Every number is derived on read from views (AGENTS.md §5.1); nothing is stored except what already exists.
@@ -14,17 +14,16 @@ Every number is derived on read from views (AGENTS.md §5.1); nothing is stored 
 | Recruiter credits | `recruiter_bonuses` (pending / applied, FIFO redemption H6v2) |
 | Excluded | events with `status = 'cancelled'` (AGENTS.md §6.1) |
 
-## 2. Rules (defaults - see §5 for the open questions)
+## 2. Rules (owner decisions B0, 2026-11-13 - do not reopen)
 **Employee pay per approved shift** (Israeli overtime, per shift):
 - regular = min(h, 8); ot125 = min(max(h - 8, 0), 2); ot150 = max(h - 10, 0)
 - pay = wage_rate × (regular + 1.25·ot125 + 1.5·ot150); travel = travel_budget_per_worker (once per shift)
 - a shift whose registration has no `wage_rate` is listed with `missing_rate = true` and pay NULL (never guessed)
 - month = `event_date` month in Asia/Jerusalem (same as `v_my_monthly_hours`)
 
-**Client billing per approved shift:**
+**Client billing per approved shift** (one flat hourly price per role, no overtime uplift):
 - billable = max(h, client.min_billable_hours or 0)
-- regular = min(billable, threshold); overtime = billable - regular, where threshold = client.overtime_threshold_hours
-  (NULL = no overtime); amount = bill_to_client × (regular + 1.25·overtime)
+- amount = bill_to_client × billable; `clients.overtime_threshold_hours` is NOT used for billing
 - travel charged = travel_budget_per_worker (pass-through)
 - `bill_to_client = 0/NULL` -> line flagged `missing_price`
 
@@ -48,7 +47,7 @@ Every number is derived on read from views (AGENTS.md §5.1); nothing is stored 
 - Manual verification after build: a month with a missing wage rate, a shift > 10h, a client with min billable hours,
   a cancelled event (must not appear), a voided submission (must not appear).
 
-## 5. Open questions (answer changes the implementation)
-1. Overtime for employees: **per shift 8h / +2h at 125% / rest at 150% (recommended)**, or a flat rate with no overtime.
-2. Client overtime above the threshold: **125% of bill_to_client (recommended)**, or a separate per-client overtime rate.
-3. Excel library: **exceljs, real .xlsx with RTL (recommended)**, or CSV with BOM (no new dependency, no RTL/formatting).
+## 5. Decisions (B0, answered by the owner 2026-11-13)
+1. Employees: legal overtime per shift - first 8h at 100%, next 2h at 125%, the rest at 150%, × `wage_rate`.
+2. Clients: one flat hourly price per role (`bill_to_client`), no overtime uplift. min billable hours still apply.
+3. Export: real .xlsx via `exceljs` (RTL sheet, Hebrew headers, totals row).
