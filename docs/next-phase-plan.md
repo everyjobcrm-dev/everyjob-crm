@@ -28,10 +28,14 @@ Done when: the fixes are merged, every verification row passes or has a filed fi
 ## Milestone B - Payroll & Billing (the next feature phase)
 Design: `docs/payroll-billing-design.md`. Admin only, internal reports and Excel only (no external accounting API).
 
-**B0 - owner decisions (blocking, ask first):**
-- Q1: employee overtime per shift 8h / next 2h at 125% / rest at 150% (recommended), or a flat rate?
-- Q2: client overtime above `clients.overtime_threshold_hours` at 125% of `bill_to_client` (recommended), or a per-client rate?
-- Q3: Excel via `exceljs`, a real .xlsx with an RTL sheet (recommended, new dependency), or CSV with BOM?
+**B0 - owner decisions (ANSWERED 2026-11-13, do not reopen):**
+- Q1 employee pay: legal overtime **per shift**, with the first 8h at 100%, the next 2h at 125% and the rest at 150%,
+  times the registration `wage_rate`.
+- Q2 client billing: **one flat hourly price per role per client, with no overtime uplift.**
+  `amount = bill_to_client × billable_hours`, and `clients.overtime_threshold_hours` is not used for billing.
+  `billable_hours = max(h, clients.min_billable_hours)` stays as in the design (confirm with the owner when building B2).
+  Update `docs/payroll-billing-design.md` §2 to match.
+- Q3 export: **real Excel (.xlsx) via `exceljs`**, an RTL sheet with Hebrew headers (a new dependency, approved).
 
 **B1 - security first (O3):** `clients` is readable by every authenticated user, so the client price list leaks.
   - Add a column-level grant on `clients` without the pricing columns, plus an Admin RPC for the clients page.
