@@ -1,4 +1,4 @@
--- PENDING (not applied). B1 / O3: the client price list (clients.preferred_roles[].rate, overtime_threshold_hours,
+-- APPLIED 2026-11-13 by the owner in the SQL Editor. B1 / O3: the client price list (clients.preferred_roles[].rate, overtime_threshold_hours,
 -- min_billable_hours) is Admin-only to READ.
 -- Owner runs this in the SQL Editor TOGETHER with the app change on the same branch (clients page + create/edit client
 -- read through get_clients_admin; event creation reads role names through list_client_options and no longer reads the
