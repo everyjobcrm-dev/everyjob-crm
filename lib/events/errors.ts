@@ -107,6 +107,8 @@ const BY_CODE: Readonly<Record<string, string>> = {
   "40P01": "המערכת עמוסה כרגע - נסה/י שוב.", // deadlock_detected
   "40001": "המערכת עמוסה כרגע - נסה/י שוב.", // serialization_failure
   "42501": "אין לך הרשאה לבצע פעולה זו.",
+  "22007": "תאריך או שעה לא תקינים.", // invalid_datetime_format
+  "22P02": "אחד הערכים שהוזנו אינו תקין.", // invalid_text_representation (uuid/number)
 };
 
 export type MapDbErrorOptions = {
