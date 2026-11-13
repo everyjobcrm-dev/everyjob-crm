@@ -22,7 +22,7 @@ export type AdminEmployee = {
 };
 
 const ROLE_LABEL: Record<AdminEmployee["role"], string> = {
-  admin: "מנהל/ת",
+  admin: "אדמין",
   manager: "מנהל/ת שטח",
   employee: "עובד/ת",
   recruiter: "מגייס/ת",

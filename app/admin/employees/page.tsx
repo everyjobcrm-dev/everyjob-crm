@@ -24,16 +24,8 @@ export default async function AdminEmployeesPage() {
 
   // Only columns that exist live. No Form 101 / employee_documents data here (AGENTS.md 8.2).
   const columns = "id, first_name, last_name, tz, role, recruited_by, approval_status, deleted_at";
-  let { data: profiles, error } = await supabase.from("profiles").select(columns).order("last_name", { ascending: true }).returns<ProfileRow[]>();
-  // shortcut: until p10c/p10d are applied the two columns do not exist (42703); fall back so the page keeps working.
-  // Remove once supabase/pending/20261110100200 + 20261110100300 are live.
-  if (error?.code === "42703") {
-    ({ data: profiles, error } = await supabase
-      .from("profiles")
-      .select("id, first_name, last_name, tz, role, recruited_by")
-      .order("last_name", { ascending: true })
-      .returns<ProfileRow[]>());
-  }
+  const { data: profiles, error } = await supabase.from("profiles").select(columns).order("last_name", { ascending: true }).returns<ProfileRow[]>();
+  if (error) console.error("[AdminEmployeesPage]", error.code, error.message);
 
   const rows: AdminEmployee[] = (profiles ?? []).map((p) => ({
     id: p.id,

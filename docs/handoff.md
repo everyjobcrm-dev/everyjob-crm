@@ -1,19 +1,24 @@
-# Session handoff - everyJob CRM (updated 2026-11-11)
+# Session handoff - everyJob CRM (updated 2026-11-13)
 
 Read this file and AGENTS.md before doing anything. AGENTS.md (§8 especially) wins over this file.
 Latest run details: `REPORT-2026-11-10.md` (Phase 0 gap list, DECISIONs D1-D11, open questions O1-O7).
 
-## 0. Start here (2026-11-11)
-- **Working branch:** `claude/everyjob-crm-backlog-run-c5839e` = PR #6 (-> `master`). It sits on top of `6c98e00`
-  (= `hopeful-gates-rtzhto-01c57f`), so PR #6 already contains everything in PR #4 + M8v2. Local `master` (`9c13cb6`)
-  is a stale stub: never branch from it. PR #3 is superseded. PR #5 (light redesign) is open and untested against #6.
-- **p10a-p10f are LIVE on dev and tested** (2026-11-11, owner-authorised, via MCP `execute_sql`): 83/83 PASS
-  (`supabase/tests/p10*_tests.sql`). Files live in `supabase/migrations/2026111010xxxx_*.sql`. tsc/lint/build clean.
-- **Owner still has to run** (records history only):
+## 0. Start here (2026-11-13)
+- **`master` (`f424e05`) now holds PR #6 + the light redesign (PR #5).** Branch new work from `origin/master`; local
+  `master` (`9c13cb6`) is still a stale stub. Fixes from the browser run are on `claude/verification-fixes` (PR).
+- **Browser verification (§7 step 4) - mostly done 2026-11-12/13**, results in §10. Still open: the hours flow (7b),
+  the Manager rate window (6.1), "final closure blocked by pending hours", staff-as-worker (7), min-rating warning (3.5)
+  and approving a pending employee from the picker. The first three need a past-dated event (DB write, owner approval);
+  the picker approval needs a pending (newly registered) employee.
+- **p10a-p10f are LIVE on dev and tested** (83/83, `supabase/tests/p10*_tests.sql`).
+- **Owner still has to run** (records history only, if not done yet):
   `supabase migration repair --status applied 20261110100000 20261110100100 20261110100200 20261110100300 20261110100400 20261110100500 --linked`
 - **Open owner questions:** O2 (block unapproved employees from self-registering? currently not), O4 (may a recruiter
-  set a role's `base_rate`?). O1 answered: final closure = Admin and Manager.
-- **Next milestone:** §7 step 4 (browser verification), then ship, then Payroll & Billing.
+  set a role's `base_rate`?).
+- **Next:** finish the open verification items, ship checks (§7 step 5: Vercel Preview anon key, `DEV_SKIP_EMAIL_VERIFICATION`
+  absent in production, smoke-test production, close #4 and #3), then Payroll & Billing.
+- **Local multi-user testing trick:** each demo user signs in on its own host (`adm.localhost:3005`, `mgr.localhost:3005`, ...)
+  so sessions don't collide. Needs `"*.localhost"` in `allowedDevOrigins` (`next.config.ts`, local only, not committed).
 
 ## 1. Mission
 Ship a working, tested, Hebrew/RTL workforce CRM for the Israeli shift market. Near-term goal: **get the events
@@ -143,8 +148,6 @@ UPDATE. The edit path goes through `update_event_details` (P9 E1), which also ch
   (`preferred_roles[].rate`, `overtime_threshold_hours`, `min_billable_hours`) is readable via PostgREST. Not urgent on
   dev (demo users only); do it as the FIRST item of the Payroll & Billing batch: column grant on `clients` + Admin RPC
   for `app/admin/clients/actions.ts` + BEFORE INSERT trigger on `event_roles` that applies the price list.
-- `lib/auth/guards.ts` and `app/admin/employees/page.tsx` keep a `42703` fallback (marked `shortcut:`) from before p10c
-  was live; now removable.
 - Form 101: `approveForm101` / dashboard count read the non-existent `profiles.form_101_status`; the employee 101 page
   writes to the locked `form_101_submissions`. 2FA batch only (pre-launch); keep failing closed.
 - Direct UPDATE on `events` / `event_roles` is still open to whoever manages the event (RLS `*_update_scoped`); the p9
@@ -153,8 +156,26 @@ UPDATE. The edit path goes through `update_event_details` (P9 E1), which also ch
   previews. `DEV_SKIP_EMAIL_VERIFICATION` is not set anywhere (good).
 - No notification to registrants when an event's date/time or `min_age` changes (the edit form only warns staff).
 - Raising `min_age` does not re-check the age of existing registrants.
-- Cast errors 22007 (bad date/time) / 22P02 (bad uuid/number) from `update_event_details` are not mapped to Hebrew in
-  `lib/events/errors.ts`.
 - A direct `events.recruiter_id` write (outside `update_event_details`) does not validate that the target has role `recruiter`.
 - Add `.gitattributes` (`eol=lf` for `*.sql`, `*.ts`, `*.md`): the owner's `core.autocrlf=true` produces CRLF working copies.
 - Screenshots at 390/1440 for the edit page need a logged-in session; pending the browser-verification milestone.
+
+## 10. Browser verification results (2026-11-12/13, localhost, demo users, plan `docs/manual-test-plan-events.md`)
+Passed: 0.1-0.4, 1.1-1.8, 2.1-2.5, 3.1-3.4, 3.6-3.9, 4.1-4.11 (4.9-4.11 with EMP2 instead of MIN: MIN's birth date is
+2020, so she correctly sees no events at all), 5.1-5.7. p10: final closure + reopen (Manager; roster and edit page
+read-only while `completed`; Recruiter gets no final-closure button), price field "חיוב ללקוח" on the edit page for Admin
+only (Manager does not see it) and Admin can save it, soft delete + restore in `/admin/employees` (deleted user cannot
+sign in; an open session is logged out; restore clears `deleted_at`, but signing in again after restore was
+not re-checked). Smoke-checked the redesigned screens as Admin: all Hebrew/RTL, real data.
+
+Fixed (branch `claude/verification-fixes`):
+- Edit page: saving any role without an end time failed with an English Zod error ("Expected string, received null").
+- Login: all errors were English; a deleted (banned) user now sees "החשבון אינו פעיל".
+- Employees directory labelled Admin as "מנהל/ת" (confusable with "מנהל/ת שטח"); now "אדמין".
+- Roles with the same start time came out in random order on the roster/edit page; now sorted by start time, then name.
+- 22007/22P02 mapped to Hebrew; pre-p10c `42703` fallbacks removed.
+
+Not bugs / notes: in local dev every server action takes 5-10 s (`proxy.ts` 1-4 s per request), so the UI looks stale
+for a few seconds after a click. The edit page for a `completed` event says "cancelled, completed or paused cannot be
+edited" and only mentions restoring a cancelled event, not "פתיחה מחדש לעריכה" (copy, minor). Admin sees a delete button
+on their own row; the DB refuses it (`cannot_delete_self`, Hebrew message).

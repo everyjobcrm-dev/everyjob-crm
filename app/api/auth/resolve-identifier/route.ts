@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
     if (!normalizedIdentifier) {
       return NextResponse.json(
-        { success: false, error: "Please enter your TZ or email." },
+        { success: false, error: "יש להזין תעודת זהות או אימייל." },
         { status: 400 },
       );
     }
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     if (profileError || !profile?.id) {
       return NextResponse.json(
-        { success: false, error: "No account was found for this TZ. Please double-check the number or use your email." },
+        { success: false, error: "לא נמצא חשבון עם תעודת הזהות הזו. בדקו את המספר או התחברו עם אימייל." },
         { status: 404 },
       );
     }
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
     if (userError || !userData?.user?.email) {
       return NextResponse.json(
-        { success: false, error: "We could not resolve the account for this TZ. Please use your email instead." },
+        { success: false, error: "לא הצלחנו לאתר את החשבון. התחברו עם אימייל." },
         { status: 404 },
       );
     }
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, email: userData.user.email });
   } catch {
     return NextResponse.json(
-      { success: false, error: "We could not resolve the account right now. Please try again in a moment." },
+      { success: false, error: "לא הצלחנו לאתר את החשבון כרגע. נסו שוב בעוד רגע." },
       { status: 500 },
     );
   }
