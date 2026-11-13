@@ -2253,6 +2253,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_clients_admin: { Args: { p_client_id?: string }; Returns: Json[] }
       get_employee_detail: {
         Args: { p_employee_id: string }
         Returns: {
@@ -2321,6 +2322,15 @@ export type Database = {
         }[]
       }
       is_current_user_admin: { Args: never; Returns: boolean }
+      list_client_options: {
+        Args: never
+        Returns: {
+          address: string
+          id: string
+          name: string
+          role_names: string[]
+        }[]
+      }
       list_employees: {
         Args: {
           p_dir: string
