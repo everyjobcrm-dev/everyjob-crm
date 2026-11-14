@@ -1,7 +1,23 @@
-# Session handoff - everyJob CRM (updated 2026-11-13)
+# Session handoff - everyJob CRM (updated 2026-11-15)
 
 Read this file and AGENTS.md before doing anything. AGENTS.md (§8 especially) wins over this file.
 Latest run details: `REPORT-2026-11-10.md` (Phase 0 gap list, DECISIONs D1-D11, open questions O1-O7).
+
+## 0a. Milestone C (2026-11-15) - five PRs open, base `master`, none merged
+| PR | Slice | SQL in `supabase/pending/` (owner approval needed) |
+|---|---|---|
+| #14 | C1 employee home: assigned vs pending/waitlisted lists | `20261115100000_c1_my_monthly_hours_overtime` - estimated pay with legal overtime (today hours x rate, lower than payroll) |
+| #15 | C2 recruiter credits: Admin per-month table on `/admin/recruiters`; fix recruiter profile card (read wrong columns, always 0) | `20261115110000_c2_recruiter_credits_monthly` - new view |
+| #16 | C3 client price list: overtime field removed (flat price per role), duplicate role refused | none |
+| #17 | C4 notifications: `/employee/notifications` + nav item | `20261115120000_c4_notifications_triggers` - 4 triggers, `notifications` UPDATE narrowed to `read_at` |
+| #18 | C5 compliance counts on the Admin dashboard | `20261115130000_c5_compliance_counts` - doc counts locked without aal2 |
+- Each SQL has a `_rollback.sql` and a test in `supabase/tests/c1..c5_*` (always rolls back). None was run.
+- Apps work before the SQL: C2 monthly section shows a load error, C4 shows an empty list, C5 shows a load error.
+- Redemption from the event screen (`RedeemCreditsControl`) already existed; no change.
+- After each SQL is applied: move it to `supabase/migrations/`, `migration repair`, regenerate `types/supabase.ts`.
+- Open owner questions: O2, O4 (asked 2026-11-15), and C5 - may document counts show without 2FA? (AGENTS 8.2 says no; built fail-closed.)
+- Not browser-verified: all of C1-C5 (home lists on phone, recruiters month table, client dialogs, notifications page
+  and each trigger end to end, dashboard compliance row).
 
 ## 0. Start here (2026-11-13)
 - **`master` holds PR #6 + the light redesign (#5) + verification fixes (#7) + B1 (#8/#9).** Branch new work from
