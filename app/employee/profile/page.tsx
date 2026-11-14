@@ -39,14 +39,14 @@ export default function ProfilePage() {
 
     supabase
       .from("v_recruiter_pending_credits")
-      .select("pending_recruitment_count, pending_recruitment_amount")
+      .select("pending_count, pending_amount")
       .eq("recruiter_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setPendingCredits({
-            count: Number(data.pending_recruitment_count),
-            amount: Number(data.pending_recruitment_amount),
+            count: Number(data.pending_count),
+            amount: Number(data.pending_amount),
           });
         }
       });

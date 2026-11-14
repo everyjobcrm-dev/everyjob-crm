@@ -1,8 +1,10 @@
-import { getRecruiterPendingCredits } from "@/app/admin/actions";
+import { fetchRecruiterCreditsMonth, getRecruiterPendingCredits, normalizeMonth } from "@/app/admin/actions";
+import { MonthPicker, money } from "@/components/admin/month-picker";
 import { PageHeader } from "@/components/ui/page-header";
 
-export default async function AdminRecruitersPage() {
-  const result = await getRecruiterPendingCredits();
+export default async function AdminRecruitersPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+  const month = (await normalizeMonth((await searchParams).month)).slice(0, 7);
+  const [result, monthly] = await Promise.all([getRecruiterPendingCredits(), fetchRecruiterCreditsMonth(month)]);
 
   if (!result.success) {
     return <p className="text-sm text-rose-700">{result.error}</p>;
@@ -49,6 +51,50 @@ export default async function AdminRecruitersPage() {
           </tbody>
         </table>
       </div>
+
+      <section aria-labelledby="monthly-credits" className="mt-10">
+        <h2 id="monthly-credits" className="mb-1 text-sm font-semibold text-ink/80">
+          זיכויים לפי חודש
+        </h2>
+        <p className="mb-4 text-xs text-muted">זיכויים שנוצרו בחודש (לפי מועד אישור השעות). זיכויים שבוטלו אינם נכללים.</p>
+        <MonthPicker month={month} />
+        {!monthly.success ? (
+          <p className="text-sm text-rose-700">{monthly.error}</p>
+        ) : monthly.data.length === 0 ? (
+          <p className="empty-state">אין זיכויים בחודש זה.</p>
+        ) : (
+          <div className="card overflow-x-auto">
+            <table className="w-full min-w-[560px] text-start text-sm">
+              <thead>
+                <tr className="border-b border-line text-muted">
+                  {["מגייס/ת", "זיכויים", "סכום", "ממתינים", "מומשו", "סכום שמומש"].map((h) => (
+                    <th key={h} scope="col" className="px-5 py-3 text-start font-medium">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {monthly.data.map((m) => {
+                  const r = recruiters.find((x) => x.recruiter_id === m.recruiterId);
+                  return (
+                    <tr key={m.recruiterId}>
+                      <td className="px-5 py-4 font-semibold text-ink">
+                        {r ? [r.first_name, r.last_name].filter(Boolean).join(" ") : "מגייס/ת לשעבר"}
+                      </td>
+                      <td className="px-5 py-4 tabular-nums">{m.earnedCount}</td>
+                      <td className="px-5 py-4 tabular-nums">{money(m.earnedAmount)}</td>
+                      <td className="px-5 py-4 tabular-nums">{m.pendingCount}</td>
+                      <td className="px-5 py-4 tabular-nums">{m.redeemedCount}</td>
+                      <td className="px-5 py-4 font-semibold text-primary-soft tabular-nums">{money(m.redeemedAmount)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
