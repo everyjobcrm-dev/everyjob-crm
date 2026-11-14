@@ -54,6 +54,7 @@ type Props = {
   viewerId: string;
   canSeeRates: boolean; // admin / manager
   canEnterAttendance: boolean; // manager and above
+  canVoidApproved: boolean; // admin only (void_shift_hours re-checks)
   roles: RosterRole[];
   rows: RosterRow[];
 };
@@ -69,7 +70,7 @@ const BUCKET_TONE: Record<RosterBucket, string> = {
 const btn =
   "inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer";
 
-export function RosterBoard({ eventId, eventDate, eventStatus, viewerId, canSeeRates, canEnterAttendance, roles, rows }: Props) {
+export function RosterBoard({ eventId, eventDate, eventStatus, viewerId, canSeeRates, canEnterAttendance, canVoidApproved, roles, rows }: Props) {
   const [attendance, setAttendance] = useState<AttendanceTarget | null>(null);
   const actionable = acceptsStaffActions(eventStatus);
 
@@ -150,7 +151,7 @@ export function RosterBoard({ eventId, eventDate, eventStatus, viewerId, canSeeR
         <p className="text-center text-sm text-muted">לאירוע אין תפקידים עדיין.</p>
       )}
 
-      {attendance && <AttendanceModal target={attendance} onClose={() => setAttendance(null)} />}
+      {attendance && <AttendanceModal target={attendance} canVoidApproved={canVoidApproved} onClose={() => setAttendance(null)} />}
     </div>
   );
 }

@@ -149,6 +149,7 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
             viewerId={ctx.userId}
             canSeeRates={roleAtLeast(ctx.role, "manager")}
             canEnterAttendance={roleAtLeast(ctx.role, "manager")}
+            canVoidApproved={ctx.role === "admin"}
             roles={roles}
             rows={rows}
           />

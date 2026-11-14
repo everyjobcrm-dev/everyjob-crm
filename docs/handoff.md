@@ -4,12 +4,12 @@ Read this file and AGENTS.md before doing anything. AGENTS.md (§8 especially) w
 Latest run details: `REPORT-2026-11-10.md` (Phase 0 gap list, DECISIONs D1-D11, open questions O1-O7).
 
 ## 0. Start here (2026-11-13)
-- **`master` (`f424e05`) now holds PR #6 + the light redesign (PR #5).** Branch new work from `origin/master`; local
-  `master` (`9c13cb6`) is still a stale stub. Fixes from the browser run are on `claude/verification-fixes` (PR).
-- **Browser verification (§7 step 4) - mostly done 2026-11-12/13**, results in §10. Still open: the hours flow (7b),
-  the Manager rate window (6.1), "final closure blocked by pending hours", staff-as-worker (7), min-rating warning (3.5)
-  and approving a pending employee from the picker. The first three need a past-dated event (DB write, owner approval);
-  the picker approval needs a pending (newly registered) employee.
+- **`master` holds PR #6 + the light redesign (#5) + verification fixes (#7) + B1 (#8/#9).** Branch new work from
+  `origin/master`; local `master` (`9c13cb6`) is still a stale stub.
+- **Browser verification (§7 step 4) - done 2026-11-12/13** except: staff-as-worker (7), min-rating warning (3.5),
+  approving a pending employee from the picker (needs a newly registered employee), sign-in after restore, and the
+  employee-side views of hours (7b.6/7b.10). Results in §10. The SEED-A past events
+  (`supabase/pending/20261113_seed_a_past_events.sql`) are live on dev; remove them with its rollback when done.
 - **p10a-p10f are LIVE on dev and tested** (83/83, `supabase/tests/p10*_tests.sql`).
 - **Owner still has to run** (records history only, if not done yet):
   `supabase migration repair --status applied 20261110100000 20261110100100 20261110100200 20261110100300 20261110100400 20261110100500 --linked`
@@ -179,3 +179,13 @@ Not bugs / notes: in local dev every server action takes 5-10 s (`proxy.ts` 1-4 
 for a few seconds after a click. The edit page for a `completed` event says "cancelled, completed or paused cannot be
 edited" and only mentions restoring a cancelled event, not "פתיחה מחדש לעריכה" (copy, minor). Admin sees a delete button
 on their own row; the DB refuses it (`cannot_delete_self`, Hebrew message).
+
+Hours flow on SEED-A event 1 (2026-11-13): 7b.2 (>24 h refused), 7b.3 submit, Manager's own row has no actions,
+"final closure" refused while a report is pending ("לא ניתן לסגור סופית: קיימים דוחות שעות..."), 7b.8 empty reject
+reason, 7b.9 approve -> REC1 1 credit ₪5 (rate ₪1), 7b.14a no credit for EMP2 (recruited_by none), 7b.14b/c
+redemption (5 refused, 1 "מומשו 1 זיכויים."), 7b.14d void of a redeemed credit refused. 6.1/6.2 on SEED-A event 2:
+Manager gets the Hebrew deadline message, Admin saves. **Fixed:** Admin had no screen to void an *approved* report (the
+modal said "only after an admin void", the board lists pending only); the roster modal now offers it to Admin only.
+Notes: hours can be submitted for a worker with no wage rate (payroll must handle a NULL rate); the hours board shows
+the raw date "2026-11-05" instead of the Hebrew format; `employee_ratings` has two triggers that both recompute
+`average_rating` (`trg_recalc_rating`, `trigger_update_rating`) - harmless, drop one in a later migration.

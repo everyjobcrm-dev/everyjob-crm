@@ -38,7 +38,15 @@ const SUBMISSION_LABEL: Record<string, string> = {
   rejected: "נדחה - ניתן להגיש מחדש",
 };
 
-export function AttendanceModal({ target, onClose }: { target: AttendanceTarget; onClose: () => void }) {
+export function AttendanceModal({
+  target,
+  canVoidApproved,
+  onClose,
+}: {
+  target: AttendanceTarget;
+  canVoidApproved: boolean;
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -200,7 +208,8 @@ export function AttendanceModal({ target, onClose }: { target: AttendanceTarget;
           </form>
         )}
 
-        {target.submissionId && (target.submissionStatus === "pending" || target.submissionStatus === "rejected") && (
+        {target.submissionId &&
+          (target.submissionStatus === "pending" || target.submissionStatus === "rejected" || (approved && canVoidApproved)) && (
           <VoidForm eventId={target.eventId} submissionId={target.submissionId} onDone={onClose} />
         )}
       </div>
