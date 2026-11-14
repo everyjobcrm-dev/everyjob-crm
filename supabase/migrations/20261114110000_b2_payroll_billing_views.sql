@@ -1,4 +1,4 @@
--- PENDING (not applied). B2: payroll + client billing, derived on read (AGENTS §5.1). Admin only.
+-- APPLIED 2026-11-14 by the owner (B2 tests 12/12). B2: payroll + client billing, derived on read (AGENTS §5.1). Admin only.
 -- Rules (docs/payroll-billing-design.md §2, owner decisions B0 2026-11-13):
 --   employee pay per approved shift: first 8h ×1, next 2h ×1.25, rest ×1.5, × registration wage_rate; travel once per shift.
 --   client billing per approved shift: billable = max(h, client.min_billable_hours), amount = bill_to_client × billable,

@@ -165,6 +165,13 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "client_role_rates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       clients: {
@@ -573,6 +580,20 @@ export type Database = {
             foreignKeyName: "event_closures_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: true
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_closures_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "v_payroll_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_closures_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
             referencedRelation: "v_shift_submissions_dashboard"
             referencedColumns: ["event_id"]
           },
@@ -665,6 +686,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_payroll_shift_lines"
+            referencedColumns: ["event_id"]
           },
           {
             foreignKeyName: "event_registrations_event_id_fkey"
@@ -822,6 +857,20 @@ export type Database = {
             foreignKeyName: "event_roles_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_roles_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_payroll_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_roles_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "v_shift_submissions_dashboard"
             referencedColumns: ["event_id"]
           },
@@ -926,6 +975,20 @@ export type Database = {
             foreignKeyName: "event_roster_override_audit_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_roster_override_audit_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_payroll_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_roster_override_audit_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "v_shift_submissions_dashboard"
             referencedColumns: ["event_id"]
           },
@@ -1014,6 +1077,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "events_recruiter_id_fkey"
@@ -1529,6 +1599,20 @@ export type Database = {
             foreignKeyName: "recruiter_bonuses_redeemed_event_id_fkey"
             columns: ["redeemed_event_id"]
             isOneToOne: false
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_event_id_fkey"
+            columns: ["redeemed_event_id"]
+            isOneToOne: false
+            referencedRelation: "v_payroll_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_redeemed_event_id_fkey"
+            columns: ["redeemed_event_id"]
+            isOneToOne: false
             referencedRelation: "v_shift_submissions_dashboard"
             referencedColumns: ["event_id"]
           },
@@ -1650,6 +1734,20 @@ export type Database = {
             foreignKeyName: "registration_status_history_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "registration_status_history_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_payroll_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "registration_status_history_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "v_shift_submissions_dashboard"
             referencedColumns: ["event_id"]
           },
@@ -1758,6 +1856,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_payroll_shift_lines"
+            referencedColumns: ["event_id"]
           },
           {
             foreignKeyName: "shift_hour_submissions_event_id_fkey"
@@ -1907,6 +2019,20 @@ export type Database = {
             foreignKeyName: "event_roles_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_roles_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_payroll_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_roles_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "v_shift_submissions_dashboard"
             referencedColumns: ["event_id"]
           },
@@ -1925,6 +2051,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_roles_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_billing_shift_lines"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_roles_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_payroll_shift_lines"
+            referencedColumns: ["event_id"]
           },
           {
             foreignKeyName: "event_roles_event_id_fkey"
@@ -2016,6 +2156,55 @@ export type Database = {
         }
         Relationships: []
       }
+      v_billing_shift_lines: {
+        Row: {
+          amount: number | null
+          billable_hours: number | null
+          client_id: string | null
+          client_name: string | null
+          employee_id: string | null
+          event_date: string | null
+          event_id: string | null
+          hours: number | null
+          location: string | null
+          missing_price: boolean | null
+          month: string | null
+          price: number | null
+          role_name: string | null
+          submission_id: string | null
+          travel: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_user_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_user_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_user_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_user_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       v_my_monthly_hours: {
         Row: {
           approved_hours: number | null
@@ -2023,6 +2212,58 @@ export type Database = {
           estimated_pay: number | null
           month: string | null
           shifts_without_rate: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_hour_submissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
+      v_payroll_shift_lines: {
+        Row: {
+          client_name: string | null
+          employee_id: string | null
+          employee_name: string | null
+          event_date: string | null
+          event_id: string | null
+          hours: number | null
+          hours_100: number | null
+          hours_125: number | null
+          hours_150: number | null
+          missing_rate: boolean | null
+          month: string | null
+          pay: number | null
+          reported_end: string | null
+          reported_start: string | null
+          role_name: string | null
+          submission_id: string | null
+          travel: number | null
+          wage_rate: number | null
         }
         Relationships: [
           {
@@ -2253,6 +2494,22 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_billing_month: {
+        Args: { p_month: string }
+        Returns: {
+          amount: number
+          billable_hours: number
+          client_id: string
+          client_name: string
+          event_date: string
+          event_id: string
+          hours: number
+          location: string
+          missing_price_shifts: number
+          shifts: number
+          travel: number
+        }[]
+      }
       get_clients_admin: { Args: { p_client_id?: string }; Returns: Json[] }
       get_employee_detail: {
         Args: { p_employee_id: string }
@@ -2310,6 +2567,50 @@ export type Database = {
           wage_rate: number
           waitlist_position: number
           worker_role: string
+        }[]
+      }
+      get_payroll_lines: {
+        Args: { p_month: string }
+        Returns: {
+          client_name: string | null
+          employee_id: string | null
+          employee_name: string | null
+          event_date: string | null
+          event_id: string | null
+          hours: number | null
+          hours_100: number | null
+          hours_125: number | null
+          hours_150: number | null
+          missing_rate: boolean | null
+          month: string | null
+          pay: number | null
+          reported_end: string | null
+          reported_start: string | null
+          role_name: string | null
+          submission_id: string | null
+          travel: number | null
+          wage_rate: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "v_payroll_shift_lines"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_payroll_month: {
+        Args: { p_month: string }
+        Returns: {
+          employee_id: string
+          employee_name: string
+          gross_pay: number
+          hours: number
+          hours_100: number
+          hours_125: number
+          hours_150: number
+          missing_rate_shifts: number
+          shifts: number
+          travel: number
         }[]
       }
       get_staff_event_request_counts: {
