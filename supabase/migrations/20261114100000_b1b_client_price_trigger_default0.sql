@@ -1,4 +1,4 @@
--- PENDING (not applied). B1b: fix the B1 trigger. event_roles.bill_to_client has DEFAULT 0, so on insert the trigger
+-- APPLIED 2026-11-14 by the owner (B1 tests 16/16). B1b: fix the B1 trigger. event_roles.bill_to_client has DEFAULT 0, so on insert the trigger
 -- saw 0 (not NULL) and never applied the client price. 0 is never a real price (design §2: 0/NULL = missing_price),
 -- so treat NULL and 0 alike. Unmatched roles keep their value (0 or NULL).
 -- Idempotent: CREATE OR REPLACE only. No DROP, no data change (existing roles are not touched).
