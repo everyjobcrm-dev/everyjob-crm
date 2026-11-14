@@ -1,4 +1,5 @@
-import { fetchBilling, normalizeMonth, type BillingEvent } from "@/app/admin/actions";
+import { fetchBilling, fetchBillingCycles, normalizeMonth, type BillingEvent } from "@/app/admin/actions";
+import { BillingCycleControl } from "@/components/admin/billing-cycle-control";
 import { MonthPicker, money, hours } from "@/components/admin/month-picker";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatEventDate } from "@/lib/format";
@@ -6,7 +7,7 @@ import { formatEventDate } from "@/lib/format";
 // "חיוב לקוחות": per client, then per event, for a month (B2 RPC, Admin only - the layout and the action re-check).
 export default async function AdminBillingPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const month = (await normalizeMonth((await searchParams).month)).slice(0, 7);
-  const result = await fetchBilling(month);
+  const [result, cycles] = await Promise.all([fetchBilling(month), fetchBillingCycles()]);
 
   const byClient = new Map<string, BillingEvent[]>();
   if (result.success) for (const r of result.data) byClient.set(r.clientId, [...(byClient.get(r.clientId) ?? []), r]);
@@ -84,6 +85,11 @@ export default async function AdminBillingPage({ searchParams }: { searchParams:
             </section>
           ))}
         </div>
+      )}
+      {cycles.success ? (
+        <BillingCycleControl month={month} cycles={cycles.data} />
+      ) : (
+        <p className="mt-8 text-sm text-rose-700">{cycles.error}</p>
       )}
     </div>
   );
