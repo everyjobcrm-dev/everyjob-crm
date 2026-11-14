@@ -104,7 +104,7 @@ export function ClientDetailDrawer({
           {/* Preferred roles */}
           {client.preferredRoles.length > 0 && (
             <div className="mt-6">
-              <h3 className="mb-3 text-sm font-semibold text-ink/80">תפקידים מועדפים ותעריף</h3>
+              <h3 className="mb-3 text-sm font-semibold text-ink/80">תפקידים ומחיר ללקוח לשעה</h3>
               <div className="flex flex-wrap gap-2">
                 {client.preferredRoles.map((r, idx) => (
                   <span

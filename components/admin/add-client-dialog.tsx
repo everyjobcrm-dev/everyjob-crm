@@ -42,7 +42,6 @@ export function AddClientDialog({
   const [notes, setNotes] = useState("");
   
   // שדות מספריים להגדרות חיוב
-  const [overtimeThreshold, setOvertimeThreshold] = useState<number | "">("");
   const [minBillable, setMinBillable] = useState<number | "">("");
 
   // רשימות דינמיות
@@ -96,7 +95,6 @@ export function AddClientDialog({
         companyId,
         address,
         notes,
-        overtimeThresholdHours: overtimeThreshold === "" ? undefined : Number(overtimeThreshold),
         minBillableHours: minBillable === "" ? undefined : Number(minBillable),
         contacts: filteredContacts,
         preferredRoles: filteredRoles,
@@ -262,28 +260,7 @@ export function AddClientDialog({
           <hr className="border-line" />
 
           {/* הגדרות כספים וחיוב */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass} htmlFor="cl-overtime">
-                סף שעות נוספות
-              </label>
-              <div className="relative">
-                <input
-                  id="cl-overtime"
-                  type="number"
-                  min="0"
-                  max="24"
-                  step="0.5"
-                  value={overtimeThreshold}
-                  onChange={(e) => setOvertimeThreshold(e.target.value ? Number(e.target.value) : "")}
-                  className={inputClass + " pe-8"}
-                  placeholder="8.5"
-                />
-                <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-muted">
-                 ש
-                </span>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelClass} htmlFor="cl-minbill">
                 מינימום לחיוב משמרת
@@ -306,13 +283,14 @@ export function AddClientDialog({
               </div>
             </div>
           </div>
+          <p className="mt-1 text-xs text-muted">החיוב: מחיר קבוע לשעה לכל תפקיד, ללא תוספת שעות נוספות. משמרת קצרה מהמינימום מחויבת לפי המינימום.</p>
 
           <hr className="border-line" />
 
           {/* תפקידים ותעריפים - שורות דינמיות */}
           <div>
             <div className="mb-3 flex items-center justify-between">
-              <span className={labelClass + " mb-0"}>תפקידים מועדפים ותעריף</span>
+              <span className={labelClass + " mb-0"}>תפקידים ומחיר ללקוח לשעה</span>
               <button
                 type="button"
                 onClick={addRoleRow}
