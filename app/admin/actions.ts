@@ -1099,3 +1099,52 @@ export async function fetchBilling(month: string): Promise<Result<BillingEvent[]
     })),
   };
 }
+
+// ── Billing cycles (B5): close / reopen a month via the live p10f RPCs (Admin only, re-checked there too).
+// The Form 101 purge is NOT exposed: it needs 2FA (aal2), deferred to Milestone D.
+
+export type BillingCycle = { month: string; closedAt: string | null; reopenedAt: string | null };
+
+export async function fetchBillingCycles(): Promise<Result<BillingCycle[]>> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  const { data, error } = await auth.supabase.rpc("get_billing_cycles");
+  if (error) {
+    console.error("[fetchBillingCycles]", error.message);
+    return fail("טעינת מחזורי החיוב נכשלה.");
+  }
+  type C = { month: string; closed_at: string | null; reopened_at: string | null };
+  return {
+    success: true,
+    data: ((data ?? []) as C[]).map((c) => ({ month: c.month, closedAt: c.closed_at, reopenedAt: c.reopened_at })),
+  };
+}
+
+const CYCLE_ERRORS: Record<string, string> = {
+  cycle_not_ended: "אפשר לסגור מחזור רק אחרי שהחודש הסתיים.",
+  cycle_already_closed: "המחזור כבר סגור.",
+  billing_cycle_open: "המחזור כבר פתוח.",
+  not_authorized: "אין לך הרשאה לבצע פעולה זו.",
+};
+
+export async function setBillingCycle(
+  _prev: { error: string | null },
+  formData: FormData,
+): Promise<{ error: string | null }> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return { error: auth.error };
+  const month = String(formData.get("month") ?? "");
+  const op = formData.get("op");
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || (op !== "close" && op !== "reopen")) return { error: "נתונים לא תקינים" };
+
+  const { error } = await auth.supabase.rpc(op === "close" ? "close_billing_cycle" : "reopen_billing_cycle", {
+    p_month: `${month}-01`,
+  });
+  if (error) {
+    const key = Object.keys(CYCLE_ERRORS).find((k) => error.message.includes(k));
+    if (!key) console.error("[setBillingCycle]", error.message);
+    return { error: key ? CYCLE_ERRORS[key] : "הפעולה נכשלה. נסה/י שוב." };
+  }
+  revalidatePath("/admin/billing");
+  return { error: null };
+}
