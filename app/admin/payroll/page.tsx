@@ -16,7 +16,14 @@ export default async function AdminPayrollPage({ searchParams }: { searchParams:
         title="שכר"
         subtitle="שעות מאושרות × תעריף לעובד. 8 השעות הראשונות 100%, 2 הבאות 125%, השאר 150%. אירועים ודיווחים מבוטלים אינם נכללים."
       />
-      <MonthPicker month={month} />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <MonthPicker month={month} />
+        {result.success && (
+          <a className="btn btn-secondary mb-6" href={`/admin/payroll/export?month=${month}`} download>
+            ייצוא לאקסל
+          </a>
+        )}
+      </div>
       {!result.success ? (
         <p className="text-sm text-rose-700">{result.error}</p>
       ) : emps.length === 0 ? (

@@ -18,7 +18,14 @@ export default async function AdminBillingPage({ searchParams }: { searchParams:
         title="חיוב לקוחות"
         subtitle="מחיר לשעה לפי תפקיד × שעות לחיוב (לפחות מינימום החיוב של הלקוח), ללא תוספת שעות נוספות. נסיעות מועברות כפי שהן."
       />
-      <MonthPicker month={month} />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <MonthPicker month={month} />
+        {result.success && (
+          <a className="btn btn-secondary mb-6" href={`/admin/billing/export?month=${month}`} download>
+            ייצוא לאקסל
+          </a>
+        )}
+      </div>
       {!result.success ? (
         <p className="text-sm text-rose-700">{result.error}</p>
       ) : byClient.size === 0 ? (
