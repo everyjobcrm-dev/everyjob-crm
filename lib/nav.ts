@@ -54,6 +54,8 @@ const ADMIN_ITEMS: NavItem[] = [
   { href: "/admin/dashboard", label: "דף הבית", icon: "dashboard" },
   { href: "/admin/events", label: "אירועים ומשמרות", icon: "staffEvents" },
   { href: "/admin/hours", label: "אישור שעות", icon: "hours" },
+  { href: "/admin/payroll", label: "שכר", icon: "hours" },
+  { href: "/admin/billing", label: "חיוב לקוחות", icon: "clients" },
   { href: "/admin/employees", label: "עובדים", icon: "employees" },
   { href: "/admin/recruiters", label: "מגייסים", icon: "recruiters" },
   { href: "/admin/clients", label: "לקוחות", icon: "clients" },
