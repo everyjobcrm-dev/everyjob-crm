@@ -969,3 +969,133 @@ export async function reviewShiftSubmission(
 ): Promise<ActionResult> {
   return status === "approved" ? approveShiftHours(submissionId) : rejectShiftHours(submissionId, rejectionReason ?? "");
 }
+
+// ── Payroll & billing (B3). Numbers come from the B2 Admin-only RPCs (views, AGENTS 5.1); nothing is computed here. ──
+
+/** "YYYY-MM" -> first day of that month; anything else -> the current month in Israel. */
+export async function normalizeMonth(month: string | undefined): Promise<string> {
+  if (month && /^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return `${month}-01`;
+  const now = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit" }).format(new Date());
+  return `${now}-01`;
+}
+
+export type PayrollEmployee = {
+  employeeId: string;
+  employeeName: string;
+  shifts: number;
+  hours: number;
+  hours100: number;
+  hours125: number;
+  hours150: number;
+  grossPay: number;
+  travel: number;
+  missingRateShifts: number;
+};
+
+export type PayrollLine = {
+  submissionId: string;
+  employeeId: string;
+  eventDate: string;
+  clientName: string;
+  roleName: string | null;
+  hours: number;
+  hours100: number;
+  hours125: number;
+  hours150: number;
+  wageRate: number | null;
+  pay: number | null;
+  travel: number;
+};
+
+export type BillingEvent = {
+  clientId: string;
+  clientName: string;
+  eventId: string;
+  eventDate: string;
+  location: string;
+  shifts: number;
+  hours: number;
+  billableHours: number;
+  amount: number;
+  travel: number;
+  missingPriceShifts: number;
+};
+
+type Result<T> = { success: true; data: T } | { success: false; error: string };
+const num = (v: unknown) => Number(v ?? 0);
+const numOrNull = (v: unknown) => (v == null ? null : Number(v));
+
+export async function fetchPayroll(month: string): Promise<Result<{ employees: PayrollEmployee[]; lines: PayrollLine[] }>> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  const p_month = await normalizeMonth(month);
+
+  const [summary, detail] = await Promise.all([
+    auth.supabase.rpc("get_payroll_month", { p_month }),
+    auth.supabase.rpc("get_payroll_lines", { p_month }),
+  ]);
+  if (summary.error || detail.error) {
+    console.error("[fetchPayroll]", summary.error?.message ?? detail.error?.message);
+    return fail("טעינת דוח השכר נכשלה.");
+  }
+  type S = { employee_id: string; employee_name: string; shifts: number; hours: number; hours_100: number; hours_125: number; hours_150: number; gross_pay: number; travel: number; missing_rate_shifts: number };
+  type L = { submission_id: string; employee_id: string; event_date: string; client_name: string; role_name: string | null; hours: number; hours_100: number; hours_125: number; hours_150: number; wage_rate: number | null; pay: number | null; travel: number };
+  return {
+    success: true,
+    data: {
+      employees: ((summary.data ?? []) as S[]).map((r) => ({
+        employeeId: r.employee_id,
+        employeeName: r.employee_name,
+        shifts: num(r.shifts),
+        hours: num(r.hours),
+        hours100: num(r.hours_100),
+        hours125: num(r.hours_125),
+        hours150: num(r.hours_150),
+        grossPay: num(r.gross_pay),
+        travel: num(r.travel),
+        missingRateShifts: num(r.missing_rate_shifts),
+      })),
+      lines: ((detail.data ?? []) as L[]).map((r) => ({
+        submissionId: r.submission_id,
+        employeeId: r.employee_id,
+        eventDate: r.event_date,
+        clientName: r.client_name,
+        roleName: r.role_name,
+        hours: num(r.hours),
+        hours100: num(r.hours_100),
+        hours125: num(r.hours_125),
+        hours150: num(r.hours_150),
+        wageRate: numOrNull(r.wage_rate),
+        pay: numOrNull(r.pay),
+        travel: num(r.travel),
+      })),
+    },
+  };
+}
+
+export async function fetchBilling(month: string): Promise<Result<BillingEvent[]>> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail(auth.error);
+  const { data, error } = await auth.supabase.rpc("get_billing_month", { p_month: await normalizeMonth(month) });
+  if (error) {
+    console.error("[fetchBilling]", error.message);
+    return fail("טעינת דוח החיוב נכשלה.");
+  }
+  type B = { client_id: string; client_name: string; event_id: string; event_date: string; location: string; shifts: number; hours: number; billable_hours: number; amount: number; travel: number; missing_price_shifts: number };
+  return {
+    success: true,
+    data: ((data ?? []) as B[]).map((r) => ({
+      clientId: r.client_id,
+      clientName: r.client_name,
+      eventId: r.event_id,
+      eventDate: r.event_date,
+      location: r.location,
+      shifts: num(r.shifts),
+      hours: num(r.hours),
+      billableHours: num(r.billable_hours),
+      amount: num(r.amount),
+      travel: num(r.travel),
+      missingPriceShifts: num(r.missing_price_shifts),
+    })),
+  };
+}

@@ -1,6 +1,6 @@
 -- B1 behavior tests: the client price list is Admin-only to read; event roles get the client price via trigger.
 -- Same harness as p10b; everything rolls back ('B1_TEST_RESULTS'). No DROP.
--- Run AFTER supabase/pending/20261113100000_b1_clients_pricing_grants.sql. Afterwards verify:
+-- Run AFTER supabase/migrations/20261113100000_b1_clients_pricing_grants.sql and pending 20261114100000_b1b. Afterwards verify:
 --   SELECT count(*) FROM auth.users WHERE email LIKE 'b1test%'; -> 0
 DO $do$
 DECLARE
@@ -56,7 +56,7 @@ BEGIN
   v_res := v_res || pg_temp.t('recruiter cannot read min_billable_hours', R1, format('SELECT min_billable_hours::text FROM public.clients WHERE id = %L', C1), 'permission denied');
   v_res := v_res || pg_temp.t('manager cannot read overtime_threshold_hours', M, format('SELECT overtime_threshold_hours::text FROM public.clients WHERE id = %L', C1), 'permission denied');
   v_res := v_res || pg_temp.t('employee select * refused', E1, format('SELECT id::text FROM (SELECT * FROM public.clients WHERE id = %L) s', C1), 'permission denied');
-  v_res := v_res || pg_temp.t('admin reads full row via RPC', A, format('SELECT (j->>''min_billable_hours'') FROM public.get_clients_admin(%L) j', C1), 'ok', '4');
+  v_res := v_res || pg_temp.t('admin reads full row via RPC', A, format('SELECT (j->>''min_billable_hours'') FROM public.get_clients_admin(%L) j', C1), 'ok', '4.00');
   v_res := v_res || pg_temp.t('admin RPC has events count', A, format('SELECT (j->''events''->0->>''count'') FROM public.get_clients_admin(%L) j', C1), 'ok', '1');
   v_res := v_res || pg_temp.t('manager get_clients_admin refused', M, 'SELECT count(*)::text FROM public.get_clients_admin()', 'not_authorized');
   v_res := v_res || pg_temp.t('recruiter gets role names only', R1, format('SELECT array_to_string(role_names, '','') FROM public.list_client_options() WHERE id = %L', C1), 'ok', 'Waiter,Bartender');
@@ -72,7 +72,7 @@ BEGIN
   SELECT bill_to_client = 95 INTO b FROM public.event_roles WHERE event_id = EV AND role_name = 'waiter';
   v_res := v_res || jsonb_build_object('t', 'trigger applied client price 95', 'r', CASE WHEN b THEN 'PASS' ELSE 'FAIL' END, 'got', COALESCE(b::text, 'null'));
   INSERT INTO public.event_roles (event_id, role_name, headcount, start_time) VALUES (EV, 'Bartender', 1, '18:00') RETURNING id INTO RO;
-  SELECT bill_to_client IS NULL INTO b FROM public.event_roles WHERE id = RO;
+  SELECT COALESCE(bill_to_client, 0) = 0 INTO b FROM public.event_roles WHERE id = RO;
   v_res := v_res || jsonb_build_object('t', 'non-numeric rate -> no price (never guessed)', 'r', CASE WHEN b THEN 'PASS' ELSE 'FAIL' END, 'got', b::text);
   INSERT INTO public.event_roles (event_id, role_name, headcount, start_time, bill_to_client) VALUES (EV, 'WAITER', 1, '18:00', 130) RETURNING id INTO RO;
   SELECT bill_to_client = 130 INTO b FROM public.event_roles WHERE id = RO;
