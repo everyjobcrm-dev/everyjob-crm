@@ -1148,3 +1148,37 @@ export async function setBillingCycle(
   revalidatePath("/admin/billing");
   return { error: null };
 }
+
+export type ComplianceCounts = {
+  activeEmployees: number;
+  duplicateTzGroups: number;
+  duplicateTzProfiles: number;
+  /** null while documents are locked (no 2FA / aal2 yet) - AGENTS 8.2 */
+  missingForm101: number | null;
+  missingBankDetails: number | null;
+  documentsLocked: boolean;
+};
+
+/** Compliance counts only (get_compliance_counts, C5). Never returns names or document fields. Admin only. */
+export async function fetchComplianceCounts() {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return { success: false as const, error: auth.error };
+  const { data, error } = await auth.supabase.rpc("get_compliance_counts");
+  const row = (data as Record<string, number | boolean | null>[] | null)?.[0];
+  if (error || !row) {
+    if (error) console.error("[get_compliance_counts]", error.code, error.message);
+    return { success: false as const, error: "טעינת נתוני הבקרה נכשלה." };
+  }
+  const num = (v: unknown) => (v == null ? null : Number(v));
+  return {
+    success: true as const,
+    data: {
+      activeEmployees: Number(row.active_employees ?? 0),
+      duplicateTzGroups: Number(row.duplicate_tz_groups ?? 0),
+      duplicateTzProfiles: Number(row.duplicate_tz_profiles ?? 0),
+      missingForm101: num(row.missing_form_101),
+      missingBankDetails: num(row.missing_bank_details),
+      documentsLocked: row.documents_locked !== false,
+    } satisfies ComplianceCounts,
+  };
+}
