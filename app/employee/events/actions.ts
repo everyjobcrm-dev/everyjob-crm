@@ -357,3 +357,47 @@ export async function fetchMyMonthlyHours(): Promise<MyMonthlyHours[]> {
     }),
   );
 }
+
+export type MyNotification = {
+  id: string;
+  type: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+  readAt: string | null;
+};
+
+/** The caller's latest notifications (RLS notifications_read_own). Rows are written only by DB triggers (C4). */
+export async function fetchMyNotifications(): Promise<MyNotification[]> {
+  const auth = await getAuthContext();
+  if (!auth.ok) return [];
+  const { data, error } = await auth.supabase
+    .from("notifications")
+    .select("id, type, payload, created_at, read_at")
+    .eq("user_id", auth.userId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) {
+    console.error("[fetchMyNotifications]", error.message);
+    return [];
+  }
+  return (data ?? []).map((n) => ({
+    id: n.id as string,
+    type: n.type as string,
+    payload: (n.payload ?? {}) as Record<string, unknown>,
+    createdAt: n.created_at as string,
+    readAt: (n.read_at as string | null) ?? null,
+  }));
+}
+
+/** Mark all own unread notifications read. Only read_at is writable (C4 column grant); RLS keeps it to own rows. */
+export async function markAllNotificationsRead(): Promise<void> {
+  const auth = await getAuthContext();
+  if (!auth.ok) return;
+  const { error } = await auth.supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", auth.userId)
+    .is("read_at", null);
+  if (error) console.error("[markAllNotificationsRead]", error.message);
+  revalidatePath("/employee/notifications");
+}

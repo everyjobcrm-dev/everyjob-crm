@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import {
+  Bell,
   Building2,
   CalendarDays,
   CalendarRange,
@@ -32,6 +33,7 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   employees: Users,
   recruiters: UserRoundCheck,
   clients: Building2,
+  notifications: Bell,
 };
 
 const WIDTH = { narrow: "max-w-5xl", wide: "max-w-7xl" } as const;
