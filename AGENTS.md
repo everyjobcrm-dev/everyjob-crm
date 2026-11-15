@@ -125,6 +125,7 @@ Flat `role` column on `profiles`: `admin | manager | recruiter | employee`.
 | Open / close registration, cancel an event | Yes (any event) | Yes (any event) | Yes (own events only) | No |
 | Restore a cancelled event | Yes | Yes | No | No |
 | Approve/reject/remove event signups, promote from waitlist, handle cancellation requests | Yes (any event) | Yes (any event) | Yes (own events only) | No |
+| Set a role's default `base_rate` when creating/editing an event (O4, owner 2026-11-15) | Yes | Yes | Yes (with `can_create_events`, own events) | No |
 | Set employee hourly rate at assignment | Yes (no time restriction) | Yes (through the 10th of the following month) | No | No |
 | Enter shift attendance/hours, rate employees, submit hour report for approval | Yes | Yes | No | No |
 | Sign up for a shift | Yes — as a worker, placed directly as approved (`משובץ`) when the role has capacity, else waitlisted | Yes — same | Yes — same | Yes (pending approval; waitlisted when full) |
@@ -178,7 +179,7 @@ Allowed transitions, enforced by the DB trigger `enforce_event_status_transition
 These are hard stops. An agent should refuse or pause rather than proceed through any of the following without explicit human confirmation in the same session:
 
 1. **Database migrations.** Never write, alter, or run a migration without explicit confirmation of its exact contents immediately beforehand — no batching migrations into a larger "while I'm at it" change.
-2. **Form 101 / bank-detail data.** Never expose these fields or queries against `employee_documents` outside the Admin-role, 2FA-gated path — including in debug logging, seed scripts, test fixtures, or admin-adjacent tooling that isn't itself 2FA-gated.
+2. **Form 101 / bank-detail data.** Never expose these fields or queries against `employee_documents` outside the Admin-role, 2FA-gated path — including in debug logging, seed scripts, test fixtures, or admin-adjacent tooling that isn't itself 2FA-gated. Exception (owner, 2026-11-15): `get_compliance_counts()` may return aggregate *missing* counts to Admin without 2FA; no names, ids or document fields.
 3. **Server-side permission checks.** Never remove, weaken, or bypass a role re-verification in a server action, even temporarily, even if the client already checked it.
 4. **RLS policies.** Never disable or broaden an RLS policy to unblock a bug — find the correct policy shape instead; treat "just turn off RLS for this table" as unacceptable regardless of who suggests it.
 5. **Monthly Form 101 purge.** Any feature that touches Form 101 storage must respect the requirement that this data is purged at the end of each billing cycle — don't build a retention path that outlives the cycle.

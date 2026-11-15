@@ -15,7 +15,11 @@ Latest run details: `REPORT-2026-11-10.md` (Phase 0 gap list, DECISIONs D1-D11, 
   Nothing persisted after any test run (checked). `types/supabase.ts` regenerated in #19.
 - **The triggers are live now**, even before #17 is merged: real registrations/events/hours already write notifications.
 - Gotcha for tests: `auth.uid()` reads `request.jwt.claim.sub` before `request.jwt.claims`; set both when impersonating.
-- Open owner questions: O2, O4 (asked 2026-11-15), and C5 - may document counts show without 2FA? (AGENTS 8.2 says no; built fail-closed.)
+- **Owner decisions 2026-11-15:** O2 yes - an unapproved employee may not self-register (C6a, SQL
+  `supabase/pending/20261115140000_c6a_block_unapproved_self_registration.sql` + test `c6_owner_decisions_tests.sql`;
+  **NOT applied yet** - the tool permission layer blocked it, the owner runs it in the SQL Editor). O4 yes - a recruiter
+  with `can_create_events` may set `base_rate` (already the behavior; recorded in AGENTS §6). C5 yes - compliance counts
+  without 2FA (C6b `20261115083457`, applied and tested; AGENTS §8.2 exception).
 - Not browser-verified: all of C1-C5 (home lists on phone, recruiters month table, client dialogs, notifications page
   and each trigger end to end in the app, dashboard compliance row).
 

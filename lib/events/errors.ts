@@ -30,6 +30,7 @@ const BY_MESSAGE: ReadonlyArray<readonly [string, string]> = [
   ["not_eligible: age", "לא ניתן להירשם: יש לעדכן תאריך לידה ולעמוד בגיל המינימלי לאירוע."],
   ["not_eligible: rating", "לא ניתן להירשם: הדירוג שלך נמוך מהדירוג המינימלי לאירוע."],
   ["not_eligible: role_skill", "לא ניתן להירשם: הרשאת התפקיד שלך עדיין לא הוגדרה במערכת."],
+  ["not_eligible: account_not_approved", "החשבון שלך עדיין ממתין לאישור הצוות. ההרשמה למשמרות תיפתח לאחר האישור."],
   ["not_eligible: previously_rejected", "בקשתך להשתתף באירוע זה נדחתה בעבר ולכן לא ניתן להירשם שוב."],
   ["not_eligible: previously_removed", "הוסרת מאירוע זה על ידי הצוות ולכן לא ניתן להירשם שוב. פנה/י למנהל/ת."],
   ["not_eligible", "אינך עומד/ת בתנאי הקבלה למשמרת זו."],
