@@ -51,7 +51,6 @@ export type CreateClientInput = {
   companyId: string;
   address: string;
   notes: string;
-  overtimeThresholdHours?: number;
   minBillableHours?: number;
   contacts: ClientContact[];
   preferredRoles: PreferredRole[];
@@ -86,13 +85,10 @@ export async function createClient(input: CreateClientInput): Promise<CreateClie
     }
   }
 
-  if (input.overtimeThresholdHours !== undefined) {
-    if (input.overtimeThresholdHours <= 0) {
-      return { success: false, error: "סף שעות נוספות חייב להיות מספר חיובי." };
-    }
-    if (input.overtimeThresholdHours > 24) {
-      return { success: false, error: "סף שעות נוספות אינו יכול לעלות על 24 שעות." };
-    }
+  const roleNames = cleanRoles.map((r) => r.role);
+  const dupRole = roleNames.find((n, i) => roleNames.indexOf(n) !== i);
+  if (dupRole) {
+    return { success: false, error: `התפקיד "${dupRole}" מופיע יותר מפעם אחת במחירון.` };
   }
 
   if (input.minBillableHours !== undefined) {
@@ -112,7 +108,6 @@ export async function createClient(input: CreateClientInput): Promise<CreateClie
       company_id: input.companyId?.trim() || null,
       address: input.address?.trim() || null,
       notes: input.notes?.trim() || null,
-      overtime_threshold_hours: input.overtimeThresholdHours ?? null,
       min_billable_hours: input.minBillableHours ?? null,
       contacts: cleanContacts, // jsonb
       preferred_roles: cleanRoles, // jsonb
@@ -150,7 +145,6 @@ export type UpdateClientInput = {
   address: string;
   notes: string;
   status: "active" | "paused";
-  overtimeThresholdHours?: number;
   minBillableHours?: number;
   contacts: ClientContact[];
   preferredRoles: PreferredRole[];
@@ -183,13 +177,10 @@ export async function updateClient(clientId: string, input: UpdateClientInput): 
     }
   }
 
-  if (input.overtimeThresholdHours !== undefined) {
-    if (input.overtimeThresholdHours <= 0) {
-      return { success: false, error: "סף שעות נוספות חייב להיות מספר חיובי." };
-    }
-    if (input.overtimeThresholdHours > 24) {
-      return { success: false, error: "סף שעות נוספות אינו יכול לעלות על 24 שעות." };
-    }
+  const roleNames = cleanRoles.map((r) => r.role);
+  const dupRole = roleNames.find((n, i) => roleNames.indexOf(n) !== i);
+  if (dupRole) {
+    return { success: false, error: `התפקיד "${dupRole}" מופיע יותר מפעם אחת במחירון.` };
   }
 
   if (input.minBillableHours !== undefined) {
@@ -209,7 +200,6 @@ export async function updateClient(clientId: string, input: UpdateClientInput): 
       company_id: input.companyId?.trim() || null,
       address: input.address?.trim() || null,
       notes: input.notes?.trim() || null,
-      overtime_threshold_hours: input.overtimeThresholdHours ?? null,
       min_billable_hours: input.minBillableHours ?? null,
       contacts: cleanContacts,
       preferred_roles: cleanRoles,

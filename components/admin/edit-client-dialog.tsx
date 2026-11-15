@@ -42,9 +42,6 @@ export function EditClientDialog({
   const [notes, setNotes] = useState(client.notes);
   const [status, setStatus] = useState<"active" | "paused">(client.status);
 
-  const [overtimeThreshold, setOvertimeThreshold] = useState<number | "">(
-    client.overtimeThresholdHours ?? ""
-  );
   const [minBillable, setMinBillable] = useState<number | "">(client.minBillableHours ?? "");
 
   const [contacts, setContacts] = useState<ContactRow[]>(
@@ -103,7 +100,6 @@ export function EditClientDialog({
         address,
         notes,
         status,
-        overtimeThresholdHours: overtimeThreshold === "" ? undefined : Number(overtimeThreshold),
         minBillableHours: minBillable === "" ? undefined : Number(minBillable),
         contacts: filteredContacts,
         preferredRoles: filteredRoles,
@@ -277,22 +273,7 @@ export function EditClientDialog({
 
           <hr className="border-line" />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass} htmlFor="ec-overtime">
-                סף שעות נוספות
-              </label>
-              <input
-                id="ec-overtime"
-                type="number"
-                min="0"
-                step="0.5"
-                value={overtimeThreshold}
-                onChange={(e) => setOvertimeThreshold(e.target.value ? Number(e.target.value) : "")}
-                className={inputClass}
-                placeholder="8.5"
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelClass} htmlFor="ec-minbill">
                 מינימום לחיוב משמרת
@@ -309,12 +290,13 @@ export function EditClientDialog({
               />
             </div>
           </div>
+          <p className="mt-1 text-xs text-muted">החיוב: מחיר קבוע לשעה לכל תפקיד, ללא תוספת שעות נוספות. משמרת קצרה מהמינימום מחויבת לפי המינימום.</p>
 
           <hr className="border-line" />
 
           <div>
             <div className="mb-3 flex items-center justify-between">
-              <span className={labelClass + " mb-0"}>תפקידים מועדפים ותעריף</span>
+              <span className={labelClass + " mb-0"}>תפקידים ומחיר ללקוח לשעה</span>
               <button
                 type="button"
                 onClick={addRoleRow}
