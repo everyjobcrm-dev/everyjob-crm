@@ -66,7 +66,12 @@ Design: `docs/payroll-billing-design.md`. Admin only, internal reports and Excel
 Done when: the DB tests pass, the payroll and billing numbers for a hand-built test month match a hand calculation,
 the export opens correctly in Excel, and the screens are checked by role in the browser.
 
-## Milestone C - remaining product screens (roadmap Phases 4-5)
+## Milestone C - remaining product screens (roadmap Phases 4-5) - DONE 2026-11-15
+Merged: PRs #14-#20 (C1 employee home, C2 recruiter credits, C3 price-list editor, C4 notifications, C5 compliance
+counts, C6 owner decisions). All SQL is live and tested; details and what is not browser-verified are in
+`docs/handoff.md` §0a. O2 = yes (blocked, C6a), O4 = yes (already the behavior), compliance counts without 2FA = yes.
+Original scope kept below for reference.
+
 - Employee home: assigned vs pending shifts and this month's hours and estimated pay (reuse `v_my_monthly_hours`).
 - Recruiter: FIFO credit redemption from the event screen (`redeem_recruiter_credits` is live).
 - Admin: recruiter-credit overview per recruiter and month; the client pricing editor (per-role price list, overtime rules).
