@@ -1,3 +1,4 @@
+-- APPLIED 2026-11-15 via Supabase MCP apply_migration (owner instruction in chat); history version 20261115084149. Tests 6/6.
 -- C6a / O2 (owner decision 2026-11-15): block self-registration for employees whose account is not approved
 -- (profiles.approval_status <> 'approved'). Everything else is the live definition verbatim
 -- (md5 3709ce7e0cceb83d5b6c11e970dbe012 on 2026-11-15), incl. SECURITY DEFINER and search_path. No DROP.
