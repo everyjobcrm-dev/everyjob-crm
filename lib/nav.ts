@@ -15,7 +15,8 @@ export type NavIcon =
   | "hours"
   | "employees"
   | "recruiters"
-  | "clients";
+  | "clients"
+  | "notifications";
 
 export type NavItem = { href: string; label: string; icon: NavIcon };
 
@@ -47,6 +48,7 @@ const WORK_ITEMS: NavItem[] = [
   { href: "/employee/dashboard", label: "בית", icon: "home" },
   { href: "/employee/events", label: "אירועים", icon: "events" },
   { href: "/employee/shifts", label: "המשמרות שלי", icon: "shifts" },
+  { href: "/employee/notifications", label: "התראות", icon: "notifications" },
   { href: "/employee/profile", label: "פרופיל", icon: "profile" },
 ];
 
