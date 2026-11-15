@@ -25,6 +25,101 @@ Email verification is currently bypassed during development.
 - [ ] Owner runs `supabase migration repair` for the hand-applied migrations so the CLI history matches the live DB
 - [ ] Schedule `cleanup-unverified-users` after a reviewed dry run; backups, error monitoring, final production smoke test by role
 
+# Path to Sale — full IP acquisition by a staffing company
+Added 15 November 2026. Goal: sell the product outright (code, database schema, domain, documentation) to one staffing
+company. Stages run in order; each ends with an exit criterion. Owner tags: **[Dev]** engineering, **[Owner]** the
+product owner (accounts, purchases, decisions), **[Legal]** the owner's lawyer. Rule for every stage: no work that only
+the buyer can specify (their pay rules, branding, accounting format) before the deal is signed.
+
+## Stage 1 — Demo readiness (now, before the first meeting; ~3 working days)
+- [ ] [Dev] Demo data: `supabase/pending/20261115_demo_seed.sql` (4 clients, 7 events across past/open/pending_rates,
+      16 roster employees, approved and pending hour reports, ratings, a full role with a waitlist); rollback beside it.
+      [Owner] runs it in the SQL Editor
+- [ ] [Owner] Remove the Milestone A test data (`supabase/pending/20261113_seed_a_past_events_rollback.sql`) and any other
+      test clients/events, so the demo shows only realistic data
+- [ ] [Owner] Give the demo sign-in users (Admin, Manager, Recruiter, Employee) real-looking Hebrew names and simple
+      passwords kept outside the repo
+- [ ] [Dev] Close the open browser-verification rows (staff-as-worker, min-rating warning, approving a pending employee
+      from the picker, sign-in after restore) and fix what fails
+- [ ] [Dev] Mobile pass at 390px on every screen of the demo script (employee screens first: they are used on a phone)
+- [ ] [Dev] Hebrew error/empty/404/500 pages: no English or stack text can reach the screen during a demo
+- [ ] [Dev] Map the remaining DB errors to Hebrew (22007 bad date/time, 22P02 bad uuid/number) in `lib/events/errors.ts`
+- [ ] [Dev] Basics a buyer notices: favicon, page titles, share preview (Open Graph), loading states on slow actions
+- [ ] [Owner] Buy the domain (the only purchase before the deal) and point it at the Vercel production deployment
+- [ ] [Dev+Owner] 10-minute demo script by business pain: signup → approval → scheduling → attendance → hour approval →
+      payroll and client billing Excel; plus a 3-minute recorded backup video
+- [ ] [Dev] One-page product sheet (Hebrew): what it does per role, screenshots, what is next
+
+Exit: the whole script runs on a phone and a laptop on the production URL with no error and no test data.
+
+## Stage 2 — Due-diligence package (before signing; ~1 week)
+A buyer's technical reviewer will ask for these. Having them ready shortens the deal and supports the price.
+- [ ] [Dev] Security sweep: Supabase security and performance advisors clean or explained; `npm audit` triaged;
+      secret scan of the full git history (e.g. gitleaks) — rotate any key that ever reached git
+- [ ] [Dev] Narrow direct UPDATE on `events` / `event_roles` to the RPCs (backlog item; the reviewer will find it)
+- [ ] [Dev] Remaining backlog fixes: `min_age` raise re-checks existing registrants (warn), direct `events.recruiter_id`
+      writes validate the target role, `.gitattributes` (`eol=lf`), optional removal of the duplicate rating trigger
+- [ ] [Dev] Automated smoke tests for the critical flows (Playwright, ~5 tests: sign-in per role, register for a shift,
+      approve a registration, submit and approve hours, export payroll). Today only SQL behaviour tests exist
+- [ ] [Dev] Technical documentation: README with local setup, architecture overview, data model diagram, RLS and role
+      model summary, environment-variable list, migration and deployment runbook
+- [ ] [Dev] Dependency licence inventory (all production dependencies and their licences; flag anything non-permissive)
+- [ ] [Owner] `supabase migration repair` so the CLI migration history matches the live database (clean replay is what
+      the buyer's production setup will rely on)
+- [ ] [Owner+Legal] Statement of IP ownership: authored by the owner (with AI coding tools), no third-party code
+      beyond open-source dependencies, no employer or client claim on the code
+- [ ] [Owner+Legal] Privacy and compliance answers the buyer will need: what personal data is stored (national ID,
+      phone, birth date; Form 101 and bank details once 2FA exists), where it is hosted, who can read it (RLS by role),
+      retention (monthly Form 101 purge)
+
+Exit: a reviewer can clone, run, read and assess the system without the owner in the room.
+
+## Stage 3 — Commercial and legal (in parallel with Stage 2)
+- [ ] [Owner+Legal] NDA before showing code or the database; product demos need none
+- [ ] [Owner] Decide the model and price floor: outright IP sale (exclusive, highest price) vs. licence/SaaS (can be
+      sold to more companies). An exclusive sale should be priced accordingly
+- [ ] [Owner+Legal] Letter of intent, then the IP assignment / sale agreement: scope of what transfers (code, schema,
+      domain, docs, design), warranties and their limits, the handover period and its price, paid change requests after
+      it, and any non-compete (keep it narrow: this product, this market, limited time)
+- [ ] [Owner+Legal] Payment structure: escrow or staged payments; code and accounts transfer only against payment
+- [ ] [Owner+Legal] Define Stage 5 (production launch) as a separately priced milestone, or with an explicit scope
+
+Exit: signed agreement and first payment received.
+
+## Stage 4 — Handover (at closing; ~1 week)
+- [ ] [Owner] Transfer the GitHub repository to the buyer's organisation
+- [ ] [Owner] Transfer or recreate the Supabase project in the buyer's organisation (Supabase supports project transfer
+      between organisations); transfer the Vercel project and the domain
+- [ ] [Dev] Rotate every secret after transfer (Supabase service-role and anon keys, any API keys); remove the owner's
+      personal accounts from all services
+- [ ] [Dev] Remove all demo data from the buyer's database; create the buyer's first Admin
+- [ ] [Dev] Import the buyer's existing clients and employees (CSV/Excel import script, run once, verified counts)
+- [ ] [Dev+Owner] Training: one session per role (Admin, Manager, Recruiter) and a short Hebrew user guide
+
+Exit: the buyer signs in with their own accounts on their own infrastructure; the owner holds no credentials.
+
+## Stage 5 — Production launch on the buyer's infrastructure (post-closing, milestone-paid; ~2–4 weeks)
+The "Pre-launch" list above, in this order:
+- [ ] [Dev] Separate production Supabase project, replay `supabase/migrations/`, point Vercel Production at it
+- [ ] [Dev+Owner] Email verification: verified domain in Resend, Custom SMTP, Hebrew template, remove
+      `DEV_SKIP_EMAIL_VERIFICATION`, end-to-end signup test on Gmail/Outlook/iCloud
+- [ ] [Dev] 2FA (aal2) for Admin — deliberately last per the owner; only then the Form 101 / bank-details flow,
+      encryption at rest and the monthly purge cron
+- [ ] [Dev] Operations: daily backups / point-in-time recovery, error monitoring, uptime alert, rate limiting on the
+      public auth endpoints, scheduled `cleanup-unverified-users` after a reviewed dry run
+- [ ] [Legal] Terms of use, privacy policy and an accessibility statement in Hebrew (Israeli accessibility regulations
+      apply to a service offered to the public, i.e. the employee-facing screens); database registration if required
+- [ ] [Dev] Accessibility pass on the employee-facing screens (keyboard, contrast, labels, screen reader basics)
+- [ ] [Dev] Production smoke test by role
+
+Exit: real workers sign up and work real shifts; payroll and billing exports match the buyer's manual check for one month.
+
+## Stage 6 — After the sale (paid change requests, buyer's choice)
+Buyer-specific: their pay rules (overtime, Shabbat/holiday rates, travel), per-client overtime billing, their Excel
+format, their branding. Product: smart shift filtering by role and age, bulk approval screen for managers, unread
+notification badge, push/SMS/WhatsApp, native app (Expo) with GPS for field managers, accounting integration
+(explicitly out of scope today, AGENTS §1).
+
 # Phase 0: Infrastructure, Stack & Build Pipeline
 Done — Next.js (App Router) + TypeScript
 
