@@ -1,5 +1,5 @@
 # everyJob CRM — Master Development Plan & System Architecture
-Last updated: August 2026
+Last updated: 15 November 2026
 
 # Status Legend
 Done — development complete, code reviewed and merged
@@ -20,12 +20,17 @@ Email verification is currently bypassed during development.
 	- Remove `DEV_SKIP_EMAIL_VERIFICATION` from the code, `.env.example`, and all environments (search for: "pre-launch")
 	- Test the end-to-end sign-up flow using Gmail, Outlook, and iCloud
 
+- [ ] Separate production Supabase project: today dev and Vercel production share `yjgqunrboxihxtgkxibw`; create a prod project, replay `supabase/migrations/`, point Vercel Production at it
+- [ ] 2FA (aal2) for Admin, then the Form 101 / bank-details flow, encryption at rest, and the monthly Form 101 purge as a cron job
+- [ ] Owner runs `supabase migration repair` for the hand-applied migrations so the CLI history matches the live DB
+- [ ] Schedule `cleanup-unverified-users` after a reviewed dry run; backups, error monitoring, final production smoke test by role
+
 # Phase 0: Infrastructure, Stack & Build Pipeline
 Done — Next.js (App Router) + TypeScript
 
 Done — Full Supabase (PostgreSQL) integration
 
-Done — Tailwind CSS v4 with RTL (logical properties), design system: Electric Indigo & Hyper Lime
+Done — Tailwind CSS v4 with RTL (logical properties); design system replaced in Nov 2026 (PR #5) by a light theme from the logo: ink #131217, pink #FF84A7, sun #FDD559, sky #83D9FF, tokens in app/globals.css
 
 Done — CI/CD Pipeline: GitHub Actions for automated type-checking (tsc --noEmit) and ESLint before allowing merges to main.
 
@@ -53,11 +58,13 @@ Done — Independent permission check on every server action
 
 Done — Fixed routing bug for the field-manager role
 
-In Progress — 2FA (SMS/Email) for Admin login; blocks Form 101 exposure until complete
+Planned (pre-launch, Milestone D; deliberately deferred by the owner) — 2FA (aal2) for Admin login. Until it exists Form 101 and bank details stay blocked for everyone, Admin included (every aal2 gate fails closed)
 
-Planned — Extend signup form: national ID, gender, phone, date of birth (with automatic age calculation)
+Done — Signup form with national ID, gender, phone and date of birth (age derived; min_age enforced on scheduling)
 
-Planned — Strict RLS on all new tables, based on profiles.role
+Done — Strict RLS on all new tables, based on profiles.role (standing rule for every new table)
+
+Done (Nov 2026, p10c/p10d/C6a) — Soft delete for users (profiles.deleted_at + auth ban, restore by Admin); new-employee approval ("ממתין/ה לאישור", approved by Admin/Manager/Recruiter); an unapproved employee cannot self-register for shifts (staff can still schedule them)
 
 # Phase 3: Events Management & Shift Registration Lifecycle
 Done — Multi-role roster, derived staffing status, travel budget, flexible base_rate (pending_rates)
@@ -66,9 +73,9 @@ Done — Waitlist: signup for full shifts with automatic promotion trigger on ca
 
 Done — cancellation_requests: controlled cancellation flow, not self-service
 
-Done — Events lifecycle (October 2026): DB enforcement (status state machine, registration write guard, role hierarchy with recruiter scope), staff RPCs and roster (Phase 3), worker cancellation requests and "המשמרות שלי" (Phase 4). Only two items remain: run M6c by hand (supabase/p4_m6c_drop_legacy_registration_policy.sql) and the browser verification in docs/manual-test-plan-events.md.
+Done — Events lifecycle (October 2026): DB enforcement (status state machine, registration write guard, role hierarchy with recruiter scope), staff RPCs and roster (Phase 3), worker cancellation requests and "המשמרות שלי" (Phase 4). M6c applied; browser verification by role done in Nov 2026 (docs/handoff.md §10), a few rows still open (staff-as-worker, min-rating warning, approving a pending employee from the picker).
 
-Planned — Shift Registration State Machine: Full UI/Server implementation of the registration lifecycle:
+Done (Oct-Nov 2026) — Shift Registration State Machine: Full UI/Server implementation of the registration lifecycle:
 
 Pending: Employee requests a shift.
 
@@ -80,7 +87,9 @@ Waitlisted: Shift is full; employee joins queue.
 
 Cancellation semantics (decided): an approved cancellation request -> `cancelled` (employee may re-register); staff removal -> `removed` (no self re-registration); `rejected` cannot re-apply.
 
-Done (October 2026, Phase 6 h0-h5 applied; docs/design-hours-flow.md) — Hours flow; remaining: credit redemption semantics + p6_h6 (PROPOSED), optional removal of the duplicate rating trigger. Original scope: attendance guards, RLS policies for shift_hour_submissions / employee_ratings / recruiter_bonuses, two-person review constraint, recruiter-credit trigger (supabase/recruiter_compensation_redesign.sql was never applied live and is superseded: it re-adds events.recruiter_id).
+Done (Oct-Nov 2026, Phase 6 h0-h5 + H6v2 FIFO redemption applied; docs/design-hours-flow.md) — Hours flow, verified in the browser (submit / approve / reject / void, Manager rate window); Admin can void approved hours (PR #10). Remaining: optional removal of the duplicate rating trigger. Original scope: attendance guards, RLS policies for shift_hour_submissions / employee_ratings / recruiter_bonuses, two-person review constraint, recruiter-credit trigger (supabase/recruiter_compensation_redesign.sql was never applied live and is superseded: it re-adds events.recruiter_id).
+
+Done (Oct-Nov 2026, P9 + p10a) — Event edit (details, roles, responsible recruiter) through allow-list RPCs; roles prefilled from the client's preferred roles; two closure levels: `closed` = closed for registration, `completed` = final closure (Admin/Manager, reopen for editing, blocked while hour reports are pending); cancel / restore
 
 Planned — Smart Shift Filtering: Ensure employees only see and can request shifts matching their profiles.role arrays and age constraints.
 
@@ -143,7 +152,7 @@ Staff roles may register as workers: placed directly as approved when capacity a
 
 Capacity = pending + approved; event_role_fill_counts derives it and excludes cancelled events; no auto-close when an event fills
 
-Event status model: completed and paused are frozen (no app transition in or out); cancelled records cancelled_from_status and is restored by Admin/Manager only; deleting an event is Admin-only and refused when audit history exists
+Event status model: two closure levels (closed = registration closed; completed = final closure by Admin/Manager, reopen completed -> closed); paused is frozen (no app transition in or out); cancelled records cancelled_from_status and is restored by Admin/Manager only; deleting an event is Admin-only and refused when audit history exists
 
 Direct client writes to event_registrations are blocked by a DB guard (inserts only via SECURITY DEFINER RPCs); employees may only raise their own cancellation request
 
