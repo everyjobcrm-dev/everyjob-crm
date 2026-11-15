@@ -7,6 +7,7 @@ import { EventCard } from "@/components/employee/EventCard";
 import { MonthlyHoursCard } from "@/components/employee/MonthlyHoursCard";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatEventDate } from "@/lib/format";
+import type { MyShift } from "@/app/employee/events/actions";
 
 // Worker home: the next confirmed shift first, then this month's approved hours, then what can be signed up for.
 // Everything is read through the same actions as "אירועים" and "המשמרות שלי" - nothing is computed or stored here.
@@ -23,8 +24,8 @@ export default async function DashboardPage() {
 
   const upcoming = shifts.filter((s) => s.eventDate >= today).sort((a, b) => a.eventDate.localeCompare(b.eventDate));
   const next = upcoming.find((s) => s.status === "approved");
-  const pending = upcoming.filter((s) => s.status === "pending").length;
-  const waitlisted = upcoming.filter((s) => s.status === "waitlisted").length;
+  const later = upcoming.filter((s) => s.status === "approved" && s !== next);
+  const waiting = upcoming.filter((s) => s.status === "pending" || s.status === "waitlisted");
 
   return (
     <div className="pb-10">
@@ -66,15 +67,17 @@ export default async function DashboardPage() {
             </Link>
           </p>
         )}
-        {(pending > 0 || waitlisted > 0) && (
-          <Link href="/employee/shifts" className="mt-3 inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
-            {[pending > 0 && `${pending} ממתינות לאישור`, waitlisted > 0 && `${waitlisted} ברשימת המתנה`]
-              .filter(Boolean)
-              .join(" · ")}
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-          </Link>
-        )}
       </section>
+
+      {(later.length > 0 || waiting.length > 0) && (
+        <section aria-labelledby="my-upcoming" className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <h2 id="my-upcoming" className="sr-only">
+            המשמרות הקרובות שלי
+          </h2>
+          <UpcomingList title={`משובץ/ת (${later.length + (next ? 1 : 0)})`} tone="border-sky" shifts={later} empty="אין משמרות מאושרות נוספות." />
+          <UpcomingList title={`ממתין/ה לאישור או ברשימת המתנה (${waiting.length})`} tone="border-sun" shifts={waiting} empty="אין בקשות פתוחות." />
+        </section>
+      )}
 
       <MonthlyHoursCard months={monthly} currentMonth={today.slice(0, 7) + "-01"} />
 
@@ -100,6 +103,43 @@ export default async function DashboardPage() {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+const STATUS_LABEL: Partial<Record<MyShift["status"], string>> = {
+  approved: "משובץ/ת",
+  pending: "ממתין/ה לאישור",
+  waitlisted: "ברשימת המתנה",
+};
+
+function UpcomingList({ title, tone, shifts, empty }: { title: string; tone: string; shifts: MyShift[]; empty: string }) {
+  return (
+    <div className={`border-s-4 ${tone} bg-surface px-5 py-4`}>
+      <h3 className="mb-2 text-sm font-semibold text-ink/80">{title}</h3>
+      {shifts.length === 0 ? (
+        <p className="text-sm text-muted">{empty}</p>
+      ) : (
+        <ul className="space-y-2 text-sm">
+          {shifts.slice(0, 4).map((s) => (
+            <li key={s.registrationId} className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <span className="text-ink">
+                {formatEventDate(s.eventDate)} · {s.roleName ?? "תפקיד"}
+              </span>
+              <span className="text-xs text-muted">
+                {s.clientName}
+                {s.status !== "approved" && ` · ${STATUS_LABEL[s.status]}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {shifts.length > 4 && (
+        <Link href="/employee/shifts" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary-soft hover:underline">
+          עוד {shifts.length - 4}
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+        </Link>
+      )}
     </div>
   );
 }
