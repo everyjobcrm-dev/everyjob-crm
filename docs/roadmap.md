@@ -32,19 +32,19 @@ product owner (accounts, purchases, decisions), **[Legal]** the owner's lawyer. 
 the buyer can specify (their pay rules, branding, accounting format) before the deal is signed.
 
 ## Stage 1 — Demo readiness (now, before the first meeting; ~3 working days)
-- [ ] [Dev] Demo data: `supabase/pending/20261115_demo_seed.sql` (4 clients, 7 events across past/open/pending_rates,
+- [x] [Dev] Demo data (applied live 15 Nov): `supabase/pending/20261115_demo_seed.sql` (4 clients, 7 events across past/open/pending_rates,
       16 roster employees, approved and pending hour reports, ratings, a full role with a waitlist); rollback beside it.
       [Owner] runs it in the SQL Editor
 - [ ] [Owner] Remove the Milestone A test data (`supabase/pending/20261113_seed_a_past_events_rollback.sql`) and any other
       test clients/events, so the demo shows only realistic data
 - [ ] [Owner] Give the demo sign-in users (Admin, Manager, Recruiter, Employee) real-looking Hebrew names and simple
       passwords kept outside the repo
-- [ ] [Dev] Close the open browser-verification rows (staff-as-worker, min-rating warning, approving a pending employee
-      from the picker, sign-in after restore) and fix what fails
-- [ ] [Dev] Mobile pass at 390px on every screen of the demo script (employee screens first: they are used on a phone)
-- [ ] [Dev] Hebrew error/empty/404/500 pages: no English or stack text can reach the screen during a demo
-- [ ] [Dev] Map the remaining DB errors to Hebrew (22007 bad date/time, 22P02 bad uuid/number) in `lib/events/errors.ts`
-- [ ] [Dev] Basics a buyer notices: favicon, page titles, share preview (Open Graph), loading states on slow actions
+- [ ] [Dev] Close the open browser-verification rows. Done 15 Nov: staff-as-worker, approving a pending employee from
+      the picker, recruiter scope. Open: min-rating warning, sign-in after restore
+- [x] [Dev] Mobile pass (15 Nov: no horizontal overflow at 375px on the main screens) on every screen of the demo script (employee screens first: they are used on a phone)
+- [x] [Dev] Hebrew error/empty/404/500 pages: no English or stack text can reach the screen during a demo
+- [x] [Dev] Map the remaining DB errors to Hebrew (22007 bad date/time, 22P02 bad uuid/number) in `lib/events/errors.ts`
+- [x] [Dev] Basics a buyer notices: favicon, page titles, share preview (Open Graph). Loading states not reviewed
 - [ ] [Owner] Buy the domain (the only purchase before the deal) and point it at the Vercel production deployment
 - [ ] [Dev+Owner] 10-minute demo script by business pain: signup → approval → scheduling → attendance → hour approval →
       payroll and client billing Excel; plus a 3-minute recorded backup video
@@ -126,9 +126,19 @@ The "Pre-launch" list above, in this order:
       encryption at rest and the monthly purge cron
 - [ ] [Dev] Operations: daily backups / point-in-time recovery, error monitoring, uptime alert, rate limiting on the
       public auth endpoints, scheduled `cleanup-unverified-users` after a reviewed dry run
-- [ ] [Legal] Terms of use, privacy policy and an accessibility statement in Hebrew (Israeli accessibility regulations
-      apply to a service offered to the public, i.e. the employee-facing screens); database registration if required
-- [ ] [Dev] Accessibility pass on the employee-facing screens (keyboard, contrast, labels, screen reader basics)
+- [x] [Dev] Drafts of `/terms`, `/privacy` and `/accessibility` in Hebrew, linked from the landing and auth screens;
+      signup consent required and recorded (`terms_version`, `terms_accepted_at` in user metadata) — PR #23
+- [ ] [Owner] Fill the real operator details in `lib/legal.ts` (legal entity, privacy contact, accessibility coordinator
+      name/phone/email); bump `LEGAL_VERSION` on every substantive text change
+- [ ] [Legal] Lawyer review of the three pages; decide on database registration / security officer duties under the
+      Privacy Protection Law and its data-security regulations; employment-law check of the cancellation and pay wording
+- [ ] [Dev] Re-consent flow: when `LEGAL_VERSION` changes, existing users accept the new terms on next sign-in
+- [ ] [Dev] Privacy-rights handling: a staff path to export or delete one person's data on request (today by SQL only)
+- [x] [Dev] Accessibility basics (15 Nov): skip link, page titles, labels, visible focus; automated scan of main screens
+- [ ] [Owner] Accessibility audit by a certified accessibility consultant (contrast, screen reader, keyboard on every
+      screen) and update `/accessibility` with the audit date
+- [ ] [Dev] If analytics or marketing tags are ever added: cookie consent banner before they load (today only the
+      essential login cookie exists, so none is needed)
 - [ ] [Dev] Production smoke test by role
 
 Exit: real workers sign up and work real shifts; payroll and billing exports match the buyer's manual check for one month.
