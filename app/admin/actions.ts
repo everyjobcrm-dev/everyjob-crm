@@ -798,6 +798,44 @@ export async function getRecruiterPendingCredits() {
   return { success: true as const, data };
 }
 
+export type RecruiterCreditsMonth = {
+  recruiterId: string;
+  earnedCount: number;
+  earnedAmount: number;
+  pendingCount: number;
+  redeemedCount: number;
+  redeemedAmount: number;
+};
+
+/** Credits created in one Jerusalem month, per recruiter (v_recruiter_credits_monthly, C2). Admin only. */
+export async function fetchRecruiterCreditsMonth(month: string) {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return { success: false as const, error: auth.error };
+
+  const { data, error } = await auth.supabase
+    .from("v_recruiter_credits_monthly")
+    .select("recruiter_id, earned_count, earned_amount, pending_count, redeemed_count, redeemed_amount")
+    .eq("month", await normalizeMonth(month));
+  if (error) {
+    console.error("[fetchRecruiterCreditsMonth]", error.code, error.message);
+    return { success: false as const, error: "טעינת הזיכויים החודשיים נכשלה." };
+  }
+  const rows = (data ?? []) as Record<string, string | number>[];
+  return {
+    success: true as const,
+    data: rows.map(
+      (r): RecruiterCreditsMonth => ({
+        recruiterId: String(r.recruiter_id),
+        earnedCount: Number(r.earned_count),
+        earnedAmount: Number(r.earned_amount),
+        pendingCount: Number(r.pending_count),
+        redeemedCount: Number(r.redeemed_count),
+        redeemedAmount: Number(r.redeemed_amount),
+      }),
+    ),
+  };
+}
+
 export async function setRecruiterBonusRate(
   recruiterId: string,
   recruiterBonusRate: number,
