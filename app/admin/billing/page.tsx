@@ -94,3 +94,5 @@ export default async function AdminBillingPage({ searchParams }: { searchParams:
     </div>
   );
 }
+
+export const metadata = { title: "חיוב לקוחות" };

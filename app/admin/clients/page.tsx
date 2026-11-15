@@ -27,3 +27,5 @@ export default async function AdminClientsPage() {
     </div>
   );
 }
+
+export const metadata = { title: "לקוחות" };

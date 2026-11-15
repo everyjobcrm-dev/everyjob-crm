@@ -26,3 +26,5 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
     </div>
   );
 }
+
+export const metadata = { title: "אירועים" };

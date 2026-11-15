@@ -121,3 +121,5 @@ function Row({ href, title, meta }: { href: string; title: string; meta: string 
     </li>
   );
 }
+
+export const metadata = { title: "חיפוש" };

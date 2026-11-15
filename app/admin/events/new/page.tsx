@@ -11,3 +11,5 @@ export default async function NewEventPage() {
     </div>
   );
 }
+
+export const metadata = { title: "אירוע חדש" };

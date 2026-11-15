@@ -143,3 +143,5 @@ function UpcomingList({ title, tone, shifts, empty }: { title: string; tone: str
     </div>
   );
 }
+
+export const metadata = { title: "הבית שלי" };

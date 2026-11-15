@@ -90,3 +90,5 @@ export default async function ManagerEmployeesPage({ searchParams }: { searchPar
     </div>
   );
 }
+
+export const metadata = { title: "עובדים" };

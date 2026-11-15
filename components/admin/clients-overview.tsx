@@ -201,6 +201,7 @@ export function ClientsOverview({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            aria-label="חיפוש לקוחות"
             placeholder="חיפוש לפי שם לקוח, איש קשר או כתובת..."
             className="w-full rounded-md border border-ink/12 bg-surface py-2.5 ps-10 pe-4 text-sm text-ink outline-none transition-colors focus:border-primary"
           />

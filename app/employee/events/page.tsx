@@ -74,3 +74,5 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
     </div>
   );
 }
+
+export const metadata = { title: "משמרות פתוחות" };

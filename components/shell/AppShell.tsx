@@ -64,6 +64,9 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-ink focus:px-4 focus:py-2 focus:text-white">
+        דילוג לתוכן העיקרי
+      </a>
       {/* Desktop sidebar */}
       <aside
         aria-label="ניווט ראשי"
@@ -118,7 +121,7 @@ export function AppShell({
         </nav>
       )}
 
-      <main className="pb-24 lg:ps-60 lg:pb-0">
+      <main id="main" tabIndex={-1} className="pb-24 outline-none lg:ps-60 lg:pb-0">
         <div className={`mx-auto w-full min-w-0 ${WIDTH[width]} px-4 pt-6 sm:px-6 lg:px-10 lg:pt-10`}>
           {isStaff && <ShellSearch className="mb-5 lg:hidden" />}
           {children}

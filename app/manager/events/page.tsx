@@ -201,3 +201,5 @@ function EventGrid({ items, empty }: { items: EventItem[]; empty: string }) {
     </div>
   );
 }
+
+export const metadata = { title: "אירועים" };
