@@ -87,7 +87,9 @@ BEGIN
 
   INSERT INTO public.shift_hour_submissions (registration_id, reported_start, reported_end, reported_hours, submitted_by, status)
     VALUES (g3, '2031-08-12 08:00+03', '2031-08-12 14:00+03', 6, M, 'pending') RETURNING id INTO g4;
+  -- auth.uid() reads request.jwt.claim.sub first: set both, or the last impersonated user (E3) counts as the actor
   PERFORM set_config('request.jwt.claims', json_build_object('sub', A, 'role', 'authenticated')::text, true);
+  PERFORM set_config('request.jwt.claim.sub', A::text, true);
   UPDATE public.shift_hour_submissions SET status = 'approved', reviewed_by = A, reviewed_at = now() WHERE id = g4;
   PERFORM set_config('request.jwt.claims', '', true);
   v_res := v_res || pg_temp.t('E3 gets hours_approved with hours', E3,

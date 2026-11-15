@@ -1,3 +1,4 @@
+-- APPLIED 2026-11-15 via Supabase MCP apply_migration (owner instruction in chat); history version 20261115073339. Test results in the PR.
 -- C4: in-app notifications. AFTER triggers write rows to public.notifications (live table: id, user_id, type,
 -- payload jsonb, created_at, read_at; RLS: read own, update own; no INSERT policy, so only SECURITY DEFINER code
 -- writes). Shown on /employee/notifications.

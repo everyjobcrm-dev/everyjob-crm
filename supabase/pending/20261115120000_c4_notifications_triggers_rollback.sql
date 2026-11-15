@@ -9,5 +9,5 @@ DROP FUNCTION IF EXISTS public.notify_event_role_time_change();
 DROP FUNCTION IF EXISTS public.notify_hours_approved();
 DROP FUNCTION IF EXISTS public.app_notify(uuid, text, jsonb);
 DROP FUNCTION IF EXISTS public.app_notification_event_payload(uuid);
--- Restore the Supabase default table grant for authenticated (RLS still limits rows).
-GRANT INSERT, UPDATE, DELETE ON public.notifications TO authenticated;
+-- Before C4 authenticated had SELECT only on notifications (checked live 2026-11-15): drop the read_at UPDATE grant.
+REVOKE UPDATE (read_at) ON public.notifications FROM authenticated;
