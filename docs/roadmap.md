@@ -89,30 +89,28 @@ Planned — Manager Approval UI: Real-time dashboard for Field Managers to rapid
 # Phase 4: Clients Management
 Done — Full CRUD, duplicate prevention, 23505 error handling, ClientDetailDrawer
 
-Planned — Smart pricing model per role, decoupled from employee wage rate
+Done (Nov 2026, B1 + C3) — Per-role client price list, decoupled from the employee wage rate: Admin-only (column grant + `get_clients_admin`), applied to new event roles by a trigger; editor in the client dialogs
 
-Planned — Per-client overtime billing rules
+Dropped (owner decision Q2, 2026-11-13) — billing is one flat price per role per client with no overtime uplift; `min_billable_hours` still applies. The overtime field was removed from the client dialogs (C3)
 
 Phase 5: Role-Based Interfaces
-Employee — Planned: home screen (showing assigned vs. pending shifts), digital Form 101 signature, bank details
+Employee — Done (C1): home screen with assigned vs. pending/waitlisted shifts, monthly hours and estimated pay (legal overtime); Planned (Milestone D, needs 2FA): digital Form 101 signature, bank details
 
-Recruiter — In Progress: assignment management and recruitment-credit profile display; Planned: event-screen FIFO redemption
+Recruiter — Done: assignment management, own pending-credit card (C2 fixed it reading wrong columns), event-screen FIFO redemption (`RedeemCreditsControl`, Manager/Admin)
 
 Field Manager — Done: attendance entry, employee ratings, final attendance report
 
-Admin — Done: shift hour report approval board; In Progress: recruiter credit overview and Admin-set recruiter rates; Planned: finance and pricing management; Planned: bulk Form 101 deletion
+Admin — Done: shift hour report approval board, recruiter credit overview per recruiter and month (C2), Admin-set recruiter rates, client pricing (C3), payroll and billing screens, compliance counts (C5/C6b); Planned (Milestone D): bulk Form 101 deletion (the purge RPC exists and fails closed until 2FA)
 
 # Phase 6: Payroll & Billing
-Starts immediately after Phases 1 and 2 are complete.
+Done (Nov 2026, B1-B5; docs/payroll-billing-design.md) — Billing engine with Excel export; employee payroll report (100%/125%/150% per shift, travel); billing-cycle screen
 
-Planned — Billing engine with Excel export
+Done (C5, C6b) — Compliance dashboard: counts only (duplicate national IDs, missing Form 101, missing bank details; shown to Admin without 2FA by owner decision 2026-11-15, the documents themselves stay blocked)
 
-Planned — Employee payroll report (regular hours, 125%/150%, travel, bonuses)
-
-Planned — Compliance dashboard (missing Form 101s, missing bank details, national ID duplicates)
+Not built — weighted recruiter bonus on the employee payslip
 
 # Phases 7–9: Compliance, Security, Future
-Done — Internal in-app notifications (partial rollout)
+Done (C4, Nov 2026) — Internal in-app notifications: DB triggers write `notifications` on registration approved/rejected/removed, event cancelled, event date/time change and hours approved; shown on /employee/notifications. Planned: push, SMS/WhatsApp, an unread badge in the nav
 
 Planned — Encryption at rest; server-level Form 101 access restricted to 2FA sessions only; monthly purge as a cron job
 
