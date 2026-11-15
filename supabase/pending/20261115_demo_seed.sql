@@ -1,7 +1,7 @@
 -- PENDING (not applied). Sales-demo data, NOT a migration (do not save to supabase/migrations/).
 -- Owner runs it in the SQL Editor (runs as postgres, so the app guards are bypassed on purpose for the seed only).
 -- Idempotent: does nothing if the demo clients already exist. Remove with 20261115_demo_seed_rollback.sql.
--- No Form 101 / bank data (AGENTS §8.2).
+-- No Form 101 / bank data (AGENTS §8.2). Requires migration D1 (20261115150000_d1_area_search: city / region / role_tags).
 --
 -- Creates:
 --   * 16 roster employees (auth.users -> profiles via on_auth_user_created). No password: they cannot sign in,
@@ -15,6 +15,8 @@
 --       future E4 2026-11-20 open (bartender role full + waitlist)   E5 2026-11-27 open, min_age 18
 --              E6 2026-12-04 open   E7 2026-12-11 pending_rates (one role without a rate)
 -- Sign-in accounts are the existing demo users (handoff §2): ADM, MGR, REC1, EMP1, EMP2 below. EMP1/EMP2 get shifts.
+-- Areas (Stage 1b): every event has a region (E6 is in the south); EMP1 = באר שבע / דרום, EMP2 = תל אביב / מרכז;
+--   the 16 roster employees get a city, region and role tags (4 bartenders in מרכז: "ברמנים במרכז").
 DO $seed$
 DECLARE
   ADM uuid := '27e864c1-a76e-4086-9ac3-42e8f0605103'; MGR uuid := 'c57bd119-7f4e-4b13-b4b5-352c6656560d';
@@ -24,6 +26,9 @@ DECLARE
   ln text[] := ARRAY['לוי','כהן','פרץ','אברהם','מזרחי','ביטון','אוחיון','דהן','גבאי','שפירא','חדד','אזולאי','סויסה','מלכה','בן דוד','נחום'];
   gd text[] := ARRAY['female','male','female','male','female','male','female','male','female','male','female','male','female','male','female','male'];
   yr int[]  := ARRAY[2001,1999,2003,1997,2002,2000,1995,2004,1998,1993,2005,2001,1996,2002,1999,2003];
+  ct text[] := ARRAY['ראשון לציון','תל אביב','באר שבע','רמת גן','חולון','הרצליה','אשדוד','תל אביב','נתניה','באר שבע','חיפה','גבעתיים','ירושלים','רחובות','אשקלון','קריית ביאליק'];
+  rg text[] := ARRAY['שפלה','מרכז','דרום','מרכז','מרכז','שרון','דרום','מרכז','שרון','דרום','חיפה והקריות','מרכז','ירושלים','שפלה','דרום','חיפה והקריות'];
+  tg text[] := ARRAY['מלצר/ית','מלצר/ית,ברמן/ית','מלצר/ית,סדרן/ית','סדרן/ית','ברמן/ית,מלצר/ית','ברמן/ית','מלצר/ית,מארח/ת','מלצר/ית,ברמן/ית','מלצר/ית','מלצר/ית,קופאי/ת','ברמן/ית','ברמן/ית,קופאי/ת','סדרן/ית','סדרן/ית,מאבטח/ת','מלצר/ית','מארח/ת'];
   W uuid[] := '{}'; uid uuid;
   C1 uuid; C2 uuid; C3 uuid; C4 uuid;
   E uuid[] := '{}'; R uuid[] := '{}'; ev uuid;
@@ -45,14 +50,19 @@ BEGIN
             jsonb_build_object('first_name', fn[i], 'last_name', ln[i], 'gender', gd[i],
                                'tz', '271800' || lpad(i::text, 2, '0'),
                                'phone_number', '05012300' || lpad(i::text, 2, '0'),
-                               'birth_date', make_date(yr[i], 1 + (i % 12), 1 + (i * 3 % 27))::text),
+                               'birth_date', make_date(yr[i], 1 + (i % 12), 1 + (i * 3 % 27))::text,
+                               'city', ct[i], 'region', rg[i]),
             now(), now(), '', '', '', '');
     W := W || uid;
   END LOOP;
   UPDATE public.profiles p SET role = 'employee',
          approval_status = CASE WHEN p.id IN (W[15], W[16]) THEN 'pending' ELSE 'approved' END,
-         recruited_by = CASE WHEN array_position(W, p.id) % 2 = 1 THEN REC1 END
+         recruited_by = CASE WHEN array_position(W, p.id) % 2 = 1 THEN REC1 END,
+         role_tags = string_to_array(tg[array_position(W, p.id)], ',')
    WHERE p.id = ANY(W);
+  -- the two demo sign-in employees: EMP1 in the south (sees E6 first), EMP2 in the centre
+  UPDATE public.profiles SET city = 'באר שבע', region = 'דרום', role_tags = '{מלצר/ית}' WHERE id = EMP1;
+  UPDATE public.profiles SET city = 'תל אביב', region = 'מרכז', role_tags = '{סדרן/ית}' WHERE id = EMP2;
 
   -- clients (preferred_roles = per-role client price list, contacts = jsonb list)
   INSERT INTO public.clients (name, industry, company_id, address, notes, min_billable_hours, contacts, preferred_roles, status, created_by)
@@ -114,7 +124,7 @@ BEGIN
   VALUES (ev, 'קופאי/ת', 3, '15:30', '22:30', 52, 86) RETURNING id INTO uid; R := R || uid;
 
   INSERT INTO public.events (client_id, event_date, start_time, location, status, recruiter_id, travel_budget_per_worker, dress_code)
-  VALUES (C2, '2026-12-04', '19:00', 'מוזיאון העיר, תל אביב', 'open', NULL, 20, 'שחור מלא') RETURNING id INTO ev; E := E || ev;
+  VALUES (C2, '2026-12-04', '19:00', 'היכל התרבות, באר שבע', 'open', NULL, 20, 'שחור מלא') RETURNING id INTO ev; E := E || ev;
   -- R11
   INSERT INTO public.event_roles (event_id, role_name, headcount, start_time, end_time, base_rate, bill_to_client)
   VALUES (ev, 'מלצר/ית', 8, '19:00', '23:30', 48, 80) RETURNING id INTO uid; R := R || uid;
@@ -123,6 +133,10 @@ BEGIN
   VALUES (C3, '2026-12-11', '07:30', 'מרכז הכנסים ים התיכון - ביתן 1', 'pending_rates', REC1, 30, 'ממתין לאישור תעריף סדרנים מהלקוח') RETURNING id INTO ev; E := E || ev;
   INSERT INTO public.event_roles (event_id, role_name, headcount, start_time, end_time, base_rate, bill_to_client) VALUES
     (ev, 'סדרן/ית', 8, '07:30', '17:00', NULL, NULL), (ev, 'מארח/ת', 3, '07:30', '15:00', 50, 82);
+
+  -- event regions (E1..E7)
+  UPDATE public.events e SET region = v.rg
+    FROM unnest(E, ARRAY['שפלה','שרון','מרכז','שפלה','מרכז','דרום','מרכז']) AS v(id, rg) WHERE e.id = v.id;
 
   -- registrations: (role index, worker: 0 = EMP1, -1 = EMP2, 1..16 = W[n], status, wage_rate)
   INSERT INTO public.event_registrations (event_id, event_role_id, user_id, status, wage_rate, created_by)

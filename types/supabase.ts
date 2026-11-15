@@ -1029,6 +1029,7 @@ export type Database = {
           min_rating: number | null
           notes: string | null
           recruiter_id: string | null
+          region: string | null
           start_time: string | null
           status: string
           travel_budget_per_worker: number | null
@@ -1047,6 +1048,7 @@ export type Database = {
           min_rating?: number | null
           notes?: string | null
           recruiter_id?: string | null
+          region?: string | null
           start_time?: string | null
           status?: string
           travel_budget_per_worker?: number | null
@@ -1065,6 +1067,7 @@ export type Database = {
           min_rating?: number | null
           notes?: string | null
           recruiter_id?: string | null
+          region?: string | null
           start_time?: string | null
           status?: string
           travel_budget_per_worker?: number | null
@@ -1335,6 +1338,7 @@ export type Database = {
           average_rating: number | null
           birth_date: string | null
           can_create_events: boolean | null
+          city: string | null
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
@@ -1348,7 +1352,9 @@ export type Database = {
           phone_verified: boolean | null
           recruited_by: string | null
           recruiter_bonus_rate: number
+          region: string | null
           role: Database["public"]["Enums"]["user_role"] | null
+          role_tags: string[]
           total_ratings: number | null
           tz: string
         }
@@ -1359,6 +1365,7 @@ export type Database = {
           average_rating?: number | null
           birth_date?: string | null
           can_create_events?: boolean | null
+          city?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -1372,7 +1379,9 @@ export type Database = {
           phone_verified?: boolean | null
           recruited_by?: string | null
           recruiter_bonus_rate?: number
+          region?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          role_tags?: string[]
           total_ratings?: number | null
           tz: string
         }
@@ -1383,6 +1392,7 @@ export type Database = {
           average_rating?: number | null
           birth_date?: string | null
           can_create_events?: boolean | null
+          city?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -1396,7 +1406,9 @@ export type Database = {
           phone_verified?: boolean | null
           recruited_by?: string | null
           recruiter_bonus_rate?: number
+          region?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          role_tags?: string[]
           total_ratings?: number | null
           tz?: string
         }
@@ -2850,26 +2862,45 @@ export type Database = {
         }[]
       }
       search_employees: {
-        Args: { p_event_id: string; p_query: string }
+        Args: {
+          p_city?: string
+          p_event_id?: string
+          p_query: string
+          p_region?: string
+          p_role_tag?: string
+        }
         Returns: {
           age_years: number
           average_rating: number
           base_rate: number
+          city: string
           employee_id: string
           event_role_id: string
           event_role_name: string
           first_name: string
+          joined_at: string
           last_name: string
           phone_number: string
+          region: string
           registered_at: string
           registration_id: string
           registration_status: string
+          role_tags: string[]
           wage_rate: number
           warnings: string[]
         }[]
       }
       set_employee_approval: {
         Args: { p_employee_id: string; p_status: string }
+        Returns: undefined
+      }
+      set_employee_area: {
+        Args: {
+          p_city: string
+          p_employee_id: string
+          p_region: string
+          p_role_tags: string[]
+        }
         Returns: undefined
       }
       set_registration_wage_rate: {
@@ -2976,6 +3007,7 @@ export type Database = {
           min_rating: number | null
           notes: string | null
           recruiter_id: string | null
+          region: string | null
           start_time: string | null
           status: string
           travel_budget_per_worker: number | null

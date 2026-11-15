@@ -1,17 +1,27 @@
 // app/employee/events/page.tsx
+import Link from "next/link";
 import { fetchEligibleEvents } from "./actions";
 import { getAuthContext } from "@/lib/auth/guards";
 import { EventCard } from "@/components/employee/EventCard";
 import { PageHeader } from "@/components/ui/page-header";
 
-export default async function EventsPage() {
-  const [events, ctx] = await Promise.all([fetchEligibleEvents(), getAuthContext()]);
+export default async function EventsPage({ searchParams }: { searchParams: Promise<{ all?: string }> }) {
+  const [events, ctx, params] = await Promise.all([fetchEligibleEvents(), getAuthContext(), searchParams]);
+  const { data: me } = ctx.ok
+    ? await ctx.supabase.from("profiles").select("approval_status, region").eq("id", ctx.userId).maybeSingle()
+    : { data: null };
   // O2: an employee whose account is not approved cannot self-register (register_for_event_role refuses it).
-  const { data: me } =
-    ctx.ok && ctx.role === "employee"
-      ? await ctx.supabase.from("profiles").select("approval_status").eq("id", ctx.userId).maybeSingle()
-      : { data: null };
-  const notApproved = me != null && me.approval_status !== "approved";
+  const notApproved = ctx.ok && ctx.role === "employee" && me != null && me.approval_status !== "approved";
+
+  // Quote item 5: default to the worker's own region (plus events with no region set); "all" shows every region,
+  // own region first. Without a region on the profile, everything is shown.
+  const myRegion = me?.region ?? null;
+  const showAll = params.all === "1" || !myRegion;
+  const inMyArea = (region: string | null) => region == null || region === myRegion;
+  const shown = showAll
+    ? [...events].sort((a, b) => Number(b.region === myRegion) - Number(a.region === myRegion))
+    : events.filter((e) => inMyArea(e.region));
+  const hiddenCount = events.length - shown.length;
 
   return (
     <div className="pb-10">
@@ -23,13 +33,41 @@ export default async function EventsPage() {
         </p>
       )}
 
+      <div className="mb-5 flex flex-wrap items-center gap-2 text-sm">
+        {myRegion ? (
+          <>
+            <Link
+              href="/employee/events"
+              aria-current={!showAll ? "page" : undefined}
+              className={`rounded-md px-3 py-1.5 font-semibold ${!showAll ? "bg-ink text-white" : "text-ink/80 hover:bg-ink/5"}`}
+            >
+              האזור שלי: {myRegion}
+            </Link>
+            <Link
+              href="/employee/events?all=1"
+              aria-current={showAll ? "page" : undefined}
+              className={`rounded-md px-3 py-1.5 font-semibold ${showAll ? "bg-ink text-white" : "text-ink/80 hover:bg-ink/5"}`}
+            >
+              כל האזורים{hiddenCount > 0 ? ` (+${hiddenCount})` : ""}
+            </Link>
+          </>
+        ) : (
+          <p className="text-muted">
+            <Link href="/employee/profile" className="font-semibold text-primary-soft hover:underline">
+              בחר/י אזור בפרופיל
+            </Link>{" "}
+            כדי לראות קודם משמרות קרובות אליך.
+          </p>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {events.map((event) => (
+        {shown.map((event) => (
           <EventCard key={event.id} event={event} />
         ))}
-        {events.length === 0 && (
+        {shown.length === 0 && (
           <p className="empty-state col-span-full">
-            אין אירועים פתוחים כרגע.
+            {hiddenCount > 0 ? "אין כרגע אירועים פתוחים באזור שלך. אפשר לעבור לכל האזורים." : "אין אירועים פתוחים כרגע."}
           </p>
         )}
       </div>

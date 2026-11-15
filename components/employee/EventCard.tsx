@@ -42,7 +42,10 @@ export function EventCard({ event }: { event: EmployeeEvent }) {
     <div className="card p-5">
       <p className="text-xs font-semibold text-primary-soft">{event.clientName}</p>
       <h2 className="font-display text-lg text-ink">{event.location}</h2>
-      <p className="mt-0.5 text-xs text-muted">{formatEventDate(event.eventDate)}</p>
+      <p className="mt-0.5 text-xs text-muted">
+        {formatEventDate(event.eventDate)}
+        {event.region && <span className="ms-2 rounded-sm bg-sky/25 px-1.5 py-0.5 font-semibold text-sky-deep">{event.region}</span>}
+      </p>
       {event.notes && <p className="mt-2 text-xs text-muted">{event.notes}</p>}
 
       <div className="mt-4 space-y-2">

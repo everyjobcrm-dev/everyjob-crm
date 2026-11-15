@@ -12,6 +12,7 @@ import {
   transitionArgsSchema,
   type StaffTransitionAction,
 } from "@/lib/validations/registration";
+import { areaSchema, type AreaInput } from "@/lib/areas";
 import { attendanceArgsSchema, redeemArgsSchema, shiftInstants, submissionReasonArgsSchema } from "@/lib/validations/hours";
 
 type ActionResult<T = undefined> =
@@ -349,4 +350,27 @@ export async function redeemRecruiterCredits(
   revalidatePath("/admin/recruiters");
   revalidatePath("/employee/profile");
   return { success: true, redeemedCount: Number(data ?? 0) };
+}
+
+/** Staff edit of an employee's city / region / role tags (set_employee_area: Admin any profile, Manager employees only). */
+export async function setEmployeeArea(employeeId: string, input: AreaInput): Promise<ActionResult> {
+  const auth = await requireRole("manager");
+  if (!auth.ok) return { success: false, error: auth.error };
+  const id = approvalArgsSchema.safeParse({ employeeId });
+  const args = areaSchema.safeParse(input);
+  if (!id.success || !args.success) return { success: false, error: "פרטים לא תקינים." };
+
+  const { error } = await auth.supabase.rpc("set_employee_area", {
+    p_employee_id: id.data.employeeId,
+    p_city: args.data.city,
+    p_region: args.data.region,
+    p_role_tags: args.data.roleTags,
+  });
+  if (error) {
+    console.error("[set_employee_area]", error.code, error.message);
+    return { success: false, error: mapDbError(error, { fallback: "השמירה נכשלה." }) };
+  }
+  revalidatePath("/manager/employees");
+  revalidatePath("/admin/employees");
+  return { success: true };
 }

@@ -10,6 +10,7 @@ import {
   type UseFormRegister,
   type FieldErrors,
 } from "react-hook-form";
+import { REGIONS } from "@/lib/areas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -60,6 +61,7 @@ export function CreateEventForm({
       event_date: "",
       start_time: "18:00",
       location: "",
+      region: "",
       notes: "",
       dress_code: "",
       min_rating: undefined,
@@ -204,6 +206,16 @@ export function CreateEventForm({
                   placeholder="לדוגמה: אולמי הגן, כפר סבא"
                   className={inputClass}
                 />
+              </Field>
+              <Field label="אזור" error={errors.region?.message}>
+                <select {...register("region")} className={inputClass}>
+                  <option value="">לא נבחר</option>
+                  {REGIONS.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
               </Field>
               <Field label="קוד לבוש" error={errors.dress_code?.message}>
                 <input {...register("dress_code")} placeholder="שחור אלגנט" className={inputClass} />

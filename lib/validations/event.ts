@@ -1,4 +1,11 @@
 import { z } from "zod";
+import { REGIONS } from "@/lib/areas";
+
+// "" (no region chosen) -> null; otherwise one of the fixed regions (events_region_check).
+const optionalRegion = z
+  .union([z.literal(""), z.null(), z.enum(REGIONS)])
+  .transform((v) => v || null)
+  .optional();
 
 // Accepts "" (from a plain <input type="number">), null (from a
 // Controller-driven field like base_rate), or a real number, and
@@ -32,6 +39,7 @@ export const createEventSchema = z.object({
   // has actually happened. Left fully optional here on purpose.
   end_time: z.string().optional(),
   location: z.string().min(1, "יש להזין מיקום"),
+  region: optionalRegion,
   notes: z.string().optional(),
   dress_code: z.string().optional(),
   min_age: nullableNumber(z.coerce.number().int().positive("גיל לא תקין")),
@@ -78,6 +86,7 @@ export const editEventDetailsSchema = z.object({
   event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "יש להזין תאריך"),
   start_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "יש להזין שעת התחלה"),
   location: z.string().trim().min(1, "יש להזין מיקום"),
+  region: optionalRegion,
   notes: z.string().optional(),
   dress_code: z.string().optional(),
   min_age: nullableNumber(z.coerce.number().int().positive("גיל לא תקין")),

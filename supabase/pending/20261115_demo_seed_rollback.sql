@@ -23,6 +23,9 @@ BEGIN
   DELETE FROM public.clients WHERE id = ANY(cl);  -- cascades: events -> roles, closures
   DELETE FROM public.profiles WHERE id = ANY(emps);
   DELETE FROM auth.users WHERE id = ANY(emps);
+  -- the seed set areas on the demo sign-in employees EMP1 / EMP2 (empty before D1)
+  UPDATE public.profiles SET city = NULL, region = NULL, role_tags = '{}'
+   WHERE id IN ('52d36bda-8352-4031-b72b-2acbc7d11779', '3d693927-0ce8-4cb6-8c9a-c11d40b2f2a5');
   -- ratings of the demo sign-in users were recalculated by trg_recalc_rating on the deletes above
   RAISE NOTICE 'demo seed removed';
 END $rb$;

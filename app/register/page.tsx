@@ -8,6 +8,7 @@ import { AuthCard } from "@/components/AuthCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isValidIsraeliId } from "@/lib/validations/israeli-id";
 import { readJsonResponse } from "@/lib/http/read-json";
+import { REGIONS } from "@/lib/areas";
 
 // Helper to calculate age dynamically
 const calculateAge = (dob: string): number | null => {
@@ -31,6 +32,8 @@ export default function RegisterPage() {
     birth_date: "",
     phone_number: "",
     gender: "",
+    city: "",
+    region: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -91,6 +94,12 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!form.city.trim() || !form.region) {
+      setError("אנא מלא/י עיר מגורים ואזור.");
+      setLoading(false);
+      return;
+    }
+
     if (form.password.length < 8) {
       setError("הסיסמה חייבת להכיל לפחות 8 תווים.");
       setLoading(false);
@@ -116,6 +125,8 @@ export default function RegisterPage() {
           birth_date: form.birth_date,
           phone_number: form.phone_number,
           gender: form.gender,
+          city: form.city,
+          region: form.region,
         }),
       });
       // Defensive parse: a proxy/redirect/5xx can return HTML or an empty body instead of JSON.
@@ -342,6 +353,36 @@ export default function RegisterPage() {
                 <option value="male">זכר</option>
                 <option value="female">נקבה</option>
                 <option value="other">אחר</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClasses} htmlFor="city">עיר מגורים</label>
+              <input
+                id="city"
+                type="text"
+                required
+                maxLength={80}
+                value={form.city}
+                onChange={(event) => handleChange("city", event.target.value)}
+                className={inputClasses}
+              />
+            </div>
+            <div>
+              <label className={labelClasses} htmlFor="region">אזור עבודה</label>
+              <select
+                id="region"
+                required
+                value={form.region}
+                onChange={(event) => handleChange("region", event.target.value)}
+                className={inputClasses}
+              >
+                <option value="" disabled>בחרו...</option>
+                {REGIONS.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
               </select>
             </div>
           </div>
