@@ -52,6 +52,21 @@ the buyer can specify (their pay rules, branding, accounting format) before the 
 
 Exit: the whole script runs on a phone and a laptop on the production URL with no error and no test data.
 
+## Stage 1b — Feature gaps from the price quote (items 2, 5, 11; owner decision 15 November 2026)
+Needs one migration (owner confirms the exact SQL, runs it in the SQL Editor, then types are regenerated).
+- [ ] [Dev] Quote item 2 — full employee card: add city and region to the employee profile (set at signup, editable
+      by the employee and by staff); show name, tz, phone, age (from `birth_date`), city/region and join date
+      (`profiles.created_at`) on the staff employee card. The Form 101 secure upload part stays in Stage 5: it is blocked
+      for everyone until Admin 2FA exists (AGENTS §8, §11)
+- [ ] [Dev] Quote item 5 — employee portal by area: events get a region; the employee's open-shifts list defaults to
+      their own region with a control to show all regions. Upcoming shifts and shift history already exist (C1)
+- [ ] [Dev] Quote item 11 — search and filters: staff filter employees by city/region and by role tags (the roles a
+      worker does: waiter, bartender, usher...), filter events by region/status/date, and one search box that finds
+      employees, clients and events from the app shell
+- [ ] [Dev] Add city, region and role tags to the demo seed (`supabase/pending/20261115_demo_seed.sql`)
+
+Exit: an employee in the south sees southern shifts first; a manager finds "bartenders in the centre" in two clicks.
+
 ## Stage 2 — Due-diligence package (before signing; ~1 week)
 A buyer's technical reviewer will ask for these. Having them ready shortens the deal and supports the price.
 - [ ] [Dev] Security sweep: Supabase security and performance advisors clean or explained; `npm audit` triaged;
