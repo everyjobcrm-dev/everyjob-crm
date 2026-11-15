@@ -53,6 +53,7 @@ BEGIN
   -- with an aal2 claim the counts unlock; the fixture employee E1 has no documents, so both counts are >= 1
   BEGIN
     PERFORM set_config('request.jwt.claims', json_build_object('sub', A, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+    PERFORM set_config('request.jwt.claim.sub', A::text, true);
     EXECUTE 'SET LOCAL ROLE authenticated';
     SELECT (NOT documents_locked AND missing_form_101 >= 1 AND missing_bank_details >= 1) INTO b FROM public.get_compliance_counts();
     EXECUTE 'RESET ROLE';

@@ -1,3 +1,4 @@
+-- APPLIED 2026-11-15 via Supabase MCP apply_migration (owner instruction in chat); history version 20261115073535. Test results in the PR.
 -- C5: compliance counts for the Admin dashboard ("בקרת מסמכים", spec 7). COUNTS ONLY - no names, ids or document
 -- fields are ever returned.
 --   active_employees        employees not soft-deleted
