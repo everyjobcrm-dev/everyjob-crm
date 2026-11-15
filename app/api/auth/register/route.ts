@@ -1,3 +1,4 @@
+import { LEGAL_VERSION } from "@/lib/legal";
 import { createHash, randomUUID } from "node:crypto";
 import { isRegion } from "@/lib/areas";
 import { createClient } from "@supabase/supabase-js";
@@ -12,6 +13,7 @@ const ALLOWED_GENDERS = new Set(["male", "female", "other"]);
 const GENERIC_DUPLICATE_MESSAGE = "פרטי ההרשמה כבר קיימים במערכת.";
 
 type RegistrationBody = {
+  accepted_terms?: unknown;
   email?: unknown;
   password?: unknown;
   first_name?: unknown;
@@ -118,7 +120,8 @@ async function handleRegistration(request: Request) {
     !PHONE_PATTERN.test(phoneNumber) ||
     !ALLOWED_GENDERS.has(gender) ||
     !city ||
-    !isRegion(region)
+    !isRegion(region) ||
+    body.accepted_terms !== true
   ) {
     return NextResponse.json(
       { success: false, error: "יש לבדוק את כל פרטי ההרשמה." },
@@ -243,6 +246,9 @@ async function handleRegistration(request: Request) {
       birth_date: birthDate,
       city,
       region,
+      // consent evidence (lib/legal.ts): which text version was accepted, at server time
+      terms_version: LEGAL_VERSION,
+      terms_accepted_at: new Date().toISOString(),
     };
 
     console.info("Signup user_metadata payload", {

@@ -39,6 +39,7 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
   
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -112,6 +113,12 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!acceptedTerms) {
+      setError("יש לאשר את תנאי השימוש ומדיניות הפרטיות.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const registrationResponse = await fetch("/api/auth/register", {
         method: "POST",
@@ -127,6 +134,7 @@ export default function RegisterPage() {
           gender: form.gender,
           city: form.city,
           region: form.region,
+          accepted_terms: acceptedTerms,
         }),
       });
       // Defensive parse: a proxy/redirect/5xx can return HTML or an empty body instead of JSON.
@@ -429,6 +437,24 @@ export default function RegisterPage() {
               />
             </div>
           </div>
+
+          <label className="flex items-start gap-3 text-sm text-ink" htmlFor="acceptedTerms">
+            <input
+              id="acceptedTerms"
+              type="checkbox"
+              required
+              checked={acceptedTerms}
+              onChange={(event) => setAcceptedTerms(event.target.checked)}
+              className="mt-0.5 h-5 w-5 shrink-0 accent-ink"
+            />
+            <span>
+              קראתי ואני מסכים/ה ל
+              <Link className="font-semibold underline underline-offset-4" href="/terms" target="_blank">תנאי השימוש</Link>
+              {" "}ול
+              <Link className="font-semibold underline underline-offset-4" href="/privacy" target="_blank">מדיניות הפרטיות</Link>
+              , כולל שמירת הפרטים שמסרתי לצורך שיבוץ ותשלום שכר.
+            </span>
+          </label>
 
           <button
             type="submit"
