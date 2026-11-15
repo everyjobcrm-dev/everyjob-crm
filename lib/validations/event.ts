@@ -25,7 +25,7 @@ export const eventRoleSchema = z.object({
 });
 
 export const createEventSchema = z.object({
-  client_id: z.string().uuid("יש לבחור לקוח"),
+  client_id: z.string({ required_error: "יש לבחור לקוח", invalid_type_error: "יש לבחור לקוח" }).uuid("יש לבחור לקוח"),
   event_date: z.string().min(1, "יש להזין תאריך"),
   start_time: z.string().min(1, "יש להזין שעת התחלה"),
   // Not collected on creation — set later at closeEvent(), once the shift
@@ -73,7 +73,7 @@ export const emptyRole: EventRoleFormValues = {
 // ── edit event (update_event_details / upsert_event_role / remove_event_role, supabase/p9_e_event_edit.sql) ──
 // The RPCs enforce every rule; these schemas only shape input. Same 3-generic useForm split as create (AGENTS.md 5.3).
 export const editEventDetailsSchema = z.object({
-  client_id: z.string().uuid("יש לבחור לקוח"),
+  client_id: z.string({ required_error: "יש לבחור לקוח", invalid_type_error: "יש לבחור לקוח" }).uuid("יש לבחור לקוח"),
   recruiter_id: optionalUuid,
   event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "יש להזין תאריך"),
   start_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "יש להזין שעת התחלה"),
