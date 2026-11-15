@@ -1,3 +1,4 @@
+-- APPLIED 2026-11-15 via Supabase MCP apply_migration (owner instruction in chat); history version 20261114233856. Test results in the PR.
 -- C1: the employee's estimated pay (v_my_monthly_hours) uses the same legal-overtime rule as payroll (B2,
 -- owner decision Q1): per shift, first 8h x1, next 2h x1.25, rest x1.5, times the registration wage_rate.
 -- Before: hours x wage_rate, so the home screen disagreed with /admin/payroll for any shift over 8h.
