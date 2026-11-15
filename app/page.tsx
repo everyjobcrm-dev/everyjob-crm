@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import Image from "next/image";
+import { LegalLinks } from "@/components/ui/legal-page";
 import Link from "next/link";
 import {
   motion,
@@ -312,6 +313,7 @@ export default function Home() {
             </Link>
           </div>
           <p className="mt-20 text-sm text-surface/60">© {new Date().getFullYear()} everyJob · אנשים טובים 770</p>
+          <LegalLinks className="mt-4 justify-center text-surface/80" />
         </div>
       </section>
     </main>

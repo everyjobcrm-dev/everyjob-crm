@@ -1,4 +1,6 @@
+import { LEGAL_VERSION } from "@/lib/legal";
 import { createHash, randomUUID } from "node:crypto";
+import { isRegion } from "@/lib/areas";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { ensureSignupProfile } from "@/lib/auth/ensure-signup-profile";
@@ -11,6 +13,7 @@ const ALLOWED_GENDERS = new Set(["male", "female", "other"]);
 const GENERIC_DUPLICATE_MESSAGE = "פרטי ההרשמה כבר קיימים במערכת.";
 
 type RegistrationBody = {
+  accepted_terms?: unknown;
   email?: unknown;
   password?: unknown;
   first_name?: unknown;
@@ -19,6 +22,8 @@ type RegistrationBody = {
   birth_date?: unknown;
   phone_number?: unknown;
   gender?: unknown;
+  city?: unknown;
+  region?: unknown;
 };
 
 function text(value: unknown): string {
@@ -102,6 +107,8 @@ async function handleRegistration(request: Request) {
   const birthDate = text(body.birth_date);
   const phoneNumber = text(body.phone_number);
   const gender = text(body.gender).toLowerCase();
+  const city = text(body.city).slice(0, 80);
+  const region = text(body.region);
 
   if (
     !EMAIL_PATTERN.test(email) ||
@@ -111,7 +118,10 @@ async function handleRegistration(request: Request) {
     !isValidIsraeliId(tz) ||
     !birthDate ||
     !PHONE_PATTERN.test(phoneNumber) ||
-    !ALLOWED_GENDERS.has(gender)
+    !ALLOWED_GENDERS.has(gender) ||
+    !city ||
+    !isRegion(region) ||
+    body.accepted_terms !== true
   ) {
     return NextResponse.json(
       { success: false, error: "יש לבדוק את כל פרטי ההרשמה." },
@@ -234,6 +244,11 @@ async function handleRegistration(request: Request) {
       gender,
       phone_number: phoneNumber,
       birth_date: birthDate,
+      city,
+      region,
+      // consent evidence (lib/legal.ts): which text version was accepted, at server time
+      terms_version: LEGAL_VERSION,
+      terms_accepted_at: new Date().toISOString(),
     };
 
     console.info("Signup user_metadata payload", {

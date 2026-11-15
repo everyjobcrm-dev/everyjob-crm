@@ -8,6 +8,7 @@ import { ROLE_LABEL } from "@/lib/nav";
 import { isAppRole } from "@/lib/auth/permissions";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { AreaForm } from "@/components/employee/AreaForm";
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth();
@@ -30,6 +31,19 @@ export default function ProfilePage() {
 
   const [loggingOut, setLoggingOut] = useState(false);
   const [pendingCredits, setPendingCredits] = useState({ count: 0, amount: 0 });
+  const [area, setArea] = useState<{ city: string | null; region: string | null; roleTags: string[] } | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+    supabase
+      .from("profiles")
+      .select("city, region, role_tags")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setArea({ city: data?.city ?? null, region: data?.region ?? null, roleTags: data?.role_tags ?? [] }));
+  }, [user?.id]);
 
   useEffect(() => {
     if (profile?.role !== "recruiter" || !user?.id) return;
@@ -80,6 +94,12 @@ export default function ProfilePage() {
           <p className="text-sm text-muted">{isAppRole(profile?.role) ? ROLE_LABEL[profile.role] : ""}</p>
         </div>
       </header>
+
+      <section className="card mb-4 p-5">
+        <h2 className="mb-1 font-semibold text-ink">אזור ותפקידים</h2>
+        <p className="mb-4 text-sm text-muted">משמרות באזור שלך יוצגו לך ראשונות.</p>
+        {area ? <AreaForm initial={area} /> : <p className="text-sm text-muted">טוען...</p>}
+      </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <section className="flex items-center justify-between card p-5">

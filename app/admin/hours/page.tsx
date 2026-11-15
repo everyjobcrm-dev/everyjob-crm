@@ -17,3 +17,5 @@ export default async function AdminHoursPage() {
     </div>
   );
 }
+
+export const metadata = { title: "אישור שעות" };

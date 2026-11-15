@@ -72,6 +72,7 @@ export type AdminEvent = {
   id: string;
   clientName: string;
   location: string;
+  region: string | null;
   eventDate: string;
   startTime: string;
   endTime: string | null; // unknown until closure
@@ -117,6 +118,7 @@ type RawEventClosure = {
 type RawEventRow = {
   id: string;
   location: string;
+  region: string | null;
   event_date: string;
   start_time: string;
   status: EventStatus;
@@ -136,7 +138,7 @@ export async function fetchEvents(): Promise<AdminEvent[]> {
   const { data: events, error } = await auth.supabase
     .from("events")
     .select(
-      `id, location, event_date, start_time, status, cancelled_from_status, recruiter_id, min_rating, travel_budget_per_worker,
+      `id, location, region, event_date, start_time, status, cancelled_from_status, recruiter_id, min_rating, travel_budget_per_worker,
       clients ( name ),
       event_roles ( id, role_name, headcount, base_rate ),
       event_closures ( total_hours_reported, travel_paid_to_workers, travel_charged_to_client, actual_income, actual_expense )`,
@@ -162,6 +164,7 @@ export async function fetchEvents(): Promise<AdminEvent[]> {
       id: e.id,
       clientName: e.clients?.name ?? "לקוח לא ידוע",
       location: e.location,
+      region: e.region,
       eventDate: e.event_date,
       startTime: e.start_time,
       endTime: null, // events has no end_time; derive MAX(event_roles.end_time) when needed
@@ -252,6 +255,7 @@ export async function createEvent(
       event_date: event.event_date,
       start_time: event.start_time,
       location: event.location,
+      region: event.region ?? null,
       notes: event.notes || null,
       dress_code: event.dress_code || null,
       min_age: event.min_age ?? null,
@@ -319,6 +323,7 @@ export type EditableEvent = {
   eventDate: string;
   startTime: string;
   location: string;
+  region: string | null;
   notes: string | null;
   dressCode: string | null;
   minAge: number | null;
@@ -348,7 +353,7 @@ export async function fetchEventForEdit(eventId: string): Promise<EditEventPageD
   const { data: ev } = await auth.supabase
     .from("events")
     .select(
-      "id, status, client_id, recruiter_id, event_date, start_time, location, notes, dress_code, min_age, min_rating, travel_budget_per_worker",
+      "id, status, client_id, recruiter_id, event_date, start_time, location, region, notes, dress_code, min_age, min_rating, travel_budget_per_worker",
     )
     .eq("id", eventId)
     .maybeSingle();
@@ -396,6 +401,7 @@ export async function fetchEventForEdit(eventId: string): Promise<EditEventPageD
       eventDate: ev.event_date,
       startTime: (ev.start_time ?? "").slice(0, 5),
       location: ev.location,
+      region: ev.region,
       notes: ev.notes,
       dressCode: ev.dress_code,
       minAge: ev.min_age,
@@ -445,6 +451,7 @@ export async function updateEventDetails(eventId: string, input: EditEventDetail
 
   const patch: Record<string, string | number | null> = {
     location: d.location,
+    region: d.region ?? null,
     event_date: d.event_date,
     start_time: d.start_time,
     notes: d.notes ?? "",

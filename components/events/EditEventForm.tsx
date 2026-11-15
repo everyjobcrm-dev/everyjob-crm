@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
+import { REGIONS } from "@/lib/areas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle, Check, Plus, Trash2 } from "lucide-react";
 import {
@@ -89,6 +90,7 @@ function DetailsForm({
       event_date: event.eventDate,
       start_time: event.startTime,
       location: event.location,
+      region: (event.region ?? "") as EditEventDetailsFormValues["region"],
       notes: event.notes ?? "",
       dress_code: event.dressCode ?? "",
       min_age: event.minAge ?? "",
@@ -157,6 +159,16 @@ function DetailsForm({
         <Field label="מיקום" error={errors.location?.message}>
           <input {...register("location")} className={inputClass} />
         </Field>
+          <Field label="אזור" error={errors.region?.message}>
+            <select {...register("region")} className={inputClass}>
+              <option value="">לא נבחר</option>
+              {REGIONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </Field>
         <Field label="קוד לבוש" error={errors.dress_code?.message}>
           <input {...register("dress_code")} className={inputClass} />
         </Field>

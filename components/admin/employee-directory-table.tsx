@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { updateUserRole, approveForm101, setRecruitedBy, softDeleteUser, restoreUser } from "@/app/admin/actions";
 import { approveEmployee } from "@/app/manager/actions";
+import { EmployeeCard, type EmployeeCardData } from "@/components/admin/employee-card";
 
 export type AdminEmployee = {
   id: string;
@@ -19,6 +20,8 @@ export type AdminEmployee = {
   approvalStatus: "pending" | "approved" | "rejected" | null;
   /** profiles.deleted_at (p10c); set = soft-deleted. */
   deletedAt: string | null;
+  /** Staff employee card (quote item 2). */
+  card: EmployeeCardData;
 };
 
 const ROLE_LABEL: Record<AdminEmployee["role"], string> = {
@@ -50,6 +53,7 @@ export function EmployeeDirectoryTable({
   const [isPending, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function run(id: string, action: () => Promise<{ success: boolean; error?: string }>) {
@@ -93,13 +97,21 @@ export function EmployeeDirectoryTable({
             {employees.map((emp) => {
               const busy = isPending && pendingId === emp.id;
               const deleted = emp.deletedAt != null;
+              const cardOpen = openCardId === emp.id;
               return (
+                <Fragment key={emp.id}>
                 <tr
-                  key={emp.id}
                   className={`max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:gap-y-3 max-sm:p-4 ${busy ? "opacity-50" : deleted ? "opacity-60" : ""}`}
                 >
                   <td className="px-4 py-3.5 max-sm:p-0 font-semibold text-ink">
-                    {emp.name}
+                    <button
+                      type="button"
+                      aria-expanded={cardOpen}
+                      onClick={() => setOpenCardId(cardOpen ? null : emp.id)}
+                      className="text-start font-semibold text-ink underline-offset-4 hover:underline"
+                    >
+                      {emp.name}
+                    </button>
                     {deleted && (
                       <span className="ms-2 rounded-sm bg-rose-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-rose-700">
                         מחוק/ה
@@ -246,6 +258,14 @@ export function EmployeeDirectoryTable({
                     )}
                   </td>
                 </tr>
+                {cardOpen && (
+                  <tr className="max-sm:block">
+                    <td colSpan={9} className="bg-canvas px-4 py-5 max-sm:block">
+                      <EmployeeCard employee={emp.card} editable={!deleted} />
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               );
             })}
             {employees.length === 0 && (

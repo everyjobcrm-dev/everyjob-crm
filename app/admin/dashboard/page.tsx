@@ -74,3 +74,5 @@ export default async function AdminDashboardPage() {
     </div>
   );
 }
+
+export const metadata = { title: "לוח בקרה" };

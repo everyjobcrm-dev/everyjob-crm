@@ -98,3 +98,5 @@ export default async function AdminRecruitersPage({ searchParams }: { searchPara
     </div>
   );
 }
+
+export const metadata = { title: "מגייסים" };

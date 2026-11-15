@@ -21,9 +21,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+const DESCRIPTION = "everyJob מחברת בין אנשים טובים לעבודה טובה ולצוותים מנצחים.";
+
 export const metadata: Metadata = {
-  title: "everyJob | אנשים טובים, משמרות טובות",
-  description: "everyJob מחברת בין אנשים טובים לעבודה טובה ולצוותים מנצחים.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: "everyJob | אנשים טובים, משמרות טובות", template: "%s | everyJob" },
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "he_IL",
+    siteName: "everyJob",
+    title: "everyJob | אנשים טובים, משמרות טובות",
+    description: DESCRIPTION,
+    images: [{ url: "/images/everyJob-logo.png", width: 738, height: 411, alt: "everyJob" }],
+  },
 };
 
 export default function RootLayout({

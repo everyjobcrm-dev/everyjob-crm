@@ -101,3 +101,5 @@ export default async function AdminPayrollPage({ searchParams }: { searchParams:
     </div>
   );
 }
+
+export const metadata = { title: "שכר" };
