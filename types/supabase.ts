@@ -2296,6 +2296,48 @@ export type Database = {
           },
         ]
       }
+      v_recruiter_credits_monthly: {
+        Row: {
+          earned_amount: number | null
+          earned_count: number | null
+          month: string | null
+          pending_amount: number | null
+          pending_count: number | null
+          recruiter_id: string | null
+          redeemed_amount: number | null
+          redeemed_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_bonuses_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "v_shift_submissions_dashboard"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       v_recruiter_pending_credits: {
         Row: {
           oldest_pending_at: string | null
@@ -2413,6 +2455,14 @@ export type Database = {
         Args: { p_event_date: string }
         Returns: string
       }
+      app_notification_event_payload: {
+        Args: { p_event_id: string }
+        Returns: Json
+      }
+      app_notify: {
+        Args: { p_payload: Json; p_type: string; p_user_id: string }
+        Returns: undefined
+      }
       app_registration_initial_status: {
         Args: { p_event_role_id: string; p_uid: string }
         Returns: Database["public"]["Enums"]["registration_status"]
@@ -2511,6 +2561,17 @@ export type Database = {
         }[]
       }
       get_clients_admin: { Args: { p_client_id?: string }; Returns: Json[] }
+      get_compliance_counts: {
+        Args: never
+        Returns: {
+          active_employees: number
+          documents_locked: boolean
+          duplicate_tz_groups: number
+          duplicate_tz_profiles: number
+          missing_bank_details: number
+          missing_form_101: number
+        }[]
+      }
       get_employee_detail: {
         Args: { p_employee_id: string }
         Returns: {
