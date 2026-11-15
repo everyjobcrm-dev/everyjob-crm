@@ -1,3 +1,4 @@
+-- APPLIED 2026-11-15 via Supabase MCP apply_migration (owner instruction in chat); history version 20261115073245. Test results in the PR.
 -- C2: recruitment credits per recruiter and month, for the Admin overview (/admin/recruiters) - AGENTS 5.1:
 -- derived totals live in a view. Month = the month the credit was created (hours approved), Asia/Jerusalem.
 -- Voided credits are excluded. 'applied' = redeemed (redeem_recruiter_credits).

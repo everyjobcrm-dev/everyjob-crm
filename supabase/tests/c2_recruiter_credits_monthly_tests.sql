@@ -69,7 +69,7 @@ BEGIN
      format('SELECT count(*)::text FROM public.v_recruiter_credits_monthly WHERE recruiter_id IN (%L, %L)', M, E2), 'ok', '2');
   v_res := v_res || pg_temp.t('employee sees nothing', E1,
      format('SELECT count(*)::text FROM public.v_recruiter_credits_monthly WHERE recruiter_id IN (%L, %L)', M, E2), 'ok', '0');
-  v_res := v_res || pg_temp.t('view is read-only', A, 'DELETE FROM public.v_recruiter_credits_monthly RETURNING 1', 'permission denied');
+  v_res := v_res || pg_temp.t('view is read-only', A, 'DELETE FROM public.v_recruiter_credits_monthly RETURNING 1', 'cannot delete from view');
   SELECT NOT has_table_privilege('anon', 'public.v_recruiter_credits_monthly', 'SELECT') INTO b;
   v_res := v_res || jsonb_build_object('t', 'anon has no SELECT', 'r', CASE WHEN b THEN 'PASS' ELSE 'FAIL' END, 'got', b::text);
 
