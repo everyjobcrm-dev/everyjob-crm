@@ -54,16 +54,20 @@ Exit: the whole script runs on a phone and a laptop on the production URL with n
 
 ## Stage 1b — Feature gaps from the price quote (items 2, 5, 11; owner decision 15 November 2026)
 Needs one migration (owner confirms the exact SQL, runs it in the SQL Editor, then types are regenerated).
-- [ ] [Dev] Quote item 2 — full employee card: add city and region to the employee profile (set at signup, editable
+- [x] [Dev] Quote item 2 — full employee card: add city and region to the employee profile (set at signup, editable
       by the employee and by staff); show name, tz, phone, age (from `birth_date`), city/region and join date
       (`profiles.created_at`) on the staff employee card. The Form 101 secure upload part stays in Stage 5: it is blocked
       for everyone until Admin 2FA exists (AGENTS §8, §11)
-- [ ] [Dev] Quote item 5 — employee portal by area: events get a region; the employee's open-shifts list defaults to
+- [x] [Dev] Quote item 5 — employee portal by area: events get a region; the employee's open-shifts list defaults to
       their own region with a control to show all regions. Upcoming shifts and shift history already exist (C1)
-- [ ] [Dev] Quote item 11 — search and filters: staff filter employees by city/region and by role tags (the roles a
+- [x] [Dev] Quote item 11 — search and filters: staff filter employees by city/region and by role tags (the roles a
       worker does: waiter, bartender, usher...), filter events by region/status/date, and one search box that finds
       employees, clients and events from the app shell
-- [ ] [Dev] Add city, region and role tags to the demo seed (`supabase/pending/20261115_demo_seed.sql`)
+- [x] [Dev] Add city, region and role tags to the demo seed (`supabase/pending/20261115_demo_seed.sql`)
+
+Done 2026-11-15: migration D1 `20261115150000_d1_area_search` applied, demo seed applied; verified in the browser as
+Manager (bartenders in the centre = 4, card edit, shell search, event filters, own-region default). Not verified: signup
+form end-to-end, Admin `/admin/employees` card, recruiter view.
 
 Exit: an employee in the south sees southern shifts first; a manager finds "bartenders in the centre" in two clicks.
 
