@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getUserRole } from "@/lib/supabase/auth";
 
-const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password"];
+const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password", "/privacy", "/terms", "/accessibility"];
 const ADMIN_PREFIX = "/admin";
 const MANAGER_PREFIX = "/manager";
 const EMPLOYEE_PREFIX = "/employee";

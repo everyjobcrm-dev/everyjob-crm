@@ -28,6 +28,7 @@ export type EmployeeEvent = {
   location: string;
   eventDate: string;
   notes: string | null;
+  region: string | null;
   roles: EmployeeEventRole[];
 };
 
@@ -49,6 +50,7 @@ type RawEvent = {
   location: string;
   event_date: string;
   notes: string | null;
+  region: string | null;
   min_age: number | null;
   min_rating: number | null;
   clients: { name: string } | null;
@@ -98,7 +100,7 @@ export async function fetchEligibleEvents(): Promise<EmployeeEvent[]> {
   const { data: events, error } = await supabase
     .from("events")
     .select(
-      `id, location, event_date, notes, min_age, min_rating,
+      `id, location, event_date, notes, region, min_age, min_rating,
        clients ( name ),
        event_roles ( id, role_name, headcount, start_time, end_time, base_rate )`
     )
@@ -155,6 +157,7 @@ export async function fetchEligibleEvents(): Promise<EmployeeEvent[]> {
       location: event.location,
       eventDate: event.event_date,
       notes: event.notes,
+      region: event.region,
       roles: (event.event_roles ?? [])
         .filter((role): role is RawRole & { base_rate: number } => role.base_rate != null)
         .map((role) => {

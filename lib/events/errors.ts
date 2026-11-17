@@ -30,6 +30,7 @@ const BY_MESSAGE: ReadonlyArray<readonly [string, string]> = [
   ["not_eligible: age", "לא ניתן להירשם: יש לעדכן תאריך לידה ולעמוד בגיל המינימלי לאירוע."],
   ["not_eligible: rating", "לא ניתן להירשם: הדירוג שלך נמוך מהדירוג המינימלי לאירוע."],
   ["not_eligible: role_skill", "לא ניתן להירשם: הרשאת התפקיד שלך עדיין לא הוגדרה במערכת."],
+  ["not_eligible: overlap", "לא ניתן להירשם: כבר יש לך משמרת אחרת באותן שעות."],
   ["not_eligible: account_not_approved", "החשבון שלך עדיין ממתין לאישור הצוות. ההרשמה למשמרות תיפתח לאחר האישור."],
   ["not_eligible: previously_rejected", "בקשתך להשתתף באירוע זה נדחתה בעבר ולכן לא ניתן להירשם שוב."],
   ["not_eligible: previously_removed", "הוסרת מאירוע זה על ידי הצוות ולכן לא ניתן להירשם שוב. פנה/י למנהל/ת."],
@@ -69,7 +70,7 @@ const BY_MESSAGE: ReadonlyArray<readonly [string, string]> = [
   ["hours_already_approved", "דוח השעות כבר אושר. כדי לתקן יש לבטל אותו תחילה (אדמין)."],
   ["submission_not_found", "דוח השעות לא נמצא."],
   ["invalid_submission_transition", "לא ניתן לבצע פעולה זו על דוח השעות במצבו הנוכחי."],
-  ["self_review", "לא ניתן לאשר או לדחות שעות שעבדת בעצמך."],
+  ["self_review", "לא ניתן לדחות שעות שעבדת בעצמך."],
   ["credit_already_applied", "לא ניתן לבטל: זיכוי הגיוס עבור שעות אלה כבר מומש."],
   // recruitment-credit redemption (redeem_recruiter_credits)
   ["invalid_count", "יש לבחור מספר זיכויים חיובי."],

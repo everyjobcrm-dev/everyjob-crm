@@ -63,3 +63,5 @@ export default async function EditEventPage({ params }: Props) {
     </div>
   );
 }
+
+export const metadata = { title: "עריכת אירוע" };

@@ -1,4 +1,11 @@
 import { z } from "zod";
+import { REGIONS } from "@/lib/areas";
+
+// "" (no region chosen) -> null; otherwise one of the fixed regions (events_region_check).
+const optionalRegion = z
+  .union([z.literal(""), z.null(), z.enum(REGIONS)])
+  .transform((v) => v || null)
+  .optional();
 
 // Accepts "" (from a plain <input type="number">), null (from a
 // Controller-driven field like base_rate), or a real number, and
@@ -25,13 +32,14 @@ export const eventRoleSchema = z.object({
 });
 
 export const createEventSchema = z.object({
-  client_id: z.string().uuid("יש לבחור לקוח"),
+  client_id: z.string({ required_error: "יש לבחור לקוח", invalid_type_error: "יש לבחור לקוח" }).uuid("יש לבחור לקוח"),
   event_date: z.string().min(1, "יש להזין תאריך"),
   start_time: z.string().min(1, "יש להזין שעת התחלה"),
   // Not collected on creation — set later at closeEvent(), once the shift
   // has actually happened. Left fully optional here on purpose.
   end_time: z.string().optional(),
   location: z.string().min(1, "יש להזין מיקום"),
+  region: optionalRegion,
   notes: z.string().optional(),
   dress_code: z.string().optional(),
   min_age: nullableNumber(z.coerce.number().int().positive("גיל לא תקין")),
@@ -73,11 +81,12 @@ export const emptyRole: EventRoleFormValues = {
 // ── edit event (update_event_details / upsert_event_role / remove_event_role, supabase/p9_e_event_edit.sql) ──
 // The RPCs enforce every rule; these schemas only shape input. Same 3-generic useForm split as create (AGENTS.md 5.3).
 export const editEventDetailsSchema = z.object({
-  client_id: z.string().uuid("יש לבחור לקוח"),
+  client_id: z.string({ required_error: "יש לבחור לקוח", invalid_type_error: "יש לבחור לקוח" }).uuid("יש לבחור לקוח"),
   recruiter_id: optionalUuid,
   event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "יש להזין תאריך"),
   start_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "יש להזין שעת התחלה"),
   location: z.string().trim().min(1, "יש להזין מיקום"),
+  region: optionalRegion,
   notes: z.string().optional(),
   dress_code: z.string().optional(),
   min_age: nullableNumber(z.coerce.number().int().positive("גיל לא תקין")),

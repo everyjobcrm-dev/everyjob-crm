@@ -10,6 +10,7 @@ import {
   type UseFormRegister,
   type FieldErrors,
 } from "react-hook-form";
+import { REGIONS } from "@/lib/areas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -60,6 +61,7 @@ export function CreateEventForm({
       event_date: "",
       start_time: "18:00",
       location: "",
+      region: "",
       notes: "",
       dress_code: "",
       min_rating: undefined,
@@ -205,6 +207,16 @@ export function CreateEventForm({
                   className={inputClass}
                 />
               </Field>
+              <Field label="אזור" error={errors.region?.message}>
+                <select {...register("region")} className={inputClass}>
+                  <option value="">לא נבחר</option>
+                  {REGIONS.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </Field>
               <Field label="קוד לבוש" error={errors.dress_code?.message}>
                 <input {...register("dress_code")} placeholder="שחור אלגנט" className={inputClass} />
               </Field>
@@ -285,6 +297,12 @@ export function CreateEventForm({
                   </motion.div>
                 ))}
               </AnimatePresence>
+              {/* names from the client's price list, so the DB price trigger matches them */}
+              <datalist id="client-role-names">
+                {(clients.find((c) => c.id === clientId)?.preferredRoles ?? []).map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
             </div>
 
             <button
@@ -394,6 +412,7 @@ function RoleRow({
         <div className="flex-1">
           <input
             {...register(`roles.${index}.role_name` as const)}
+            list="client-role-names"
             placeholder="שם התפקיד (למשל: ברמנית)"
             className={`${inputClass} font-semibold`}
           />

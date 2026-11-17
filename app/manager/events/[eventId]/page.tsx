@@ -167,3 +167,5 @@ export default async function ManagerEventDetailsPage({ params }: Props) {
     </div>
   );
 }
+
+export const metadata = { title: "פרטי אירוע" };

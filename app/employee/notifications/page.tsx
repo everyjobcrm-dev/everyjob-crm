@@ -13,6 +13,13 @@ const TITLE: Record<string, string> = {
   event_cancelled: "האירוע בוטל",
   event_time_changed: "מועד המשמרת השתנה",
   hours_approved: "דוח השעות שלך אושר",
+  hours_rejected: "דוח השעות שלך נדחה",
+  registration_promoted: "התפנה מקום: עברת מרשימת ההמתנה",
+  registration_cancellation_approved: "בקשת הביטול שלך אושרה",
+  registration_cancellation_dismissed: "בקשת הביטול שלך נדחתה",
+  staff_new_registration: "נרשם/ה עובד/ת חדש/ה",
+  staff_cancellation_request: "בקשת ביטול חדשה",
+  announcement: "הודעה מהמשרד",
 };
 
 const stamp = new Intl.DateTimeFormat("he-IL", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Jerusalem" });
@@ -29,7 +36,11 @@ function detail(n: MyNotification): string {
     else if ("role_start_time" in p)
       extra = `שעות התפקיד: ${hhmm(p.role_start_time) ?? "-"}–${hhmm(p.role_end_time) ?? "-"}`;
   }
-  if (n.type === "hours_approved" && p.hours != null) extra = `${p.hours} שעות`;
+  if (n.type === "announcement") return [p.title, p.body].filter(Boolean).join(" · ");
+  if ((n.type === "hours_approved" || n.type === "hours_rejected") && p.hours != null) extra = `${p.hours} שעות`;
+  if (n.type === "hours_rejected" && p.reason) extra = [extra, `סיבה: ${p.reason}`].filter(Boolean).join(" · ");
+  if (n.type === "registration_promoted") extra = p.status === "approved" ? "שובצת" : "ממתין/ה לאישור הצוות";
+  if (n.type.startsWith("staff_") && p.employee_name) extra = String(p.employee_name);
   return [parts.join(" · "), extra].filter(Boolean).join(" · ");
 }
 
@@ -70,3 +81,5 @@ export default async function NotificationsPage() {
     </div>
   );
 }
+
+export const metadata = { title: "התראות" };

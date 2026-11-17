@@ -1,5 +1,4 @@
 import { AlertTriangle, MapPin, Users, Clock } from "lucide-react";
-import { FinancialClosureSummary, type ClosureFinancials } from "@/components/admin/financial-closure-summary";
 
 export type HistoryRole = {
   id: string;
@@ -20,7 +19,6 @@ export type HistoryEvent = {
   endTime: string | null;
   status: "pending_rates" | "open" | "closed" | "cancelled" | "completed";
   roles: HistoryRole[];
-  closure?: ClosureFinancials | null;
 };
 
 const STATUS_LABEL: Record<HistoryEvent["status"], string> = {
@@ -101,12 +99,6 @@ export function EventHistoryCard({ event, tilt = 0 }: { event: HistoryEvent; til
           >
             השלמת תעריפים
           </a>
-        </div>
-      )}
-
-      {event.status === "completed" && event.closure && (
-        <div className="mt-4">
-          <FinancialClosureSummary closure={event.closure} />
         </div>
       )}
     </div>

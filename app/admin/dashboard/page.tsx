@@ -17,9 +17,9 @@ export default async function AdminDashboardPage() {
   const todayStr = today.toISOString().slice(0, 10);
   const weekStr = weekFromNow.toISOString().slice(0, 10);
 
-  const [{ count: activeEmployees }, { count: pendingForms }, { count: upcomingEvents }] = await Promise.all([
-    supabase.from("profiles").select("id", { count: "exact", head: true }).in("role", ["employee", "recruiter"]),
-    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("form_101_status", "pending"),
+  // Form 101 counts live in "בקרת מסמכים" below (get_compliance_counts); profiles has no form_101_status column.
+  const [{ count: activeEmployees }, { count: upcomingEvents }] = await Promise.all([
+    supabase.from("profiles").select("id", { count: "exact", head: true }).in("role", ["employee", "recruiter"]).is("deleted_at", null),
     supabase
       .from("events")
       .select("id", { count: "exact", head: true })
@@ -32,7 +32,6 @@ export default async function AdminDashboardPage() {
 
   const metrics = [
     { label: "עובדים פעילים", value: activeEmployees ?? 0 },
-    { label: "טפסי 101 ממתינים לאישור", value: pendingForms ?? 0 },
     { label: "אירועים השבוע", value: upcomingEvents ?? 0 },
   ];
 
@@ -74,3 +73,5 @@ export default async function AdminDashboardPage() {
     </div>
   );
 }
+
+export const metadata = { title: "לוח בקרה" };

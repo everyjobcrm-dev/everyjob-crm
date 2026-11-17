@@ -8,6 +8,7 @@ import { AuthCard } from "@/components/AuthCard";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isValidIsraeliId } from "@/lib/validations/israeli-id";
 import { readJsonResponse } from "@/lib/http/read-json";
+import { REGIONS } from "@/lib/areas";
 
 // Helper to calculate age dynamically
 const calculateAge = (dob: string): number | null => {
@@ -31,11 +32,14 @@ export default function RegisterPage() {
     birth_date: "",
     phone_number: "",
     gender: "",
+    city: "",
+    region: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
   
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -91,6 +95,12 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!form.city.trim() || !form.region) {
+      setError("אנא מלא/י עיר מגורים ואזור.");
+      setLoading(false);
+      return;
+    }
+
     if (form.password.length < 8) {
       setError("הסיסמה חייבת להכיל לפחות 8 תווים.");
       setLoading(false);
@@ -99,6 +109,12 @@ export default function RegisterPage() {
 
     if (form.password !== form.confirmPassword) {
       setError("הסיסמאות אינן תואמות. אנא נסה שוב.");
+      setLoading(false);
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError("יש לאשר את תנאי השימוש ומדיניות הפרטיות.");
       setLoading(false);
       return;
     }
@@ -116,6 +132,9 @@ export default function RegisterPage() {
           birth_date: form.birth_date,
           phone_number: form.phone_number,
           gender: form.gender,
+          city: form.city,
+          region: form.region,
+          accepted_terms: acceptedTerms,
         }),
       });
       // Defensive parse: a proxy/redirect/5xx can return HTML or an empty body instead of JSON.
@@ -346,6 +365,36 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClasses} htmlFor="city">עיר מגורים</label>
+              <input
+                id="city"
+                type="text"
+                required
+                maxLength={80}
+                value={form.city}
+                onChange={(event) => handleChange("city", event.target.value)}
+                className={inputClasses}
+              />
+            </div>
+            <div>
+              <label className={labelClasses} htmlFor="region">אזור עבודה</label>
+              <select
+                id="region"
+                required
+                value={form.region}
+                onChange={(event) => handleChange("region", event.target.value)}
+                className={inputClasses}
+              >
+                <option value="" disabled>בחרו...</option>
+                {REGIONS.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div>
             <label className={labelClasses} htmlFor="email">אימייל</label>
             <input
@@ -388,6 +437,24 @@ export default function RegisterPage() {
               />
             </div>
           </div>
+
+          <label className="flex items-start gap-3 text-sm text-ink" htmlFor="acceptedTerms">
+            <input
+              id="acceptedTerms"
+              type="checkbox"
+              required
+              checked={acceptedTerms}
+              onChange={(event) => setAcceptedTerms(event.target.checked)}
+              className="mt-0.5 h-5 w-5 shrink-0 accent-ink"
+            />
+            <span>
+              קראתי ואני מסכים/ה ל
+              <Link className="font-semibold underline underline-offset-4" href="/terms" target="_blank">תנאי השימוש</Link>
+              {" "}ול
+              <Link className="font-semibold underline underline-offset-4" href="/privacy" target="_blank">מדיניות הפרטיות</Link>
+              , כולל שמירת הפרטים שמסרתי לצורך שיבוץ ותשלום שכר.
+            </span>
+          </label>
 
           <button
             type="submit"

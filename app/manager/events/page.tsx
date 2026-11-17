@@ -7,10 +7,12 @@ import { fetchRecruiterOptions } from "@/app/admin/actions";
 import { EVENT_STATUS_LABEL, EVENT_STATUS_STYLE, isEventStatus } from "@/lib/events/status";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatEventDate } from "@/lib/format";
+import { EventFilters, hasEventFilters, matchesEventFilters, type EventFilterValues } from "@/components/events/EventFilters";
 
 type EventItem = {
   id: string;
   location: string;
+  region: string | null;
   event_date: string;
   status: string;
   clientName: string;
@@ -31,7 +33,8 @@ function jerusalemToday(): string {
 
 // Staff events list. Admin / Manager: every event. Recruiter: only events they own (events.recruiter_id).
 // Staffing numbers are derived from the event_role_fill_counts view (pending + approved), never stored.
-export default async function ManagerEventsPage() {
+export default async function ManagerEventsPage({ searchParams }: { searchParams: Promise<EventFilterValues> }) {
+  const f = await searchParams;
   const ctx = await getAuthContext();
   if (!ctx.ok) redirect(ctx.reason === "unauthenticated" ? "/login" : "/employee/dashboard");
   if (!roleAtLeast(ctx.role, "recruiter")) redirect("/employee/dashboard");
@@ -40,7 +43,7 @@ export default async function ManagerEventsPage() {
 
   let query = supabase
     .from("events")
-    .select("id, location, event_date, status, recruiter_id, clients(name)")
+    .select("id, location, region, event_date, status, recruiter_id, clients(name)")
     .order("event_date", { ascending: true });
   if (isRecruiter) query = query.eq("recruiter_id", ctx.userId);
   const { data: events, error } = await query;
@@ -84,7 +87,7 @@ export default async function ManagerEventsPage() {
     const t = totals.get(e.id) ?? { filled: 0, headcount: 0 };
     const counts = countsByEvent.get(e.id) ?? { pending: 0, waitlisted: 0, requests: 0 };
     const recruiterName = isRecruiter ? null : e.recruiter_id ? (recruiterNameById.get(e.recruiter_id) ?? "מגייס/ת") : "ללא מגייס/ת";
-    return { id: e.id, location: e.location, event_date: e.event_date, status: e.status, clientName, recruiterName, ...t, ...counts };
+    return { id: e.id, location: e.location, region: e.region, event_date: e.event_date, status: e.status, clientName, recruiterName, ...t, ...counts };
   });
 
   const today = jerusalemToday();
@@ -110,6 +113,15 @@ export default async function ManagerEventsPage() {
 
       {error && <p className="text-sm text-rose-700">טעינת האירועים נכשלה.</p>}
 
+      <EventFilters action="/manager/events" values={f} />
+
+      {hasEventFilters(f) ? (
+        <EventGrid
+          items={items.filter((e) => matchesEventFilters({ ...e, eventDate: e.event_date }, f))}
+          empty="לא נמצאו אירועים התואמים לסינון."
+        />
+      ) : (
+        <>
       <EventGrid items={upcoming} empty="אין אירועים קרובים." />
 
       {past.length > 0 && (
@@ -130,6 +142,8 @@ export default async function ManagerEventsPage() {
             <EventGrid items={archived} empty="" />
           </div>
         </details>
+      )}
+        </>
       )}
     </div>
   );
@@ -157,7 +171,10 @@ function EventGrid({ items, empty }: { items: EventItem[]; empty: string }) {
               )}
             </div>
             <h3 className="mt-1 font-display text-lg text-ink">{event.location}</h3>
-            <p className="text-xs text-muted">{formatEventDate(event.event_date)}</p>
+            <p className="text-xs text-muted">
+              {formatEventDate(event.event_date)}
+              {event.region && <span className="ms-2 font-semibold text-sky-deep">{event.region}</span>}
+            </p>
             {event.recruiterName && <p className="mt-1 text-xs text-muted">מגייס/ת: {event.recruiterName}</p>}
             {(event.requests > 0 || event.pending > 0 || event.waitlisted > 0) && (
               <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
@@ -184,3 +201,5 @@ function EventGrid({ items, empty }: { items: EventItem[]; empty: string }) {
     </div>
   );
 }
+
+export const metadata = { title: "אירועים" };

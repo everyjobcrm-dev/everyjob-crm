@@ -460,7 +460,7 @@ export default function Form101Page() {
                   <input
                     value={form.employerName}
                     onChange={(event) => handleChange("employerName", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("שם המעסיק") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("שם המעסיק") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -468,7 +468,7 @@ export default function Form101Page() {
                   <input
                     value={form.employerTaxFileNumber}
                     onChange={(event) => handleChange("employerTaxFileNumber", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("מספר תיק ניכויים") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("מספר תיק ניכויים") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
               </div>
@@ -482,7 +482,7 @@ export default function Form101Page() {
                   <input
                     value={form.firstName}
                     onChange={(event) => handleChange("firstName", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("שם פרטי") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("שם פרטי") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -490,7 +490,7 @@ export default function Form101Page() {
                   <input
                     value={form.lastName}
                     onChange={(event) => handleChange("lastName", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("שם משפחה") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("שם משפחה") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -498,7 +498,7 @@ export default function Form101Page() {
                   <input
                     value={form.identityNumber}
                     onChange={(event) => handleChange("identityNumber", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("מספר תעודת זהות") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("מספר תעודת זהות") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -507,7 +507,7 @@ export default function Form101Page() {
                     type="date"
                     value={form.dateOfBirth}
                     onChange={(event) => handleChange("dateOfBirth", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("תאריך לידה") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("תאריך לידה") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -516,7 +516,7 @@ export default function Form101Page() {
                     type="date"
                     value={form.dateOfImmigration}
                     onChange={(event) => handleChange("dateOfImmigration", event.target.value)}
-                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
+                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink"
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -524,7 +524,7 @@ export default function Form101Page() {
                   <input
                     value={form.gender}
                     onChange={(event) => handleChange("gender", event.target.value)}
-                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
+                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink"
                     placeholder="זכר / נקבה"
                   />
                 </label>
@@ -533,7 +533,7 @@ export default function Form101Page() {
                   <input
                     value={form.israeliResidentStatus}
                     onChange={(event) => handleChange("israeliResidentStatus", event.target.value)}
-                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
+                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink"
                     placeholder="ישראלי / תושב חוזר / עולה"
                   />
                 </label>
@@ -542,7 +542,7 @@ export default function Form101Page() {
                   <input
                     value={form.street}
                     onChange={(event) => handleChange("street", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("רחוב") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("רחוב") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -550,7 +550,7 @@ export default function Form101Page() {
                   <input
                     value={form.houseNumber}
                     onChange={(event) => handleChange("houseNumber", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("מספר בית") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("מספר בית") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -558,7 +558,7 @@ export default function Form101Page() {
                   <input
                     value={form.apartment}
                     onChange={(event) => handleChange("apartment", event.target.value)}
-                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
+                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink"
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -566,7 +566,7 @@ export default function Form101Page() {
                   <input
                     value={form.city}
                     onChange={(event) => handleChange("city", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("עיר") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("עיר") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -574,7 +574,7 @@ export default function Form101Page() {
                   <input
                     value={form.postalCode}
                     onChange={(event) => handleChange("postalCode", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("מיקוד") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("מיקוד") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -583,7 +583,7 @@ export default function Form101Page() {
                     type="email"
                     value={form.email}
                     onChange={(event) => handleChange("email", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("אימייל") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("אימייל") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -591,7 +591,7 @@ export default function Form101Page() {
                   <input
                     value={form.mobilePhone}
                     onChange={(event) => handleChange("mobilePhone", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("מספר נייד") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("מספר נייד") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
                 <label className="text-sm text-ink/80">
@@ -599,7 +599,7 @@ export default function Form101Page() {
                   <input
                     value={form.maritalStatus}
                     onChange={(event) => handleChange("maritalStatus", event.target.value)}
-                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
+                    className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink"
                     placeholder="רווק/ה / נשוי/אה / גרוש/ה"
                   />
                 </label>
@@ -609,7 +609,7 @@ export default function Form101Page() {
                     type="date"
                     value={form.employmentStartDate}
                     onChange={(event) => handleChange("employmentStartDate", event.target.value)}
-                    className={`w-full rounded-lg border px-3 py-3 text-ink outline-none ring-0 ${missingFields.includes("תאריך תחילת עבודה") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
+                    className={`w-full rounded-lg border px-3 py-3 text-ink ${missingFields.includes("תאריך תחילת עבודה") ? "border-amber-500/50 bg-amber-400/10" : "border-line-strong bg-canvas"}`}
                   />
                 </label>
               </div>
@@ -621,7 +621,7 @@ export default function Form101Page() {
                     <input
                       value={form.spouseName}
                       onChange={(event) => handleChange("spouseName", event.target.value)}
-                      className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
+                      className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink"
                     />
                   </label>
                   <label className="text-sm text-ink/80">
@@ -629,7 +629,7 @@ export default function Form101Page() {
                     <input
                       value={form.spouseId}
                       onChange={(event) => handleChange("spouseId", event.target.value)}
-                      className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
+                      className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink"
                     />
                   </label>
                   <label className="text-sm text-ink/80">
@@ -637,7 +637,7 @@ export default function Form101Page() {
                     <input
                       value={form.spouseEmploymentStatus}
                       onChange={(event) => handleChange("spouseEmploymentStatus", event.target.value)}
-                      className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink outline-none ring-0"
+                      className="w-full rounded-lg border border-line-strong bg-canvas px-3 py-3 text-ink"
                     />
                   </label>
                 </div>

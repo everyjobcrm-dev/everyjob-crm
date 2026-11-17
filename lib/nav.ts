@@ -73,6 +73,8 @@ export function buildNav(profile: PermissionProfile | null): NavModel {
     // "אירוע חדש" is a button on the events list itself (shown only when canCreateEvents), not a nav item.
     manage = [
       { href: "/manager/events", label: role === "recruiter" ? "האירועים שלי" : "כל האירועים", icon: "staffEvents" },
+      // employee directory: Manager only (a recruiter reaches employees through their own events)
+      ...(role === "manager" ? [{ href: "/manager/employees", label: "עובדים", icon: "employees" as const }] : []),
     ];
   }
 

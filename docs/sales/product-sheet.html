@@ -1,0 +1,167 @@
+<title>everyJob — דף מוצר</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Heebo:wght@400;500;700&display=swap">
+<style>
+  /* Layout: one A4-like sheet, RTL. Ink headline block on the start side, the shift lifecycle as a single strip,
+     then a two-by-two of roles and a narrow "what transfers" column. Cuff colours mark the three staff roles. */
+  :root {
+    --canvas: #fbf8f4; --surface: #ffffff; --surface2: #f4efe8;
+    --ink: #131217; --muted: #6a6670; --line: rgb(19 18 23 / .10);
+    --pink: #ff84a7; --pink-deep: #c2255c; --sun: #fdd559; --sun-deep: #7a5600;
+    --sky: #83d9ff; --sky-deep: #0b6a94; --peach: #fecbaa;
+    --on-ink: #fbf8f4;
+    --display: "Frank Ruhl Libre", "David", "Times New Roman", serif;
+    --body: "Heebo", "Arial Hebrew", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --canvas: #141317; --surface: #1c1b20; --surface2: #24222a; --ink: #f3efe9; --muted: #a9a4ad;
+    --line: rgb(243 239 233 / .12); --pink-deep: #ff9dbb; --sun-deep: #fdd559; --sky-deep: #83d9ff; --on-ink: #141317;
+    color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --canvas: #141317; --surface: #1c1b20; --surface2: #24222a; --ink: #f3efe9; --muted: #a9a4ad;
+    --line: rgb(243 239 233 / .12); --pink-deep: #ff9dbb; --sun-deep: #fdd559; --sky-deep: #83d9ff; --on-ink: #141317;
+    color-scheme: dark }
+
+  body { background: var(--canvas); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.6;
+         padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .sheet { max-width: 920px; margin-inline: auto; padding-block: 40px 56px; display: grid; gap: 36px; }
+  h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+
+  .top { display: grid; grid-template-columns: 1.35fr 1fr; gap: 28px; align-items: end; }
+  .brand { font-family: var(--display); font-weight: 900; font-size: 20px; letter-spacing: .01em; display: flex; gap: 8px; align-items: center; }
+  .cuffs { display: inline-flex; gap: 3px; }
+  .cuffs i { width: 8px; height: 18px; display: block; }
+  .cuffs i:nth-child(1) { background: var(--pink); } .cuffs i:nth-child(2) { background: var(--sun); } .cuffs i:nth-child(3) { background: var(--sky); }
+  h1 { font-size: clamp(32px, 5.4vw, 52px); line-height: 1.08; font-weight: 900; margin-top: 18px; }
+  h1 mark { background: linear-gradient(transparent 62%, var(--sun) 62%); color: inherit; padding-inline: 2px; }
+  .lede { color: var(--muted); font-size: 17px; max-width: 46ch; margin-top: 14px; }
+  .pain { background: var(--ink); color: var(--on-ink); padding: 22px 24px; display: grid; gap: 10px; }
+  .pain h2 { font-size: 19px; font-weight: 700; }
+  .pain ul { margin: 0; padding-inline-start: 18px; display: grid; gap: 4px; }
+
+  .label { font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--muted); }
+  .flow { display: grid; gap: 12px; }
+  .strip { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); background: var(--surface); }
+  .strip li { padding: 14px 12px; display: grid; gap: 4px; align-content: start; border-inline-start: 1px solid var(--line); }
+  .strip li:first-child { border-inline-start: 0; }
+  .strip b { font-family: var(--display); font-size: 16px; }
+  .strip span { font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .strip .who { font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+  .w-rec { color: var(--sun-deep); } .w-emp { color: var(--muted); } .w-mgr { color: var(--sky-deep); } .w-adm { color: var(--pink-deep); }
+  .strip li:last-child { background: var(--surface2); }
+
+  .body { display: grid; grid-template-columns: 1.6fr 1fr; gap: 28px; align-items: start; }
+  .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 2px solid var(--ink); }
+  .role { padding: 16px 0 18px; padding-inline-end: 20px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; min-width: 0; }
+  .role h3 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
+  .role h3::before { content: ""; width: 10px; height: 10px; background: var(--c, var(--ink)); }
+  .role ul { margin: 0; padding-inline-start: 18px; display: grid; gap: 3px; font-size: 14px; }
+  .adm { --c: var(--pink); } .mgr { --c: var(--sky); } .rec { --c: var(--sun); } .emp { --c: var(--peach); }
+
+  aside { display: grid; gap: 20px; }
+  .box { border: 1px solid var(--line); background: var(--surface); padding: 18px 20px; display: grid; gap: 10px; }
+  .box h2 { font-size: 19px; }
+  .box ul { margin: 0; padding-inline-start: 18px; display: grid; gap: 4px; font-size: 14px; }
+  .facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; margin: 0; }
+  .facts dt { font-weight: 700; } .facts dd { margin: 0; color: var(--muted); }
+
+  .foot { border-top: 1px solid var(--line); padding-top: 18px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 14px; }
+  .foot strong { font-family: var(--display); font-size: 18px; }
+
+  @media (max-width: 760px) {
+    .top, .body { grid-template-columns: 1fr; }
+    .strip { grid-template-columns: 1fr; }
+    .strip li { border-inline-start: 0; border-top: 1px solid var(--line); grid-template-columns: 7.5em 1fr; column-gap: 10px; }
+    .strip li:first-child { border-top: 0; }
+    .strip .who { grid-column: 1; } .strip b { grid-column: 1; grid-row: 2; } .strip span { grid-column: 2; grid-row: 1 / span 2; }
+    .roles { grid-template-columns: 1fr; }
+  }
+</style>
+
+<main class="sheet" dir="rtl" lang="he">
+  <header class="top">
+    <div>
+      <div class="brand"><span class="cuffs" aria-hidden="true"><i></i><i></i><i></i></span>everyJob</div>
+      <h1>מאיישים אירועים <mark>בלי אקסלים</mark> ובלי וואטסאפים</h1>
+      <p class="lede">מערכת אחת לחברת כוח אדם במשמרות: גיוס, שיבוץ, נוכחות, אישור שעות, דוח שכר וחשבונית ללקוח. נבנתה בעברית, לשוק המשמרות בישראל.</p>
+    </div>
+    <section class="pain" aria-labelledby="pain-h">
+      <h2 id="pain-h">איפה הכסף דולף היום</h2>
+      <ul>
+        <li>שעות שעבדו ולא חויבו ללקוח</li>
+        <li>טעויות בשעות נוספות 125% / 150%</li>
+        <li>עובד שמבטל ברגע האחרון, ואין מי שיחליף</li>
+        <li>ימי עבודה שלמים על הקלדת דוחות</li>
+      </ul>
+    </section>
+  </header>
+
+  <section class="flow" aria-labelledby="flow-h">
+    <h2 id="flow-h" class="label">משמרת אחת, מההתחלה ועד החשבונית</h2>
+    <ol class="strip">
+      <li><span class="who w-rec">מגייס</span><b>אירוע</b><span>תפקידים ומחיר נמשכים ממחירון הלקוח</span></li>
+      <li><span class="who w-emp">עובד</span><b>הרשמה</b><span>משמרות באזור שלו קודם, מהטלפון</span></li>
+      <li><span class="who w-mgr">מנהל</span><b>שיבוץ</b><span>אישור, חיפוש לפי תפקיד ואזור, סטטוס איוש חי</span></li>
+      <li><span class="who w-emp">עובד</span><b>המתנה</b><span>תפקיד מלא נכנס לתור, וביטול מתמלא ממנו</span></li>
+      <li><span class="who w-mgr">מנהל שטח</span><b>נוכחות</b><span>שעות ודירוג בסוף המשמרת</span></li>
+      <li><span class="who w-adm">אדמין</span><b>אישור</b><span>אישור שעות, אף פעם לא לשעות של עצמו</span></li>
+      <li><span class="who w-adm">אדמין</span><b>אקסל</b><span>דוח שכר וחשבונית ללקוח בלחיצה</span></li>
+    </ol>
+  </section>
+
+  <div class="body">
+    <section aria-labelledby="roles-h">
+      <h2 id="roles-h" class="label" style="margin-bottom:10px">מה כל אחד מקבל</h2>
+      <div class="roles">
+        <div class="role adm"><h3>אדמין</h3><ul>
+          <li>לוח אישור שעות ודוח שכר עם 100% / 125% / 150% ונסיעות</li>
+          <li>מחירון לקוח לפי תפקיד וחשבונית בייצוא לאקסל</li>
+          <li>תעריף זיכוי גיוס לכל מגייס</li>
+          <li>מסך תאימות: ת״ז כפולות, טופס 101 חסר</li></ul></div>
+        <div class="role mgr"><h3>מנהל שטח</h3><ul>
+          <li>אישור, דחייה ושיבוץ בכל האירועים</li>
+          <li>“ברמנים במרכז” בשתי לחיצות</li>
+          <li>נוכחות, שעות ודירוג עובדים</li>
+          <li>טיפול בבקשות ביטול ובקידום מרשימת ההמתנה</li></ul></div>
+        <div class="role rec"><h3>מגייס</h3><ul>
+          <li>פתיחת אירועים וניהול האירועים שלו בלבד</li>
+          <li>זיכוי גיוס אוטומטי לפי שעות מאושרות</li>
+          <li>מעקב אחר זיכויים ממתינים</li></ul></div>
+        <div class="role emp"><h3>עובד</h3><ul>
+          <li>משמרות פתוחות באזור שלו, והרשמה מהטלפון</li>
+          <li>המשמרות שלי, בקשת ביטול מסודרת</li>
+          <li>שעות החודש ושכר משוער</li>
+          <li>התראות על שיבוץ, ביטול ושינוי שעה</li></ul></div>
+      </div>
+    </section>
+
+    <aside>
+      <section class="box" aria-labelledby="own-h">
+        <h2 id="own-h">מה עובר אליכם</h2>
+        <ul>
+          <li>קוד המקור המלא, בבעלות בלעדית</li>
+          <li>מבנה מסד הנתונים והמיגרציות</li>
+          <li>הדומיין, העיצוב והתיעוד</li>
+          <li>תקופת חפיפה והדרכה לכל תפקיד</li>
+        </ul>
+        <p style="font-size:14px;color:var(--muted)">בלי דמי מנוי חודשיים ובלי תלות בספק.</p>
+      </section>
+      <section class="box" aria-labelledby="tech-h">
+        <h2 id="tech-h">מתחת למכסה</h2>
+        <dl class="facts">
+          <dt>הרשאות</dt><dd>נאכפות במסד הנתונים עצמו, לא רק במסך</dd>
+          <dt>טכנולוגיה</dt><dd>Next.js ו-Supabase (PostgreSQL), קל לגייס להם מפתחים</dd>
+          <dt>ממשק</dt><dd>עברית מימין לשמאל, עובד בטלפון ובמחשב</dd>
+          <dt>פרטיות</dt><dd>טופס 101 ופרטי בנק נעולים עד אימות דו-שלבי</dd>
+        </dl>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="foot">
+    <strong>הצעד הבא: פיילוט של חודש על קבוצת עובדים אחת שלכם</strong>
+    <span>הצלחה = דוח השכר והחשבונית תואמים לבדיקה הידנית שלכם.</span>
+  </footer>
+</main>

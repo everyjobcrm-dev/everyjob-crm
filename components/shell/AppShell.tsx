@@ -14,6 +14,7 @@ import {
   Home,
   LayoutGrid,
   LogOut,
+  Search,
   UserRound,
   UserRoundCheck,
   Users,
@@ -63,6 +64,9 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-ink focus:px-4 focus:py-2 focus:text-white">
+        דילוג לתוכן העיקרי
+      </a>
       {/* Desktop sidebar */}
       <aside
         aria-label="ניווט ראשי"
@@ -72,6 +76,8 @@ export function AppShell({
           <Image src="/images/everyJob-logo.png" alt="everyJob" width={738} height={411} priority className="h-11 w-auto" />
           <span className="rounded-md bg-surface2 px-2 py-1 text-[11px] font-semibold text-muted">{nav.roleLabel}</span>
         </Link>
+
+        {isStaff && <ShellSearch className="mb-5" />}
 
         <nav className="flex flex-1 flex-col gap-6 overflow-y-auto [scrollbar-width:thin]">
           {isStaff && <NavSection title="ניהול" items={nav.manage} pathname={pathname} />}
@@ -115,8 +121,11 @@ export function AppShell({
         </nav>
       )}
 
-      <main className="pb-24 lg:ps-60 lg:pb-0">
-        <div className={`mx-auto w-full min-w-0 ${WIDTH[width]} px-4 pt-6 sm:px-6 lg:px-10 lg:pt-10`}>{children}</div>
+      <main id="main" tabIndex={-1} className="pb-24 outline-none lg:ps-60 lg:pb-0">
+        <div className={`mx-auto w-full min-w-0 ${WIDTH[width]} px-4 pt-6 sm:px-6 lg:px-10 lg:pt-10`}>
+          {isStaff && <ShellSearch className="mb-5 lg:hidden" />}
+          {children}
+        </div>
       </main>
 
       {/* Mobile: bottom tab bar with the work items. Logout lives on the profile screen, away from the thumb. */}
@@ -173,5 +182,23 @@ function NavSection({ title, items, pathname }: { title?: string; items: NavItem
         })}
       </ul>
     </div>
+  );
+}
+
+/** Staff-wide search (quote item 11): employees, clients and events, on /manager/search (scope enforced there). */
+function ShellSearch({ className = "" }: { className?: string }) {
+  return (
+    <form action="/manager/search" method="get" role="search" className={`relative ${className}`}>
+      <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden="true" />
+      <input
+        type="search"
+        name="q"
+        minLength={2}
+        required
+        aria-label="חיפוש עובדים, לקוחות ואירועים"
+        placeholder="חיפוש עובד, לקוח, אירוע"
+        className="field w-full ps-9 text-sm"
+      />
+    </form>
   );
 }

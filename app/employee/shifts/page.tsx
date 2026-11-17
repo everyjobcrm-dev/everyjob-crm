@@ -31,3 +31,5 @@ export default async function MyShiftsPage() {
     </div>
   );
 }
+
+export const metadata = { title: "המשמרות שלי" };
