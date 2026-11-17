@@ -1,4 +1,4 @@
--- Rollback for 20261117120000_s1_security_hardening.sql: restores the grants as they were on 2026-11-17.
+-- Rollback for 20261117115659_s1_security_hardening.sql: restores the grants as they were on 2026-11-17.
 BEGIN;
 GRANT INSERT, UPDATE, DELETE ON public.events, public.event_roles TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.add_historical_event_attendee(uuid, uuid, uuid) TO anon, public;

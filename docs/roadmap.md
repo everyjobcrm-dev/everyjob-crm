@@ -75,9 +75,9 @@ Exit: an employee in the south sees southern shifts first; a manager finds "bart
 
 ## Stage 2 — Due-diligence package (before signing; ~1 week)
 A buyer's technical reviewer will ask for these. Having them ready shortens the deal and supports the price.
-- [x] [Dev] (17 Nov, `docs/due-diligence/security-review.md`; Next 16.4.6; fixes in pending migration S1) Security sweep: Supabase security and performance advisors clean or explained; `npm audit` triaged;
+- [x] [Dev] (17 Nov, `docs/due-diligence/security-review.md`; Next 16.4.6; fixes applied as migration S1) Security sweep: Supabase security and performance advisors clean or explained; `npm audit` triaged;
       secret scan of the full git history (e.g. gitleaks) — rotate any key that ever reached git
-- [ ] [Dev] (drafted: `supabase/pending/20261117120000_s1_security_hardening.sql`, awaiting owner confirmation) Narrow direct UPDATE on `events` / `event_roles` to the RPCs (backlog item; the reviewer will find it)
+- [x] [Dev] (applied 17 Nov: migration S1 `20261117115659`) Narrow direct UPDATE on `events` / `event_roles` to the RPCs (backlog item; the reviewer will find it)
 - [ ] [Dev] (17 Nov: `.gitattributes` done; the two DB checks need a migration) Remaining backlog fixes: `min_age` raise re-checks existing registrants (warn), direct `events.recruiter_id`
       writes validate the target role, `.gitattributes` (`eol=lf`), optional removal of the duplicate rating trigger
 - [x] [Dev] (`e2e/`, read-only by design while the database is shared; write paths stay in `supabase/tests/`) Automated smoke tests for the critical flows (Playwright, ~5 tests: sign-in per role, register for a shift,
@@ -108,6 +108,7 @@ Exit: a reviewer can clone, run, read and assess the system without the owner in
 Exit: signed agreement and first payment received.
 
 ## Stage 4 — Handover (at closing; ~1 week)
+Step-by-step runbook: [docs/handover/stage-4-handover.md](handover/stage-4-handover.md).
 - [ ] [Owner] Transfer the GitHub repository to the buyer's organisation
 - [ ] [Owner] Transfer or recreate the Supabase project in the buyer's organisation (Supabase supports project transfer
       between organisations); transfer the Vercel project and the domain
@@ -120,6 +121,7 @@ Exit: signed agreement and first payment received.
 Exit: the buyer signs in with their own accounts on their own infrastructure; the owner holds no credentials.
 
 ## Stage 5 — Production launch on the buyer's infrastructure (post-closing, milestone-paid; ~2–4 weeks)
+Detailed plan, order, estimates and 2FA / Form 101 design: [docs/handover/stage-5-launch.md](handover/stage-5-launch.md).
 The "Pre-launch" list above, in this order:
 - [ ] [Dev] Separate production Supabase project, replay `supabase/migrations/`, point Vercel Production at it
 - [ ] [Dev+Owner] Email verification: verified domain in Resend, Custom SMTP, Hebrew template, remove

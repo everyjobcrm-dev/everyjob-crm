@@ -1,6 +1,9 @@
--- PENDING (NOT applied). Migration S1, security hardening from the 2026-11-17 due-diligence sweep
--- (docs/due-diligence/security-review.md). AGENTS §8.1: run only after the owner confirms these exact contents.
--- Rollback: 20261117120000_s1_security_hardening_rollback.sql. No DROP statements (safe for the MCP).
+-- Migration S1, security hardening (2026-11-17 due-diligence sweep, docs/due-diligence/security-review.md).
+-- APPLIED 2026-11-17 via Supabase MCP apply_migration (owner-approved), version 20261117115659 (in the live history).
+-- Applied without the BEGIN/COMMIT lines (apply_migration wraps one transaction). Verified read-only and with
+-- rolled-back tests as a recruiter: status update allowed; bill_to_client and other direct column updates refused;
+-- event + role insert still works and the client price trigger still fills bill_to_client.
+-- Rollback: 20261117115659_s1_security_hardening_rollback.sql. No DROP statements (safe for the MCP).
 --
 -- 1. Narrow direct writes on events / event_roles to what the app actually does (roadmap Stage 2 backlog item).
 --    App writes found (app/admin/actions.ts): events INSERT (createEvent), events UPDATE of `status` only

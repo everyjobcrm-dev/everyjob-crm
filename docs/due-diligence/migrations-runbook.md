@@ -6,7 +6,7 @@ State checked on 2026-11-17 against the live project `yjgqunrboxihxtgkxibw` (Sup
 
 | Group | Count | Status |
 |---|---|---|
-| Versions in the live history table **and** in `supabase/migrations/` | 7 | in sync (c1, c2, c4, c5, c6a, c6b, d1) |
+| Versions in the live history table **and** in `supabase/migrations/` | 8 | in sync (c1, c2, c4, c5, c6a, c6b, d1, s1) |
 | Files in `supabase/migrations/` applied by hand, **missing from the live history** | 9 | fix with step 2 |
 | Versions in the live history with **no file** in `supabase/migrations/` (Oct 2026, applied through the MCP; sources are the `supabase/p*_*.sql` files) | 36 | fix with step 3 |
 | Changes applied by hand with no history row (M1d, M1e, M6a, M6c and other `DROP` migrations; see `supabase/live_snapshot/README.md`) | several | covered by the baseline in step 4 |
