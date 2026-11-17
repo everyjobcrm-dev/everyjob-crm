@@ -135,45 +135,6 @@ export type Database = {
           },
         ]
       }
-      client_role_rates: {
-        Row: {
-          bill_rate: number
-          client_id: string
-          effective_from: string
-          id: string
-          role_name: Database["public"]["Enums"]["staff_role"]
-        }
-        Insert: {
-          bill_rate: number
-          client_id: string
-          effective_from?: string
-          id?: string
-          role_name: Database["public"]["Enums"]["staff_role"]
-        }
-        Update: {
-          bill_rate?: number
-          client_id?: string
-          effective_from?: string
-          id?: string
-          role_name?: Database["public"]["Enums"]["staff_role"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "client_role_rates_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "client_role_rates_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "v_billing_shift_lines"
-            referencedColumns: ["client_id"]
-          },
-        ]
-      }
       clients: {
         Row: {
           address: string | null
@@ -1023,7 +984,6 @@ export type Database = {
           dress_code: string | null
           event_date: string
           id: string
-          lifecycle_status: string
           location: string
           min_age: number | null
           min_rating: number | null
@@ -1042,7 +1002,6 @@ export type Database = {
           dress_code?: string | null
           event_date: string
           id?: string
-          lifecycle_status?: string
           location: string
           min_age?: number | null
           min_rating?: number | null
@@ -1061,7 +1020,6 @@ export type Database = {
           dress_code?: string | null
           event_date?: string
           id?: string
-          lifecycle_status?: string
           location?: string
           min_age?: number | null
           min_rating?: number | null
@@ -3021,7 +2979,6 @@ export type Database = {
           dress_code: string | null
           event_date: string
           id: string
-          lifecycle_status: string
           location: string
           min_age: number | null
           min_rating: number | null
