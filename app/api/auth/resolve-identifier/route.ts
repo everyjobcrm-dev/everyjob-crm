@@ -1,65 +1,56 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
+// TZ login. The email behind a ת"ז never leaves the server: we sign in here and return only the session,
+// and an unknown ת"ז gets the same answer as a wrong password (no account enumeration).
+const INVALID = "Invalid login credentials";
+
 export async function POST(request: Request) {
   try {
-    const { identifier } = await request.json();
-    const normalizedIdentifier = String(identifier ?? "").trim();
+    const { identifier, password } = await request.json();
+    const tz = String(identifier ?? "").trim();
+    const pass = typeof password === "string" ? password : "";
 
-    if (!normalizedIdentifier) {
-      return NextResponse.json(
-        { success: false, error: "יש להזין תעודת זהות או אימייל." },
-        { status: 400 },
-      );
+    if (!tz || !pass) {
+      return NextResponse.json({ success: false, error: "יש להזין תעודת זהות וסיסמה." }, { status: 400 });
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceRoleKey) {
+    if (!supabaseUrl || !anonKey || !serviceRoleKey) {
       return NextResponse.json(
-        {
-          success: false,
-          error:
-            "TZ login is not enabled yet because the Supabase service role key is missing. Please use your email and password for now.",
-        },
+        { success: false, error: "התחברות עם תעודת זהות אינה זמינה כרגע. התחברו עם אימייל וסיסמה." },
         { status: 500 },
       );
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
+    const options = { auth: { persistSession: false, autoRefreshToken: false } };
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, options);
+
+    const { data: profile } = await adminClient.from("profiles").select("id").eq("tz", tz).maybeSingle();
+    const email = profile?.id ? (await adminClient.auth.admin.getUserById(profile.id)).data?.user?.email : null;
+    if (!email) {
+      return NextResponse.json({ success: false, error: INVALID }, { status: 401 });
+    }
+
+    // Supabase Auth's own rate limit and checks (banned, unconfirmed email) still apply to this call.
+    const { data, error } = await createClient(supabaseUrl, anonKey, options).auth.signInWithPassword({
+      email,
+      password: pass,
     });
-
-    const { data: profile, error: profileError } = await adminClient
-      .from("profiles")
-      .select("id,tz")
-      .eq("tz", normalizedIdentifier)
-      .single();
-
-    if (profileError || !profile?.id) {
-      return NextResponse.json(
-        { success: false, error: "לא נמצא חשבון עם תעודת הזהות הזו. בדקו את המספר או התחברו עם אימייל." },
-        { status: 404 },
-      );
+    if (error || !data.session) {
+      return NextResponse.json({ success: false, error: error?.message ?? INVALID }, { status: 401 });
     }
 
-    const { data: userData, error: userError } = await adminClient.auth.admin.getUserById(profile.id);
-
-    if (userError || !userData?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: "לא הצלחנו לאתר את החשבון. התחברו עם אימייל." },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json({ success: true, email: userData.user.email });
+    return NextResponse.json({
+      success: true,
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    });
   } catch {
     return NextResponse.json(
-      { success: false, error: "לא הצלחנו לאתר את החשבון כרגע. נסו שוב בעוד רגע." },
+      { success: false, error: "לא הצלחנו להתחבר כרגע. נסו שוב בעוד רגע." },
       { status: 500 },
     );
   }

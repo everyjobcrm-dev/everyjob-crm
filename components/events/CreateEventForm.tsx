@@ -297,6 +297,12 @@ export function CreateEventForm({
                   </motion.div>
                 ))}
               </AnimatePresence>
+              {/* names from the client's price list, so the DB price trigger matches them */}
+              <datalist id="client-role-names">
+                {(clients.find((c) => c.id === clientId)?.preferredRoles ?? []).map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
             </div>
 
             <button
@@ -406,6 +412,7 @@ function RoleRow({
         <div className="flex-1">
           <input
             {...register(`roles.${index}.role_name` as const)}
+            list="client-role-names"
             placeholder="שם התפקיד (למשל: ברמנית)"
             className={`${inputClass} font-semibold`}
           />

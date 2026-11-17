@@ -60,14 +60,6 @@ export type EventRoleView = {
   baseRate: number | null;
 };
 
-export type ClosureFinancials = {
-  totalHoursReported: number;
-  travelPaidToWorkers: number;
-  travelChargedToClient: number;
-  actualIncome: number;
-  actualExpense: number;
-};
-
 export type AdminEvent = {
   id: string;
   clientName: string;
@@ -82,7 +74,6 @@ export type AdminEvent = {
   cancelledFromStatus: string | null;
   recruiterId: string | null;
   roles: EventRoleView[];
-  closure: ClosureFinancials | null;
 };
 
 export async function fetchClients(): Promise<ClientOption[]> {
@@ -107,14 +98,6 @@ type RawEventRole = {
   base_rate: number | null;
 };
 
-type RawEventClosure = {
-  total_hours_reported: number;
-  travel_paid_to_workers: number;
-  travel_charged_to_client: number;
-  actual_income: number;
-  actual_expense: number;
-};
-
 type RawEventRow = {
   id: string;
   location: string;
@@ -128,7 +111,6 @@ type RawEventRow = {
   travel_budget_per_worker: number | null;
   clients: { name: string } | null;
   event_roles: RawEventRole[] | null;
-  event_closures: RawEventClosure | null;
 };
 
 export async function fetchEvents(): Promise<AdminEvent[]> {
@@ -140,8 +122,7 @@ export async function fetchEvents(): Promise<AdminEvent[]> {
     .select(
       `id, location, region, event_date, start_time, status, cancelled_from_status, recruiter_id, min_rating, travel_budget_per_worker,
       clients ( name ),
-      event_roles ( id, role_name, headcount, base_rate ),
-      event_closures ( total_hours_reported, travel_paid_to_workers, travel_charged_to_client, actual_income, actual_expense )`,
+      event_roles ( id, role_name, headcount, base_rate )`,
     )
     .order("event_date", { ascending: false })
     .returns<RawEventRow[]>();
@@ -182,15 +163,6 @@ export async function fetchEvents(): Promise<AdminEvent[]> {
           baseRate: r.base_rate,
         }),
       ),
-      closure: e.event_closures
-        ? {
-            totalHoursReported: e.event_closures.total_hours_reported,
-            travelPaidToWorkers: e.event_closures.travel_paid_to_workers,
-            travelChargedToClient: e.event_closures.travel_charged_to_client,
-            actualIncome: e.event_closures.actual_income,
-            actualExpense: e.event_closures.actual_expense,
-          }
-        : null,
     }),
   );
 }
@@ -719,17 +691,15 @@ export async function broadcastMessage(title: string, body: string): Promise<Act
     return fail("יש למלא כותרת ותוכן.");
   }
 
-  const { error } = await auth.supabase.from("announcements").insert({
-    title: title.trim(),
-    body: body.trim(),
-    created_by: auth.userId,
-  });
+  // one in-app notification per active employee/recruiter (F1: there is no announcements table)
+  const { error } = await auth.supabase.rpc("broadcast_announcement", { p_title: title.trim(), p_body: body.trim() });
 
   if (error) {
-    return fail("שליחת ההודעה נכשלה.");
+    console.error("[broadcastMessage]", error.code, error.message);
+    return fail(error.message.includes("too_long") ? "ההודעה ארוכה מדי." : "שליחת ההודעה נכשלה.");
   }
 
-  revalidatePath("/employee/dashboard");
+  revalidatePath("/employee/notifications");
   return { success: true };
 }
 
@@ -758,6 +728,7 @@ export async function getShiftSubmissions() {
   const { data, error } = await auth.supabase
     .from("v_shift_submissions_dashboard")
     .select("*")
+    .eq("submission_status", "pending")
     .order("submitted_at", { ascending: false });
 
   if (error) return { success: false as const, error: "טעינת דוחות השעות נכשלה." };
@@ -770,6 +741,7 @@ export type RecruiterPendingCredits = {
   first_name: string;
   last_name: string;
   recruiter_bonus_rate: number | null;
+  can_create_events: boolean;
   pending_recruitment_count: number;
   pending_recruitment_amount: number;
 };
@@ -781,8 +753,9 @@ export async function getRecruiterPendingCredits() {
   const [{ data: recruiters, error }, { data: pending }] = await Promise.all([
     auth.supabase
       .from("profiles")
-      .select("id, first_name, last_name, recruiter_bonus_rate")
+      .select("id, first_name, last_name, recruiter_bonus_rate, can_create_events")
       .eq("role", "recruiter")
+      .is("deleted_at", null)
       .order("last_name", { ascending: true }),
     // derived on read by the view (p6_h5); nothing is stored
     auth.supabase.from("v_recruiter_pending_credits").select("recruiter_id, pending_count, pending_amount"),
@@ -793,12 +766,19 @@ export async function getRecruiterPendingCredits() {
     ((pending ?? []) as { recruiter_id: string; pending_count: number; pending_amount: number }[]).map((p) => [p.recruiter_id, p]),
   );
   const data: RecruiterPendingCredits[] = (
-    (recruiters ?? []) as { id: string; first_name: string; last_name: string; recruiter_bonus_rate: number | null }[]
+    (recruiters ?? []) as {
+      id: string;
+      first_name: string;
+      last_name: string;
+      recruiter_bonus_rate: number | null;
+      can_create_events: boolean | null;
+    }[]
   ).map((r) => ({
     recruiter_id: r.id,
     first_name: r.first_name,
     last_name: r.last_name,
     recruiter_bonus_rate: r.recruiter_bonus_rate,
+    can_create_events: r.can_create_events === true,
     pending_recruitment_count: Number(byRecruiter.get(r.id)?.pending_count ?? 0),
     pending_recruitment_amount: Number(byRecruiter.get(r.id)?.pending_amount ?? 0),
   }));
@@ -866,6 +846,22 @@ export async function setRecruiterBonusRate(
   return { success: true };
 }
 
+/** Admin only: lets a recruiter create events (profiles.can_create_events; the DB guard also requires Admin). */
+export async function setRecruiterCanCreateEvents(recruiterId: string, allowed: boolean): Promise<ActionResult> {
+  const auth = await requireRole("admin");
+  if (!auth.ok) return fail("רק אדמין יכול לשנות הרשאה זו.");
+
+  const { error } = await auth.supabase
+    .from("profiles")
+    .update({ can_create_events: allowed === true })
+    .eq("id", recruiterId)
+    .eq("role", "recruiter");
+
+  if (error) return fail("עדכון ההרשאה נכשל.");
+  revalidatePath("/admin/recruiters");
+  return { success: true };
+}
+
 // ── Hours approval (p6_h2 RPCs; the tables are SELECT-only for clients after p6_h3) ─────────────────
 
 export type PendingHours = {
@@ -882,7 +878,7 @@ export type PendingHours = {
   eventId: string;
   eventDate: string;
   location: string;
-  isOwnHours: boolean; // the admin worked these hours - approve is hidden and refused (self_review)
+  isOwnHours: boolean; // the admin worked these hours - approve allowed (owner 2026-11-17), reject refused (self_review)
 };
 
 /** Pending, non-voided hour reports of non-cancelled events, oldest event first. No tz / documents. */
@@ -952,7 +948,7 @@ function revalidateHoursViews() {
   revalidatePath("/employee/shifts");
 }
 
-/** Admin only; never own worked hours (self_review). Creates the event recruiter's credit (hours x rate). */
+/** Admin only; own worked hours allowed (owner 2026-11-17, F1). Creates the event recruiter's credit (hours x rate). */
 export async function approveShiftHours(submissionId: string): Promise<ActionResult> {
   const auth = await requireRole("admin");
   if (!auth.ok) return fail(auth.error);

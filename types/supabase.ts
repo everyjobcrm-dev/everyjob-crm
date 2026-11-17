@@ -2475,9 +2475,17 @@ export type Database = {
         Args: { p_payload: Json; p_type: string; p_user_id: string }
         Returns: undefined
       }
+      app_notify_event_staff: {
+        Args: { p_event_id: string; p_payload: Json; p_type: string }
+        Returns: undefined
+      }
       app_registration_initial_status: {
         Args: { p_event_role_id: string; p_uid: string }
         Returns: Database["public"]["Enums"]["registration_status"]
+      }
+      app_role_price: {
+        Args: { p_list: Json; p_role: string }
+        Returns: number
       }
       approve_shift_hours: {
         Args: { p_submission_id: string }
@@ -2507,6 +2515,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      broadcast_announcement: {
+        Args: { p_body: string; p_title: string }
+        Returns: number
       }
       close_billing_cycle: {
         Args: { p_month: string }
@@ -2609,6 +2621,14 @@ export type Database = {
           role_name: string
           total_ratings: number
           tz: string
+        }[]
+      }
+      get_employee_totals: {
+        Args: never
+        Returns: {
+          employee_id: string
+          total_hours: number
+          total_profit: number
         }[]
       }
       get_event_role_pricing: {

@@ -72,16 +72,9 @@ function HoursRow({ row }: { row: PendingHours }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {!row.isOwnHours && (
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={approve}
-              className="btn btn-primary btn-sm"
-            >
-              <Check className="h-3.5 w-3.5" aria-hidden="true" /> אישור
-            </button>
-          )}
+          <button type="button" disabled={isPending} onClick={approve} className="btn btn-primary btn-sm">
+            <Check className="h-3.5 w-3.5" aria-hidden="true" /> אישור
+          </button>
           {!row.isOwnHours && (
             <button
               type="button"
@@ -102,7 +95,7 @@ function HoursRow({ row }: { row: PendingHours }) {
           </button>
         </div>
       </div>
-      {row.isOwnHours && <p className="mt-1 text-xs text-muted">את השעות שעבדת בעצמך לא ניתן לאשר או לדחות.</p>}
+      {row.isOwnHours && <p className="mt-1 text-xs text-muted">את השעות שעבדת בעצמך ניתן לאשר, אך לא לדחות.</p>}
       {mode && <ReasonForm row={row} mode={mode} onDone={() => setMode(null)} />}
       {error && <p className="mt-2 text-xs text-rose-700">{error}</p>}
     </div>

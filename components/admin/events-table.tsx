@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ChevronDown, ChevronUp, ClipboardList, Trash2, Users, AlertTriangle } from "lucide-react";
 import { updateEventStatus, restoreEvent, deleteEvent, type AdminEvent } from "@/app/admin/actions";
 export type { AdminEvent };
-import { FinancialClosureSummary } from "@/components/admin/financial-closure-summary";
 import {
   EVENT_STATUS_LABEL as STATUS_LABEL,
   EVENT_STATUS_STYLE as STATUS_STYLE,
@@ -178,11 +177,6 @@ export function EventsTable({ events }: { events: AdminEvent[] }) {
                     <tr>
                       <td colSpan={5} className="bg-surface2 px-4 py-4">
                         <RolesRoster event={event} />
-                        {event.status === "completed" && event.closure && (
-                          <div className="mt-4">
-                            <FinancialClosureSummary closure={event.closure} />
-                          </div>
-                        )}
                       </td>
                     </tr>
                   )}
@@ -275,7 +269,6 @@ function EventCard({
       {expanded && (
         <div className="mt-3 space-y-3 border-t border-line pt-3">
           <RolesRoster event={event} />
-          {event.status === "completed" && event.closure && <FinancialClosureSummary closure={event.closure} />}
         </div>
       )}
 

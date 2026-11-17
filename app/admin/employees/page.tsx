@@ -52,11 +52,19 @@ export default async function AdminEmployeesPage({ searchParams }: { searchParam
   if (clean(f.city)) query = query.ilike("city", `%${clean(f.city)}%`);
   const q = clean(f.q);
   if (q.length >= 2) query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,phone_number.ilike.%${q}%`);
-  const [{ data: profiles, error }, { data: recruiterRows }] = await Promise.all([
+  const [{ data: profiles, error }, { data: recruiterRows }, { data: totalsRows }] = await Promise.all([
     query.order("last_name", { ascending: true }).returns<ProfileRow[]>(),
     // the "גויס ע״י" options must not shrink with the filters
     supabase.from("profiles").select("id, first_name, last_name").eq("role", "recruiter").is("deleted_at", null),
+    // approved hours + company profit per employee, derived on read from the payroll/billing views (F1)
+    supabase.rpc("get_employee_totals"),
   ]);
+  const totals = new Map(
+    ((totalsRows ?? []) as { employee_id: string; total_hours: number | null; total_profit: number | null }[]).map((t) => [
+      t.employee_id,
+      t,
+    ]),
+  );
   if (error) console.error("[AdminEmployeesPage]", error.code, error.message);
 
   const rows: AdminEmployee[] = (profiles ?? []).map((p) => ({
@@ -65,8 +73,8 @@ export default async function AdminEmployeesPage({ searchParams }: { searchParam
     tz: p.tz ?? "—",
     role: p.role ?? "employee",
     form101Status: null,
-    totalEarnings: null,
-    totalHours: null,
+    totalEarnings: totals.get(p.id)?.total_profit != null ? Number(totals.get(p.id)!.total_profit) : null,
+    totalHours: totals.get(p.id)?.total_hours != null ? Number(totals.get(p.id)!.total_hours) : null,
     recruitedBy: p.recruited_by,
     approvalStatus: APPROVAL.has(p.approval_status ?? "") ? (p.approval_status as AdminEmployee["approvalStatus"]) : null,
     deletedAt: p.deleted_at ?? null,

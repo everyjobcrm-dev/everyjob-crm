@@ -45,20 +45,25 @@ export default function LoginForm() {
     }
 
     const normalizedIdentifier = identifier.trim();
-    let emailToLogin = normalizedIdentifier;
 
-    // If there is no '@' symbol, assume it is a TZ and resolve it
+    let signInResult;
     if (!normalizedIdentifier.includes("@")) {
+      // No '@' -> a ת"ז: the server signs in and returns only the session (the email is never sent to the browser)
       try {
         const response = await fetch("/api/auth/resolve-identifier", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ identifier: normalizedIdentifier }),
+          body: JSON.stringify({ identifier: normalizedIdentifier, password }),
           signal: AbortSignal.timeout(LOGIN_REQUEST_TIMEOUT_MS),
         });
 
         // Defensive parse: never crash on an HTML/empty response.
-        const payload = await readJsonResponse<{ success?: boolean; email?: string; error?: string }>(response);
+        const payload = await readJsonResponse<{
+          success?: boolean;
+          access_token?: string;
+          refresh_token?: string;
+          error?: string;
+        }>(response);
 
         if (!payload) {
           setError("שירות ההתחברות אינו זמין כרגע. נסו שוב מאוחר יותר או התחברו עם אימייל וסיסמה.");
@@ -66,32 +71,30 @@ export default function LoginForm() {
           return;
         }
 
-        if (!response.ok || !payload.success || !payload.email) {
-          setError(payload.error ?? "לא נמצא חשבון עם תעודת הזהות הזו. נסו להתחבר עם אימייל.");
-          setLoading(false);
-          return;
-        }
-
-        emailToLogin = payload.email;
+        signInResult =
+          response.ok && payload.success && payload.access_token && payload.refresh_token
+            ? await withTimeout(
+                supabase.auth.setSession({ access_token: payload.access_token, refresh_token: payload.refresh_token }),
+              )
+            : { data: { user: null, session: null }, error: { message: payload.error ?? "Invalid login credentials" } };
       } catch {
-        setError("לא הצלחנו לזהות את תעודת הזהות. התחברו עם אימייל וסיסמה.");
+        setError("ההתחברות מתעכבת. בדקו את החיבור ונסו שוב.");
         setLoading(false);
         return;
       }
-    }
-
-    let signInResult;
-    try {
-      signInResult = await withTimeout(
-        supabase.auth.signInWithPassword({
-          email: emailToLogin,
-          password,
-        }),
-      );
-    } catch {
-      setError("ההתחברות מתעכבת. בדקו את החיבור ונסו שוב.");
-      setLoading(false);
-      return;
+    } else {
+      try {
+        signInResult = await withTimeout(
+          supabase.auth.signInWithPassword({
+            email: normalizedIdentifier,
+            password,
+          }),
+        );
+      } catch {
+        setError("ההתחברות מתעכבת. בדקו את החיבור ונסו שוב.");
+        setLoading(false);
+        return;
+      }
     }
 
     const { data, error: signInError } = signInResult;
