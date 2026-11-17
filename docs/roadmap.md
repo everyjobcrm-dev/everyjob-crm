@@ -1,5 +1,5 @@
 # everyJob CRM — Master Development Plan & System Architecture
-Last updated: 15 November 2026
+Last updated: 17 November 2026
 
 # Status Legend
 Done — development complete, code reviewed and merged
@@ -35,9 +35,9 @@ the buyer can specify (their pay rules, branding, accounting format) before the 
 - [x] [Dev] Demo data (applied live 15 Nov): `supabase/pending/20261115_demo_seed.sql` (4 clients, 7 events across past/open/pending_rates,
       16 roster employees, approved and pending hour reports, ratings, a full role with a waitlist); rollback beside it.
       [Owner] runs it in the SQL Editor
-- [ ] [Owner] Remove the Milestone A test data (`supabase/pending/20261113_seed_a_past_events_rollback.sql`) and any other
+- [x] [Owner] (done 17 Nov, `supabase/pending/20261117_demo_cleanup.sql`: 4 clients / 7 events left) Remove the Milestone A test data (`supabase/pending/20261113_seed_a_past_events_rollback.sql`) and any other
       test clients/events, so the demo shows only realistic data
-- [ ] [Owner] Give the demo sign-in users (Admin, Manager, Recruiter, Employee) real-looking Hebrew names and simple
+- [x] [Owner] (done 17 Nov, `20261117_demo_user_names.sql`) Give the demo sign-in users (Admin, Manager, Recruiter, Employee) real-looking Hebrew names and simple
       passwords kept outside the repo
 - [ ] [Dev] Close the open browser-verification rows. Done 15 Nov: staff-as-worker, approving a pending employee from
       the picker, recruiter scope. Open: min-rating warning, sign-in after restore
@@ -46,9 +46,11 @@ the buyer can specify (their pay rules, branding, accounting format) before the 
 - [x] [Dev] Map the remaining DB errors to Hebrew (22007 bad date/time, 22P02 bad uuid/number) in `lib/events/errors.ts`
 - [x] [Dev] Basics a buyer notices: favicon, page titles, share preview (Open Graph). Loading states not reviewed
 - [ ] [Owner] Buy the domain (the only purchase before the deal) and point it at the Vercel production deployment
-- [ ] [Dev+Owner] 10-minute demo script by business pain: signup → approval → scheduling → attendance → hour approval →
+- [x] [Dev+Owner] (script and video shot list: `docs/sales/demo-script.md`; recording still open) 10-minute demo script by business pain: signup → approval → scheduling → attendance → hour approval →
       payroll and client billing Excel; plus a 3-minute recorded backup video
-- [ ] [Dev] One-page product sheet (Hebrew): what it does per role, screenshots, what is next
+- [x] [Dev] (`docs/sales/product-sheet.html`) One-page product sheet (Hebrew): what it does per role, screenshots, what is next
+
+- [x] [Dev] Demo dates relative to today: `supabase/pending/20261117_demo_shift_dates.sql`, re-run the day before each demo
 
 Exit: the whole script runs on a phone and a laptop on the production URL with no error and no test data.
 
@@ -73,21 +75,21 @@ Exit: an employee in the south sees southern shifts first; a manager finds "bart
 
 ## Stage 2 — Due-diligence package (before signing; ~1 week)
 A buyer's technical reviewer will ask for these. Having them ready shortens the deal and supports the price.
-- [ ] [Dev] Security sweep: Supabase security and performance advisors clean or explained; `npm audit` triaged;
+- [x] [Dev] (17 Nov, `docs/due-diligence/security-review.md`; Next 16.4.6; fixes in pending migration S1) Security sweep: Supabase security and performance advisors clean or explained; `npm audit` triaged;
       secret scan of the full git history (e.g. gitleaks) — rotate any key that ever reached git
-- [ ] [Dev] Narrow direct UPDATE on `events` / `event_roles` to the RPCs (backlog item; the reviewer will find it)
-- [ ] [Dev] Remaining backlog fixes: `min_age` raise re-checks existing registrants (warn), direct `events.recruiter_id`
+- [ ] [Dev] (drafted: `supabase/pending/20261117120000_s1_security_hardening.sql`, awaiting owner confirmation) Narrow direct UPDATE on `events` / `event_roles` to the RPCs (backlog item; the reviewer will find it)
+- [ ] [Dev] (17 Nov: `.gitattributes` done; the two DB checks need a migration) Remaining backlog fixes: `min_age` raise re-checks existing registrants (warn), direct `events.recruiter_id`
       writes validate the target role, `.gitattributes` (`eol=lf`), optional removal of the duplicate rating trigger
-- [ ] [Dev] Automated smoke tests for the critical flows (Playwright, ~5 tests: sign-in per role, register for a shift,
+- [x] [Dev] (`e2e/`, read-only by design while the database is shared; write paths stay in `supabase/tests/`) Automated smoke tests for the critical flows (Playwright, ~5 tests: sign-in per role, register for a shift,
       approve a registration, submit and approve hours, export payroll). Today only SQL behaviour tests exist
-- [ ] [Dev] Technical documentation: README with local setup, architecture overview, data model diagram, RLS and role
+- [x] [Dev] (README, `docs/due-diligence/migrations-runbook.md`) Technical documentation: README with local setup, architecture overview, data model diagram, RLS and role
       model summary, environment-variable list, migration and deployment runbook
-- [ ] [Dev] Dependency licence inventory (all production dependencies and their licences; flag anything non-permissive)
-- [ ] [Owner] `supabase migration repair` so the CLI migration history matches the live database (clean replay is what
+- [x] [Dev] (`docs/due-diligence/licenses.md`) Dependency licence inventory (all production dependencies and their licences; flag anything non-permissive)
+- [ ] [Owner] (exact commands: `docs/due-diligence/migrations-runbook.md`) `supabase migration repair` so the CLI migration history matches the live database (clean replay is what
       the buyer's production setup will rely on)
-- [ ] [Owner+Legal] Statement of IP ownership: authored by the owner (with AI coding tools), no third-party code
+- [ ] [Owner+Legal] (draft ready for the lawyer) Statement of IP ownership: authored by the owner (with AI coding tools), no third-party code
       beyond open-source dependencies, no employer or client claim on the code
-- [ ] [Owner+Legal] Privacy and compliance answers the buyer will need: what personal data is stored (national ID,
+- [ ] [Owner+Legal] (facts: `docs/due-diligence/privacy-data-map.md`; data is hosted in Sydney) Privacy and compliance answers the buyer will need: what personal data is stored (national ID,
       phone, birth date; Form 101 and bank details once 2FA exists), where it is hosted, who can read it (RLS by role),
       retention (monthly Form 101 purge)
 
